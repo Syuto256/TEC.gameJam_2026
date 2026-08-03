@@ -10,6 +10,12 @@
 | `MiniGameBase` | `Assets/Scripts/Core/MiniGameBase.cs` | ミニゲーム共通のライフサイクル、制限時間、完了イベントを提供する抽象基底クラス | UnityEngine, `System.Action` |
 | `RapidClickMiniGame` | `Assets/Scripts/MiniGameSample/RepidClickMiniGame.cs` | 連打数を満たすサンプルのミニゲーム実装 | `MiniGameBase`, TextMeshPro, Input |
 | `TestRunner` | `Assets/Scripts/MiniGameSample/TestRunner.cs` | `RapidClickMiniGame` を単独起動して結果をログ出力する試験用コンポーネント | `RapidClickMiniGame` |
+| `TypingMiniGame` | `Assets/Personal/Suzuki/TypingMiniGame/Scripts/TypingMiniGame.cs` | 日本語読みのローマ字入力を判定し、共通ミニゲーム結果を通知する個人試作 | `MiniGameBase`, `TypingWordDatabase`, `TypingInputEvaluator` |
+| `TypingWordDatabase` / `TypingWordEntry` | `Assets/Personal/Suzuki/TypingMiniGame/Scripts/TypingWordDatabase.cs` | 表示文字列・読み・出現難易度を持つタイピング問題を集約する ScriptableObject | UnityEngine |
+| `RomanizationGenerator` | `Assets/Personal/Suzuki/TypingMiniGame/Scripts/RomanizationGenerator.cs` | ひらがなから許容ローマ字候補と表示用の代表候補を生成する | System collections |
+| `TypingInputEvaluator` | `Assets/Personal/Suzuki/TypingMiniGame/Scripts/TypingInputEvaluator.cs` | 候補群に対する文字単位の入力進捗を Unity 非依存で判定する | `RomanizationGenerator` の出力 |
+| `TypingMiniGameView` | `Assets/Personal/Suzuki/TypingMiniGame/Scripts/TypingMiniGameView.cs` | お題・ローマ字・進捗・ミス・時間・結果を TextMeshPro に表示する | TextMeshPro |
+| `MiniGameDebugRunner` | `Assets/Personal/Suzuki/TypingMiniGame/Scripts/MiniGameDebugRunner.cs` | 任意のミニゲームを Inspector 設定で単体起動する再利用可能なデバッグ補助 | `MiniGameBase`, TextMeshPro |
 
 > ファイル名は現状 `RepidClickMiniGame.cs`（`Rapid` のスペルではない）ですが、クラス名は `RapidClickMiniGame` です。リネームする場合は Unity Editor / Pipeline 経由で参照と `.meta` を保ったまま行ってください。
 
@@ -59,3 +65,15 @@
 - 完了イベントを受け、結果を Console に出力する。
 
 **位置付け:** 本番進行用ではなくサンプル検証用です。`GameManager` と同一シーンで同じミニゲームを同時に制御しないでください。
+
+## TypingMiniGame（個人試作）
+
+- `MiniGameBase` を継承し、難易度に一致する `TypingWordDatabase` の問題をランダムに選ぶ。
+- ひらがなの読みから生成した複数ローマ字候補を `TypingInputEvaluator` に渡し、どの候補にも一致しない入力をミスとする。
+- ミス後は 0.2 秒間の入力無効を設け、2 ミスで `MISSED`、完了で `COMPLETE` を通知する。
+- 本編のスクリプトを変更しない個人試作であり、本編との接続は未実装である。
+
+## MiniGameDebugRunner（個人試作）
+
+- 任意の `MiniGameBase` を指定難易度・制限時間で初期化し、成功／失敗理由を表示する。
+- `TypingMiniGame` 専用ではなく、同じ共通契約を満たす別ミニゲームにも利用できる。

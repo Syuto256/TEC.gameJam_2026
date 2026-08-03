@@ -5,7 +5,7 @@
 
 ## 現在の構造
 
-ゲーム全体の状態を `GameManager` が保持し、共通のミニゲーム制御を `MiniGameBase` が提供します。各ミニゲームは `MiniGameBase` を継承して成功・失敗をイベントで通知します。調整値は `GameTuningSettings` ScriptableObject に集約されています。
+ゲーム全体の状態を `GameManager` が保持し、共通のミニゲーム制御を `MiniGameBase` が提供します。各ミニゲームは `MiniGameBase` を継承して成功・失敗をイベントで通知します。調整値は `GameTuningSettings` ScriptableObject に集約されています。個人試作領域には、同じ共通契約を利用するタイピングミニゲームと、他のミニゲームにも流用できる単体デバッグランナーがあります。
 
 ```mermaid
 classDiagram
@@ -40,11 +40,34 @@ classDiagram
     class TestRunner {
         -RapidClickMiniGame miniGame
     }
+    class TypingMiniGame {
+        -TypingWordDatabase wordDatabase
+        -TypingInputEvaluator inputEvaluator
+        +ProcessInput(char)
+    }
+    class TypingWordDatabase {
+        +TryGetRandomEntry(難易度)
+    }
+    class RomanizationGenerator {
+        +GenerateCandidates(読み)
+    }
+    class TypingInputEvaluator {
+        +TryInput(char)
+    }
+    class MiniGameDebugRunner {
+        -MiniGameBase targetMiniGame
+        +StartMiniGame()
+    }
 
     GameManager --> GameTuningSettings : 調整値を読む
     GameManager --> MiniGameBase : 初期化・完了を購読
     RapidClickMiniGame --|> MiniGameBase : 継承
     TestRunner --> RapidClickMiniGame : 単体試行
+    TypingMiniGame --|> MiniGameBase : 継承
+    TypingMiniGame --> TypingWordDatabase : 問題を取得
+    TypingMiniGame --> TypingInputEvaluator : 入力を判定
+    TypingMiniGame --> RomanizationGenerator : 候補を生成
+    MiniGameDebugRunner --> MiniGameBase : 任意の実装を単体起動
 ```
 
 ## 実行時フロー
@@ -82,6 +105,10 @@ sequenceDiagram
 2. 共有の調整値は `GameTuningSettings` へ追加する前に、全ミニゲームで共有する値か個別データかを判断する。個別の値は個別 ScriptableObject を検討する。
 3. `GameManager` が個別ミニゲームの種類を直接判定する分岐は増やさない。選択・遷移が必要になったら専用の選択／進行コンポーネントを導入する。
 4. 新しい責務または依存を足したら、この図、カタログ、必要に応じて詳細ページを更新する。
+
+## 個人試作: Suzuki のタイピングミニゲーム
+
+`Assets/Personal/Suzuki/TypingMiniGame/` は、本編の `GameManager` や既存ミニゲームを変更しない独立した試作領域である。`TypingMiniGame` は `MiniGameBase` の共通ライフサイクルのみを利用し、単語データ、ローマ字候補生成、入力判定、表示を分離する。`MiniGameDebugRunner` は対象の `MiniGameBase` を Inspector で差し替えられるため、後から追加する別ミニゲームの単体確認にも使用できる。
 
 ## 未確定事項
 
