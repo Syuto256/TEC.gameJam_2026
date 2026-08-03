@@ -5,7 +5,7 @@
 
 ## 現在の構造
 
-ゲーム全体の状態を `GameManager` が保持し、共通のミニゲーム制御を `MiniGameBase` が提供します。各ミニゲームは `MiniGameBase` を継承して成功・失敗をイベントで通知します。調整値は `GameTuningSettings` ScriptableObject に集約されています。個人試作領域には、同じ共通契約を利用するタイピングミニゲームと、他のミニゲームにも流用できる単体デバッグランナーがあります。
+ゲーム全体の状態を `GameManager` が保持し、共通のミニゲーム制御を `MiniGameBase` が提供します。各ミニゲームは `MiniGameBase` を継承して成功・失敗をイベントで通知します。調整値は `GameTuningSettings` ScriptableObject に集約されています。個人試作領域には、同じ共通契約を利用するタイピングミニゲーム、なぞるミニゲーム、および他のミニゲームにも流用できる単体デバッグランナーがあります。
 
 ```mermaid
 classDiagram
@@ -45,6 +45,12 @@ classDiagram
         -TypingInputEvaluator inputEvaluator
         +ProcessInput(char)
     }
+    class TracingMiniGame {
+        -float traceTolerance
+        -float startRadius
+        -float endRadius
+        +Initialize(int, float)
+    }
     class TypingWordDatabase {
         +TryGetRandomEntry(難易度)
     }
@@ -64,6 +70,7 @@ classDiagram
     RapidClickMiniGame --|> MiniGameBase : 継承
     TestRunner --> RapidClickMiniGame : 単体試行
     TypingMiniGame --|> MiniGameBase : 継承
+    TracingMiniGame --|> MiniGameBase : 継承
     TypingMiniGame --> TypingWordDatabase : 問題を取得
     TypingMiniGame --> TypingInputEvaluator : 入力を判定
     TypingMiniGame --> RomanizationGenerator : 候補を生成
@@ -109,6 +116,10 @@ sequenceDiagram
 ## 個人試作: Suzuki のタイピングミニゲーム
 
 `Assets/Personal/Suzuki/TypingMiniGame/` は、本編の `GameManager` や既存ミニゲームを変更しない独立した試作領域である。`TypingMiniGame` は `MiniGameBase` の共通ライフサイクルのみを利用し、単語データ、ローマ字候補生成、入力判定、表示を分離する。`MiniGameDebugRunner` は対象の `MiniGameBase` を Inspector で差し替えられるため、後から追加する別ミニゲームの単体確認にも使用できる。
+
+## 個人試作: Suzuki のなぞるミニゲーム
+
+`Assets/Personal/Suzuki/TracingMiniGame/` は、本編へ依存を追加しない独立した試作領域である。`TracingMiniGame` は `MiniGameBase` の共通タイマーと完了通知を利用し、New Input System の `Mouse.current` で入力を取得する。固定経路までの最短距離と開始／終点半径を判定し、逸脱 2 回で失敗、終点到達で成功を通知する。デバッグ UI は `SuzukiTracingDebug.unity` 上で実行時に構築する。
 
 ## 未確定事項
 
