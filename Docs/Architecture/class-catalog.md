@@ -5,6 +5,7 @@
 
 | クラス | パス | 役割 | 主な依存先 |
 | --- | --- | --- | --- |
+| `TracingMiniGame` | `Assets/Personal/Suzuki/TracingMiniGame/Scripts/TracingMiniGame.cs` | New Input System のマウス入力で経路逸脱・開始／終点を判定する個人用なぞる試作 | `MiniGameBase`, Input System, uGUI |
 | `GameManager` | `Assets/Scripts/Core/GameManager.cs` | HP / スコアと、現在のミニゲーム完了結果を管理する | `GameTuningSettings`, `MiniGameBase` |
 | `GameTuningSettings` | `Assets/Scripts/Core/GameTuningSettings.cs` | ゲーム全体の調整値を保持する ScriptableObject | UnityEngine |
 | `MiniGameBase` | `Assets/Scripts/Core/MiniGameBase.cs` | ミニゲーム共通のライフサイクル、制限時間、完了イベントを提供する抽象基底クラス | UnityEngine, `System.Action` |
@@ -72,6 +73,14 @@
 - ひらがなの読みから生成した複数ローマ字候補を `TypingInputEvaluator` に渡し、どの候補にも一致しない入力をミスとする。
 - ミス後は 0.2 秒間の入力無効を設け、2 ミスで `MISSED`、完了で `COMPLETE` を通知する。
 - 本編のスクリプトを変更しない個人試作であり、本編との接続は未実装である。
+
+## TracingMiniGame（個人試作）
+
+- `MiniGameBase` を継承し、デバッグ設定の制限時間で単体起動する。
+- New Input System の `Mouse.current.leftButton` とポインタ位置を使用し、左クリック中だけなぞり判定する。
+- 開始点以外でのクリックは無視し、クリック解除はミス数を増やさず試行を開始点へ戻す。
+- 経路から許容距離を超えると 1 ミスとして試行をリセットし、2 ミスで `MISSED` を通知する。
+- 終点半径内へ到達すると `COMPLETE` を通知する。精度や所要時間は成功条件に含めない。
 
 ## MiniGameDebugRunner（個人試作）
 
