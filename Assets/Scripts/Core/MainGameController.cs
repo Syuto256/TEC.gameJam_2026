@@ -18,6 +18,8 @@ public sealed class MainGameController : MonoBehaviour
     private GameObject miniGameHost;
     private TextMeshProUGUI miniGameHostText;
     private GameObject pausePanel;
+    private IPlayerMiniGameLauncher[] miniGameLaunchers;
+    private int activePlayerTaskId = -1;
     private float spawnElapsedSec;
     private int nextTaskKindIndex;
     private bool initialized;
@@ -34,7 +36,8 @@ public sealed class MainGameController : MonoBehaviour
         Transform pcSpawnArea,
         Transform padSpawnArea,
         GameObject host,
-        GameObject pause)
+        GameObject pause,
+        IPlayerMiniGameLauncher[] launchers)
     {
         if (initialized)
         {
@@ -54,6 +57,7 @@ public sealed class MainGameController : MonoBehaviour
         miniGameHost = host;
         miniGameHostText = host.GetComponentInChildren<TextMeshProUGUI>(true);
         pausePanel = pause;
+        miniGameLaunchers = launchers ?? System.Array.Empty<IPlayerMiniGameLauncher>();
 
         var flow = GameFlowController.EnsureInstance();
         difficultyProfile = tuningSettings.GetDifficultyProfile(flow.SelectedDifficulty);
@@ -115,7 +119,19 @@ public sealed class MainGameController : MonoBehaviour
 
     public bool TryAssignPlayer(int taskId)
     {
-        if (!initialized || ending || paused || !taskManager.TryStartPlayer(taskId))
+        if (!initialized || ending || paused || !taskManager.TryGetTask(taskId, out var task) || task.State != TaskState.Available)
+        {
+            return false;
+        }
+
+        var launcher = FindLauncher(task.Kind);
+        if (launcher == null || !launcher.IsReady)
+        {
+            Debug.LogError("Mini-game launcher or its data is missing for " + task.Kind + ".");
+            return false;
+        }
+
+        if (!taskManager.TryStartPlayer(taskId))
         {
             return false;
         }
@@ -126,10 +142,22 @@ public sealed class MainGameController : MonoBehaviour
         }
 
         miniGameHost.SetActive(true);
-        if (taskManager.TryGetTask(taskId, out var task))
+        if (task.Kind == TaskKind.Typing || task.Kind == TaskKind.Tracing)
         {
+            activePlayerTaskId = taskId;
+            var timeLimit = task.Kind == TaskKind.Typing ? tuningSettings.miniGameTimes.typing : tuningSettings.miniGameTimes.tracing;
+            if (!launcher.TryStart(miniGameHost, task.Level, timeLimit, (success, reason) => CompletePlayerMiniGame(taskId, success)))
+            {
+                activePlayerTaskId = -1;
+                taskManager.CompletePlayer(taskId, false);
+                return false;
+            }
+        }
+        else
+        {
+            miniGameHostText.gameObject.SetActive(true);
             miniGameHostText.text = "SELF TASK RESERVED\n" + task.Kind + "  Lv." + task.Level + "\n" +
-                "The mini-game will connect here in M4/M5.";
+                "The mini-game will connect here in M5.";
         }
         return true;
     }
@@ -213,11 +241,39 @@ public sealed class MainGameController : MonoBehaviour
     private void OnTaskResolved(TaskResolutionResult result)
     {
         session.Apply(result);
+        if (activePlayerTaskId == result.Task.Id)
+        {
+            activePlayerTaskId = -1;
+            miniGameHost.SetActive(false);
+        }
         if (taskViews.TryGetValue(result.Task.Id, out var view))
         {
             taskViews.Remove(result.Task.Id);
             Destroy(view.gameObject);
         }
+    }
+
+    private void CompletePlayerMiniGame(int taskId, bool success)
+    {
+        if (!initialized || activePlayerTaskId != taskId)
+        {
+            return;
+        }
+
+        taskManager.CompletePlayer(taskId, success);
+    }
+
+    private IPlayerMiniGameLauncher FindLauncher(TaskKind kind)
+    {
+        foreach (var launcher in miniGameLaunchers)
+        {
+            if (launcher != null && launcher.Kind == kind)
+            {
+                return launcher;
+            }
+        }
+
+        return null;
     }
 
     private void RefreshTaskViews()

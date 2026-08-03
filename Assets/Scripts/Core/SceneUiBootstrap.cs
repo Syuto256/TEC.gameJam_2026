@@ -63,7 +63,10 @@ public sealed class SceneUiBootstrap : MonoBehaviour
                 BuildDifficultySelect(root.transform);
                 break;
             case GameFlowController.GameSceneName:
-                BuildGame(root.transform, tuningSettings);
+                BuildGame(
+                    root.transform,
+                    tuningSettings,
+                    GetMiniGameLaunchers());
                 break;
             case GameFlowController.ClearSceneName:
                 BuildResult(root.transform, true);
@@ -99,7 +102,10 @@ public sealed class SceneUiBootstrap : MonoBehaviour
         CreateButton(parent, label, new Vector2(0.5f, y), () => GameFlowController.EnsureInstance().SelectDifficulty(difficulty));
     }
 
-    private static void BuildGame(Transform parent, GameTuningSettings tuningSettings)
+    private static void BuildGame(
+        Transform parent,
+        GameTuningSettings tuningSettings,
+        IPlayerMiniGameLauncher[] miniGameLaunchers)
     {
         var flow = GameFlowController.EnsureInstance();
         var hud = CreatePanel(parent, "HudPanel", new Vector2(0.02f, 0.87f), new Vector2(0.98f, 0.98f), PanelColor);
@@ -120,7 +126,7 @@ public sealed class SceneUiBootstrap : MonoBehaviour
         var pausePanel = CreatePanel(parent, "PausePanel", new Vector2(0.32f, 0.3f), new Vector2(0.68f, 0.7f), PanelColor);
         CreateText(pausePanel.transform, "PAUSED", new Vector2(0.1f, 0.68f), new Vector2(0.9f, 0.9f), 48f, TextAlignmentOptions.Center);
         var controller = parent.gameObject.AddComponent<MainGameController>();
-        controller.Initialize(tuningSettings, hudText, pcTaskSpawnArea, padTaskSpawnArea, miniGameHost, pausePanel);
+        controller.Initialize(tuningSettings, hudText, pcTaskSpawnArea, padTaskSpawnArea, miniGameHost, pausePanel, miniGameLaunchers);
 
         CreateButton(pausePanel.transform, "Resume", new Vector2(0.5f, 0.5f), controller.Resume);
         CreateButton(pausePanel.transform, "Back to Difficulty", new Vector2(0.5f, 0.25f), controller.ReturnToDifficultySelect);
@@ -132,6 +138,21 @@ public sealed class SceneUiBootstrap : MonoBehaviour
 
         CreateButton(parent, "Pause", new Vector2(0.88f, 0.08f), controller.TogglePause, new Vector2(180f, 56f));
         CreateButton(parent, "Difficulty", new Vector2(0.12f, 0.08f), controller.ReturnToDifficultySelect, new Vector2(180f, 56f));
+    }
+
+    private IPlayerMiniGameLauncher[] GetMiniGameLaunchers()
+    {
+        var components = GetComponents<MonoBehaviour>();
+        var launchers = new System.Collections.Generic.List<IPlayerMiniGameLauncher>();
+        foreach (var component in components)
+        {
+            if (component is IPlayerMiniGameLauncher launcher)
+            {
+                launchers.Add(launcher);
+            }
+        }
+
+        return launchers.ToArray();
     }
 
     private static void BuildResult(Transform parent, bool cleared)

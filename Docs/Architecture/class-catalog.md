@@ -50,6 +50,29 @@ See [Game flow and UI detail](game-flow-controller.md).
 
 See [Main game controller detail](main-game-controller.md).
 
+## M4: Shared typing mini-game integration (2026-08-03)
+
+| Class | Path | Responsibility | Dependencies |
+| --- | --- | --- | --- |
+| `IPlayerMiniGameLauncher` | `Assets/Scripts/Core/IPlayerMiniGameLauncher.cs` | Defines the minimal Core-to-feature launch contract. | `TaskKind`, UnityEngine |
+| `TypingQuestionDatabase` / `TypingQuestion` | `Assets/Scripts/MiniGameS/Typing/TypingQuestionDatabase.cs` | Stores levelled Japanese display text and allowed Romanizations. | UnityEngine |
+| `TypingInputEvaluator` | `Assets/Scripts/MiniGameS/Typing/TypingInputEvaluator.cs` | Evaluates an input prefix against multiple allowed Romanizations. | System |
+| `TypingMiniGame` | `Assets/Scripts/MiniGameS/Typing/TypingMiniGame.cs` | Receives keyboard text input, displays progress, and produces one completion result. | `MiniGameBase`, Input System, TextMeshPro |
+| `TypingMiniGameLauncher` | `Assets/Scripts/MiniGameS/Typing/TypingMiniGameLauncher.cs` | Builds the temporary host UI and adapts completion into the Core contract. | `IPlayerMiniGameLauncher`, `TypingMiniGame` |
+
+See [Shared typing mini-game detail](typing-mini-game.md).
+
+## M5: Shared tracing mini-game integration (2026-08-03)
+
+| Class | Path | Responsibility | Dependencies |
+| --- | --- | --- |
+| `TracingPathDatabase` / `TracingPathEntry` | `Assets/Scripts/MiniGameS/Tracing/TracingPathDatabase.cs` | Stores normalized guide paths and allowed deviations by level. | UnityEngine |
+| `TracingPathMath` | `Assets/Scripts/MiniGameS/Tracing/TracingPathMath.cs` | Calculates point-to-polyline distance without physics. | UnityEngine |
+| `TracingMiniGame` | `Assets/Scripts/MiniGameS/Tracing/TracingMiniGame.cs` | Draws a guide and resolves start, release, deviation, end, and time-limit states. | `MiniGameBase`, Input System, uGUI, TextMeshPro |
+| `TracingMiniGameLauncher` | `Assets/Scripts/MiniGameS/Tracing/TracingMiniGameLauncher.cs` | Adapts the tracing feature to `IPlayerMiniGameLauncher`. | Core, tracing data |
+
+See [Shared tracing mini-game detail](tracing-mini-game.md).
+
 ## GameManager
 
 - `Start` で `settings.maxHP` を初期 HP に設定する。

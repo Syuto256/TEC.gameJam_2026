@@ -221,6 +221,8 @@ GameObject:
   m_Component:
   - component: {fileID: 1481473233}
   - component: {fileID: 1481473234}
+  - component: {fileID: 1481473235}
+  - component: {fileID: 1481473236}
   m_Layer: 0
   m_Name: UiBootstrap
   m_TagString: Untagged
@@ -256,6 +258,32 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Overwork.Core::SceneUiBootstrap
   tuningSettings: {fileID: 11400000, guid: de6ff50e26b8c854baaa7cd3364b7600, type: 2}
+--- !u!114 &1481473235
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1481473229}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5e1e787943a4d144a991c07b934e62e8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Overwork.MiniGames.Typing::Overwork.MiniGames.Typing.TypingMiniGameLauncher
+  questionDatabase: {fileID: 11400000, guid: 9b479589176861a4f9b7a35f7182d260, type: 2}
+--- !u!114 &1481473236
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1481473229}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5a137d7fa16369f419bb3a5638c527cb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Overwork.MiniGames.Tracing::Overwork.MiniGames.Tracing.TracingMiniGameLauncher
+  pathDatabase: {fileID: 11400000, guid: 066be7f477701924c8f911775c1f5de2, type: 2}
 --- !u!1 &2071254701
 GameObject:
   m_ObjectHideFlags: 0

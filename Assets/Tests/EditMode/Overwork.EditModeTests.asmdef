@@ -1,7 +1,7 @@
 {
   "name": "Overwork.EditModeTests",
   "rootNamespace": "",
-  "references": ["Overwork.Core"],
+  "references": ["Overwork.Core", "Overwork.MiniGames.Typing", "Overwork.MiniGames.Tracing"],
   "includePlatforms": ["Editor"],
   "excludePlatforms": [],
   "allowUnsafeCode": false,

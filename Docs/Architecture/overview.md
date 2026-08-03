@@ -7,6 +7,19 @@
 
 ゲーム全体の状態を `GameManager` が保持し、共通のミニゲーム制御を `MiniGameBase` が提供します。各ミニゲームは `MiniGameBase` を継承して成功・失敗をイベントで通知します。調整値は `GameTuningSettings` ScriptableObject に集約されています。個人試作領域には、同じ共通契約を利用するタイピングミニゲーム、なぞるミニゲーム、および他のミニゲームにも流用できる単体デバッグランナーがあります。
 
+## M4: Shared typing mini-game integration (2026-08-03)
+
+The typing feature is isolated in `Overwork.MiniGames.Typing`, while Core depends only on `IPlayerMiniGameLauncher`. `TypingMiniGameLauncher` is assigned to the Game scene's `UiBootstrap`; it creates the temporary host UI and forwards `MiniGameBase.OnCompleted` to `MainGameController` once. This direction prevents Core from depending on a concrete mini-game and is the connection model for M5 onward.
+
+```mermaid
+flowchart LR
+    Core[MainGameController] --> Contract[IPlayerMiniGameLauncher]
+    Contract --> Launcher[TypingMiniGameLauncher]
+    Launcher --> Game[TypingMiniGame]
+    Game --> Data[TypingQuestionDatabase]
+    Game -->|OnCompleted| Core
+```
+
 ## M3: Task UI and AI integration (2026-08-03)
 
 `MainGameController` is created only for the Game scene by `SceneUiBootstrap`. It translates the selected `GameDifficulty` and `GameTuningSettings` into a runtime `GameSession` and `TaskManager`; task completion events update the session before the time-clear check, preserving GameOver priority. `TaskBubbleView` is a temporary code-generated View until the planned M6 hierarchy / Prefab migration.

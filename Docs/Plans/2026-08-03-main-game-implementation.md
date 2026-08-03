@@ -184,6 +184,24 @@ flowchart LR
 
 M4 完了時点が最初の「通しで遊べる版」である。M5 はユーザー要求のなぞり通常版を満たす必須段階、M6 の連打・ドラッグ＆ドロップは追加接続段階とする。
 
+## M4 completion record (2026-08-03)
+
+- Implemented a separate shared typing feature under `Assets/Scripts/MiniGameS/Typing/`; no files under `Assets/Personal/` were modified.
+- Created `TypingQuestionDatabase.asset` with 32 initial questions (8 per level) and assigned it to the Game scene's `TypingMiniGameLauncher`.
+- Connected a typing player task from `MainGameController` to `MiniGameHost`, then from `MiniGameBase.OnCompleted` back to `TaskManager.CompletePlayer`.
+- Verified the 9 EditMode tests, runtime host construction, and the two-miss completion path. Physical keyboard and IME combinations remain a manual play-test TODO.
+
+## Mini-game lifecycle decision (2026-08-03)
+
+`MiniGameHost` remains a hidden, persistent Game Canvas region. Each individual mini-game is authored as a Prefab and is instantiated as its child only while a player task is active; it is destroyed after the completion callback. See [the decision record](../Decisions/2026-08-03-mini-game-lifecycle.md).
+
+## M5 completion record (2026-08-03)
+
+- Added the shared tracing path data, path-distance evaluator, mouse tracing UI, and `TaskKind.Tracing` launcher under `Assets/Scripts/MiniGameS/Tracing/`.
+- Generalized `MainGameController` to select an `IPlayerMiniGameLauncher` by task kind; typing and tracing now share the same Core completion path.
+- Added `TracingPathDatabase.asset` and assigned `TracingMiniGameLauncher` to the Game scene's `UiBootstrap`.
+- Verified 11 EditMode tests and runtime Host construction. Fine-tuning and real mouse gesture play-tests remain TODO for M6.
+
 ## 6. 数値調整の扱い
 
 コードには難易度値を直接書かない。以下は `GameTuningSettings` と対応カタログへ置く。
