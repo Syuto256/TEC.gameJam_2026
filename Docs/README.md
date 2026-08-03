@@ -15,8 +15,10 @@
 
 1. [アーキテクチャ概要](Architecture/overview.md)
 2. [クラスカタログ](Architecture/class-catalog.md)
-3. [Unity CLI / Pipeline 運用](Operations/unity-pipeline.md)
-4. 対象機能に対応する企画・仕様・決定記録
+3. [ゲーム企画概要](GameDesign/game-overview.md)
+4. [コアゲームプレイ仕様](Specifications/gameplay-core.md)
+5. [Unity CLI / Pipeline 運用](Operations/unity-pipeline.md)
+6. 対象機能に対応する企画・仕様・決定記録
 
 ## 記載の原則
 
