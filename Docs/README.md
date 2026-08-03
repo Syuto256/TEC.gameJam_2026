@@ -7,6 +7,7 @@
 | `Architecture/` | 実装済みの構造、依存関係、クラスの責務 | クラス・依存・データの変更時 |
 | `GameDesign/` | 企画書、ゲーム体験、ルール | 企画が決まった時点から |
 | `Specifications/` | 実装可能な仕様、画面・入力・データ定義 | 仕様が決まった時点から |
+| `Plans/` | 合意済み仕様を実装へ分解した段階計画と確認ゲート | 実装開始前・計画変更時 |
 | `Operations/` | 開発環境、Unity / Pipeline の運用手順 | ツールや手順の変更時 |
 | `Decisions/` | 合意済みの設計判断と保留事項 | 判断・合意時 |
 | `Templates/` | 資料作成用テンプレート | テンプレートを改善した時 |
@@ -17,8 +18,10 @@
 2. [クラスカタログ](Architecture/class-catalog.md)
 3. [ゲーム企画概要](GameDesign/game-overview.md)
 4. [コアゲームプレイ仕様](Specifications/gameplay-core.md)
-5. [Unity CLI / Pipeline 運用](Operations/unity-pipeline.md)
-6. 対象機能に対応する企画・仕様・決定記録
+5. [メインゲーム画面・接続仕様](Specifications/main-game-flow.md)
+6. [メインゲーム実装計画](Plans/2026-08-03-main-game-implementation.md)
+7. [Unity CLI / Pipeline 運用](Operations/unity-pipeline.md)
+8. 対象機能に対応する企画・仕様・決定記録
 
 ## 記載の原則
 
