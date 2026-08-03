@@ -7,6 +7,21 @@
 
 ゲーム全体の状態を `GameManager` が保持し、共通のミニゲーム制御を `MiniGameBase` が提供します。各ミニゲームは `MiniGameBase` を継承して成功・失敗をイベントで通知します。調整値は `GameTuningSettings` ScriptableObject に集約されています。個人試作領域には、同じ共通契約を利用するタイピングミニゲーム、なぞるミニゲーム、および他のミニゲームにも流用できる単体デバッグランナーがあります。
 
+## M3: Task UI and AI integration (2026-08-03)
+
+`MainGameController` is created only for the Game scene by `SceneUiBootstrap`. It translates the selected `GameDifficulty` and `GameTuningSettings` into a runtime `GameSession` and `TaskManager`; task completion events update the session before the time-clear check, preserving GameOver priority. `TaskBubbleView` is a temporary code-generated View until the planned M6 hierarchy / Prefab migration.
+
+```mermaid
+flowchart LR
+    Settings[GameTuningSettings] --> Main[MainGameController]
+    Main --> Tasks[TaskManager]
+    Main --> Session[GameSession]
+    Tasks --> Bubbles[TaskBubbleView]
+    Bubbles -->|Left / Right click| Main
+    Tasks -->|TaskResolved| Session
+    Session -->|Clear / GameOver| Flow[GameFlowController]
+```
+
 ## M2: Scene flow and Canvas foundation (2026-08-03)
 
 Each shared scene has one `UiBootstrap` GameObject authored through Unity Pipeline. At runtime `SceneUiBootstrap` creates the overlay Canvas and its functional P0 controls. `GameFlowController` persists between scene loads and owns the selected difficulty / final session result. This keeps the initial scene assets small while allowing M6 to replace only the View construction and detailed layout.

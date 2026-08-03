@@ -41,6 +41,15 @@ See [TaskManager detail](task-manager.md).
 
 See [Game flow and UI detail](game-flow-controller.md).
 
+## M3: Task UI and AI integration (2026-08-03)
+
+| Class | Path | Responsibility | Dependencies |
+| --- | --- | --- | --- |
+| `MainGameController` | `Assets/Scripts/Core/MainGameController.cs` | Creates a session, spawns tasks, applies task results, refreshes HUD, and finishes the session. | `GameTuningSettings`, `TaskManager`, `GameSession`, `GameFlowController` |
+| `TaskBubbleView` | `Assets/Scripts/Core/TaskBubbleView.cs` | Draws one task and routes left/right pointer clicks to the controller. | uGUI, TextMeshPro, EventSystem, `TaskInstance` |
+
+See [Main game controller detail](main-game-controller.md).
+
 ## GameManager
 
 - `Start` で `settings.maxHP` を初期 HP に設定する。

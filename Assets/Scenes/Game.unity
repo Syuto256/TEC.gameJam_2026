@@ -255,6 +255,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b2532d03040c28047b390882ec23f7b1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Overwork.Core::SceneUiBootstrap
+  tuningSettings: {fileID: 11400000, guid: de6ff50e26b8c854baaa7cd3364b7600, type: 2}
 --- !u!1 &2071254701
 GameObject:
   m_ObjectHideFlags: 0

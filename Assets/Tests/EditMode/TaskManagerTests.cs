@@ -16,6 +16,21 @@ public class TaskManagerTests
     }
 
     [Test]
+    public void PositiveAiCooldown_RejectsAnotherRequestUntilElapsed()
+    {
+        var manager = new TaskManager(new TaskManagerSettings { AiCooldownSec = 1f });
+        var first = manager.CreateTask(TaskKind.Typing, TaskSurface.Pc, 1, 10f);
+        var second = manager.CreateTask(TaskKind.Tracing, TaskSurface.Pad, 1, 10f);
+
+        Assert.That(manager.TryRequestAi(first.Id), Is.True);
+        Assert.That(manager.TryRequestAi(second.Id), Is.False);
+
+        manager.Tick(1f);
+
+        Assert.That(manager.TryRequestAi(second.Id), Is.True);
+    }
+
+    [Test]
     public void PlayerStart_FreezesTaskLifetimeAndCapturesRemainingRatio()
     {
         var manager = new TaskManager(new TaskManagerSettings());
