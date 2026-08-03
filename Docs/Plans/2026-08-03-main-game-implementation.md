@@ -190,6 +190,7 @@ M4 完了時点が最初の「通しで遊べる版」である。M5 はユー�
 - `MainGameController` routes both task kinds through the same `IPlayerMiniGameLauncher` completion path used by typing and tracing.
 - The Game scene's `UiBootstrap` holds both launchers. Game-loop assignment was verified for both task kinds with no Unity Console errors.
 - The M6 shared-root Prefab migration and audio foundation are complete. Manual pointer/click play-tests, final inner-Prefab UI authoring, clip assignment, and visual layout tuning remain pending.
+- After the Game screen structure and designer-asset replacement workflow are stable, run the deferred pseudo-2D UI-lighting prototype. See [the decision record](../Decisions/2026-08-04-deferred-ui-lighting-prototype.md).
 
 ## M4 completion record (2026-08-03)
 
