@@ -223,6 +223,8 @@ GameObject:
   - component: {fileID: 1481473234}
   - component: {fileID: 1481473235}
   - component: {fileID: 1481473236}
+  - component: {fileID: 1481473237}
+  - component: {fileID: 1481473238}
   m_Layer: 0
   m_Name: UiBootstrap
   m_TagString: Untagged
@@ -271,6 +273,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Overwork.MiniGames.Typing::Overwork.MiniGames.Typing.TypingMiniGameLauncher
   questionDatabase: {fileID: 11400000, guid: 9b479589176861a4f9b7a35f7182d260, type: 2}
+  miniGamePrefab: {fileID: 8827452368946370434, guid: 05dafb9aa8a8ec141a3f4f45f6db4191, type: 3}
 --- !u!114 &1481473236
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -284,6 +287,33 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Overwork.MiniGames.Tracing::Overwork.MiniGames.Tracing.TracingMiniGameLauncher
   pathDatabase: {fileID: 11400000, guid: 066be7f477701924c8f911775c1f5de2, type: 2}
+  miniGamePrefab: {fileID: 800562403701734181, guid: 01813cae13401b841bfcbfbcb785124e, type: 3}
+--- !u!114 &1481473237
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1481473229}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 90ac2bbed82f412458e2c670f7b6855e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Overwork.MiniGames.RapidClick::Overwork.MiniGames.RapidClick.RapidClickMiniGameLauncher
+  miniGamePrefab: {fileID: 6376002635238043940, guid: c9f983224a485ef49969a836cbbf2b01, type: 3}
+--- !u!114 &1481473238
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1481473229}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b55df44f6048f21438531d6c62d49fce, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Overwork.MiniGames.DragDrop::Overwork.MiniGames.DragDrop.SortingMiniGameLauncher
+  miniGamePrefab: {fileID: 2527230923838134837, guid: 523d38558cb883a488c7296c6d772814, type: 3}
 --- !u!1 &2071254701
 GameObject:
   m_ObjectHideFlags: 0

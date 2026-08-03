@@ -43,4 +43,4 @@ sequenceDiagram
 - EditMode tests cover alternative Romanization, invalid-prefix handling, and per-level question count.
 - Runtime verification covers host construction and two-miss completion routing.
 - TODO: manually verify real keyboard input with both IME on and off, then adjust the allowed Romanization candidates from play-test results.
-- TODO: replace the code-generated temporary UI with the M6 hierarchy/Prefab View without changing this launch contract.
+- The launcher now instantiates `Assets/Prefabs/MiniGames/TypingMiniGame.prefab` and destroys that instance on completion. The current inner controls are still code-generated; author the final view inside this shared Prefab in the next UI pass without changing the launcher contract.

@@ -13,6 +13,7 @@ The feature draws a normalized 2D guide path in `MiniGameHost` and evaluates mou
 - `TracingMiniGame` starts only when the left mouse button is pressed in the start marker.
 - Releasing before the end restarts the current attempt; leaving the permitted deviation twice resolves `MISSED`; reaching the end resolves `COMPLETE`.
 - `TracingMiniGameLauncher` implements `IPlayerMiniGameLauncher` for `TaskKind.Tracing`.
+- The launcher instantiates `Assets/Prefabs/MiniGames/TracingMiniGame.prefab` and destroys that instance on completion. Its final authored child view remains an M6 UI task.
 
 ## Verification and TODO
 

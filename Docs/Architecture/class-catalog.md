@@ -73,6 +73,25 @@ See [Shared typing mini-game detail](typing-mini-game.md).
 
 See [Shared tracing mini-game detail](tracing-mini-game.md).
 
+## M6: Existing mini-game connection (2026-08-04)
+
+| Class | Path | Responsibility | Dependencies |
+| --- | --- | --- | --- |
+| `RapidClickMiniGame` / `RapidClickMiniGameLauncher` | `Assets/Scripts/MiniGameS/RapidClick/` | Connects the rapid-click vertical slice to `TaskKind.RapidClick` and the common completion path. | Core, `MiniGameBase`, uGUI, TextMeshPro |
+| `SortingMiniGame` / `SortingMiniGameLauncher` | `Assets/Scripts/MiniGameS/DragDrop/` | Connects the Motonaga-inspired sorting slice to `TaskKind.DragDrop`; owns uGUI card dragging and two-miss resolution. | Core, `MiniGameBase`, uGUI, EventSystem, TextMeshPro |
+| `SortingDraggable` / `SortingDropBox` | `Assets/Scripts/MiniGameS/DragDrop/SortingMiniGame.cs` | Routes card drag and drop events into `SortingMiniGame` without physics. | uGUI, EventSystem |
+
+See [Shared rapid-click mini-game detail](rapid-click-mini-game.md) and [Shared drag-and-drop mini-game detail](drag-drop-mini-game.md).
+
+## M6: Audio foundation (2026-08-04)
+
+| Class | Path | Responsibility | Dependencies |
+| --- | --- | --- | --- |
+| `AudioCatalog` / `AudioCue` | `Assets/Scripts/Core/AudioCatalog.cs` | Maps named BGM/SFX cues to optional clips and volumes. | UnityEngine |
+| `AudioManager` | `Assets/Scripts/Core/AudioManager.cs` | Owns persistent BGM/SFX sources, scene BGM selection, and safe cue playback. | Unity audio, SceneManager, `GameFlowController` |
+
+See [Shared audio manager detail](audio-manager.md).
+
 ## GameManager
 
 - `Start` で `settings.maxHP` を初期 HP に設定する。

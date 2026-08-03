@@ -21,6 +21,7 @@ public sealed class SceneUiBootstrap : MonoBehaviour
     private void Start()
     {
         GameFlowController.EnsureInstance();
+        AudioManager.EnsureInstance();
         EnsureEventSystem();
         BuildCanvasFor(SceneManager.GetActiveScene().name);
     }
@@ -237,7 +238,11 @@ public sealed class SceneUiBootstrap : MonoBehaviour
         image.color = ButtonColor;
         var button = buttonObject.GetComponent<Button>();
         button.targetGraphic = image;
-        button.onClick.AddListener(() => onClick());
+        button.onClick.AddListener(() =>
+        {
+            AudioManager.PlaySfx(AudioCue.UiConfirm);
+            onClick();
+        });
 
         CreateText(buttonObject.transform, label, Vector2.zero, Vector2.one, 30f, TextAlignmentOptions.Center);
         return button;

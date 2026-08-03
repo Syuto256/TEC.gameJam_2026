@@ -142,10 +142,12 @@ public sealed class MainGameController : MonoBehaviour
         }
 
         miniGameHost.SetActive(true);
-        if (task.Kind == TaskKind.Typing || task.Kind == TaskKind.Tracing)
+        if (task.Kind == TaskKind.Typing || task.Kind == TaskKind.Tracing || task.Kind == TaskKind.RapidClick || task.Kind == TaskKind.DragDrop)
         {
             activePlayerTaskId = taskId;
-            var timeLimit = task.Kind == TaskKind.Typing ? tuningSettings.miniGameTimes.typing : tuningSettings.miniGameTimes.tracing;
+            var timeLimit = task.Kind == TaskKind.Typing ? tuningSettings.miniGameTimes.typing :
+                task.Kind == TaskKind.Tracing ? tuningSettings.miniGameTimes.tracing :
+                task.Kind == TaskKind.RapidClick ? tuningSettings.miniGameTimes.rapidClick : tuningSettings.miniGameTimes.dragDrop;
             if (!launcher.TryStart(miniGameHost, task.Level, timeLimit, (success, reason) => CompletePlayerMiniGame(taskId, success)))
             {
                 activePlayerTaskId = -1;
@@ -260,6 +262,7 @@ public sealed class MainGameController : MonoBehaviour
             return;
         }
 
+        AudioManager.PlaySfx(success ? AudioCue.MiniGameSuccess : AudioCue.MiniGameFailure);
         taskManager.CompletePlayer(taskId, success);
     }
 

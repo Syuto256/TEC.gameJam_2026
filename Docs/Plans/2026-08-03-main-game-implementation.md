@@ -184,6 +184,13 @@ flowchart LR
 
 M4 完了時点が最初の「通しで遊べる版」である。M5 はユーザー要求のなぞり通常版を満たす必須段階、M6 の連打・ドラッグ＆ドロップは追加接続段階とする。
 
+## M6 connection record (2026-08-04)
+
+- Added shared `RapidClick` and `DragDrop` launchers below `Assets/Scripts/MiniGameS/`, leaving every `Assets/Personal/` source intact.
+- `MainGameController` routes both task kinds through the same `IPlayerMiniGameLauncher` completion path used by typing and tracing.
+- The Game scene's `UiBootstrap` holds both launchers. Game-loop assignment was verified for both task kinds with no Unity Console errors.
+- The M6 shared-root Prefab migration and audio foundation are complete. Manual pointer/click play-tests, final inner-Prefab UI authoring, clip assignment, and visual layout tuning remain pending.
+
 ## M4 completion record (2026-08-03)
 
 - Implemented a separate shared typing feature under `Assets/Scripts/MiniGameS/Typing/`; no files under `Assets/Personal/` were modified.
@@ -201,6 +208,14 @@ M4 完了時点が最初の「通しで遊べる版」である。M5 はユー�
 - Generalized `MainGameController` to select an `IPlayerMiniGameLauncher` by task kind; typing and tracing now share the same Core completion path.
 - Added `TracingPathDatabase.asset` and assigned `TracingMiniGameLauncher` to the Game scene's `UiBootstrap`.
 - Verified 11 EditMode tests and runtime Host construction. Fine-tuning and real mouse gesture play-tests remain TODO for M6.
+
+## Personal prototype adoption (2026-08-04)
+
+M6 will migrate the Motonaga sorting prototype into the shared `DragDrop` feature and connect the existing rapid-click sample as `RapidClick`. The title-transition prototype remains reference-only because the main flow is already owned by `GameFlowController`. See [the decision record](../Decisions/2026-08-04-personal-prototype-adoption.md).
+
+## Prefab handoff workflow (2026-08-04)
+
+Mini-game owners improve working Prefabs and data under their own `Assets/Personal/<member>/MiniGameWork/` workspace. The game references only approved Prefabs under `Assets/Prefabs/MiniGames/`; a finished work copy is promoted through Unity Pipeline after verification. See [the handoff decision](../Decisions/2026-08-04-prefab-handoff-workflow.md).
 
 ## 6. 数値調整の扱い
 
