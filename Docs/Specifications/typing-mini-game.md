@@ -50,7 +50,7 @@
 
 ## 6. UI
 
-日本語表示可能な TextMeshPro フォントを後から割り当てられる前提とする。画面には次を表示する。
+日本語表示可能な TextMeshPro フォントを後から割り当てられる前提とする。デバッグ環境は `Screen Space - Overlay` の 2D Canvas を使用し、各表示欄は `TextMeshProUGUI` とする。Canvas Scaler は基準解像度 1920×1080・画面サイズ追従とする。画面には次を表示する。
 
 | 表示 | 内容 |
 | --- | --- |
