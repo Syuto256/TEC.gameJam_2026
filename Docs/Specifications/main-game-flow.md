@@ -21,6 +21,8 @@
 
 `Game` はルート Canvas の下に `HudPanel`、`PcTaskPanel`、`PadTaskPanel`、`MiniGameHost`、`PausePanel`、`OptionPanel` を持つ。PC / パッドの一方だけを表示・入力可能にするが、両パネルのタスクモデルは常に更新する。
 
+Clear の戻る操作は DifficultySelect へ遷移する。GameOver の Retry は、選択済み難易度を保持したまま Game を新しいセッションとして再開する。GameOver の戻る操作は DifficultySelect へ遷移する。
+
 ## 3. 実装責務
 
 | コンポーネント | 責務 | 個別ミニゲームへの依存 |
