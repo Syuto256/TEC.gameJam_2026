@@ -7,6 +7,21 @@
 
 ゲーム全体の状態を `GameManager` が保持し、共通のミニゲーム制御を `MiniGameBase` が提供します。各ミニゲームは `MiniGameBase` を継承して成功・失敗をイベントで通知します。調整値は `GameTuningSettings` ScriptableObject に集約されています。個人試作領域には、同じ共通契約を利用するタイピングミニゲーム、なぞるミニゲーム、および他のミニゲームにも流用できる単体デバッグランナーがあります。
 
+## M2: Scene flow and Canvas foundation (2026-08-03)
+
+Each shared scene has one `UiBootstrap` GameObject authored through Unity Pipeline. At runtime `SceneUiBootstrap` creates the overlay Canvas and its functional P0 controls. `GameFlowController` persists between scene loads and owns the selected difficulty / final session result. This keeps the initial scene assets small while allowing M6 to replace only the View construction and detailed layout.
+
+```mermaid
+flowchart LR
+    Title --> DifficultySelect
+    DifficultySelect -->|selected GameDifficulty| Game
+    Game -->|Clear| Clear
+    Game -->|HP 0| GameOver
+    Clear --> DifficultySelect
+    GameOver -->|Retry| Game
+    GameOver -->|Back| DifficultySelect
+```
+
 ## M1: Shared game progression model (2026-08-03)
 
 `Overwork.Core` is the UI-independent progression layer. M3's `MainGameController` will create `TaskManager` and `GameSession`, apply each `TaskResolved` notification to the session, then update the HUD and scene transition. Task display, Prefab creation, and input stay outside this layer.

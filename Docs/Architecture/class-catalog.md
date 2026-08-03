@@ -32,6 +32,15 @@
 
 See [TaskManager detail](task-manager.md).
 
+## M2: Scene flow and Canvas foundation (2026-08-03)
+
+| Class | Path | Responsibility | Dependencies |
+| --- | --- | --- | --- |
+| `GameFlowController` | `Assets/Scripts/Core/GameFlowController.cs` | Keeps selected difficulty and final result across scenes; opens the five shared scenes. | Unity SceneManager, `GameSessionResult` |
+| `SceneUiBootstrap` | `Assets/Scripts/Core/SceneUiBootstrap.cs` | Builds the P0 overlay Canvas, EventSystem, scene buttons, and Game placeholder regions. | uGUI, Input System, TextMeshPro |
+
+See [Game flow and UI detail](game-flow-controller.md).
+
 ## GameManager
 
 - `Start` で `settings.maxHP` を初期 HP に設定する。
