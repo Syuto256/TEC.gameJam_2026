@@ -7,6 +7,20 @@
 
 ゲーム全体の状態を `GameManager` が保持し、共通のミニゲーム制御を `MiniGameBase` が提供します。各ミニゲームは `MiniGameBase` を継承して成功・失敗をイベントで通知します。調整値は `GameTuningSettings` ScriptableObject に集約されています。個人試作領域には、同じ共通契約を利用するタイピングミニゲーム、なぞるミニゲーム、および他のミニゲームにも流用できる単体デバッグランナーがあります。
 
+## M1: Shared game progression model (2026-08-03)
+
+`Overwork.Core` is the UI-independent progression layer. M3's `MainGameController` will create `TaskManager` and `GameSession`, apply each `TaskResolved` notification to the session, then update the HUD and scene transition. Task display, Prefab creation, and input stay outside this layer.
+
+```mermaid
+flowchart LR
+    Tuning[GameTuningSettings] --> Controller[MainGameController M3]
+    Controller --> Tasks[TaskManager]
+    Tasks -->|TaskResolved| Session[GameSession]
+    Controller --> Catalog[MiniGameCatalog]
+    Controller --> UI[TaskBubbleView / HUD]
+    Session --> UI
+```
+
 ```mermaid
 classDiagram
     class GameManager {

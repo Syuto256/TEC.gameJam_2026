@@ -20,6 +20,18 @@
 
 > ファイル名は現状 `RepidClickMiniGame.cs`（`Rapid` のスペルではない）ですが、クラス名は `RapidClickMiniGame` です。リネームする場合は Unity Editor / Pipeline 経由で参照と `.meta` を保ったまま行ってください。
 
+## M1: Shared game progression model (2026-08-03)
+
+| Class | Path | Responsibility | Dependencies |
+| --- | --- | --- | --- |
+| `TaskModel` / `TaskInstance` | `Assets/Scripts/Core/TaskModel.cs` | Defines task type, state, resolution, and runtime task values. | System |
+| `TaskManager` | `Assets/Scripts/Core/TaskManager.cs` | Manages task ownership, expiration, AI processing, and one-time resolution notifications. | `TaskModel` |
+| `GameSession` | `Assets/Scripts/Core/GameSession.cs` | Manages HP, score, time, and Clear/GameOver state. | `TaskModel` |
+| `MiniGameCatalog` | `Assets/Scripts/Core/MiniGameCatalog.cs` | Maps task types to mini-game Prefabs, icons, and per-level time limits. | UnityEngine, `MiniGameBase` |
+| `GameTuningSettings.DifficultyProfile` | `Assets/Scripts/Core/GameTuningSettings.cs` | Stores difficulty start parameters; empty assets use legacy fallback values. | UnityEngine, `GameDifficulty` |
+
+See [TaskManager detail](task-manager.md).
+
 ## GameManager
 
 - `Start` で `settings.maxHP` を初期 HP に設定する。
