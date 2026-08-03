@@ -13,7 +13,7 @@
 実行時に生成するものは次の 3 つだけである。それ以外はすべてシーンか Prefab に実体がある。
 
 - タスク吹き出し（`TaskBubble.prefab`）
-- ミニゲーム（`MiniGameCatalog` に登録された Prefab）
+- ミニゲーム（`MiniGameCatalog` に登録された Prefab。どの面に出るかは `TaskSpawnTable` が決める）
 - なぞりミニゲームのガイド線（経路データで本数が変わるため）
 
 ## シーンと入口の対応

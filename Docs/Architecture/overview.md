@@ -37,9 +37,12 @@ flowchart TB
 
 ## タスク 1 件の流れ
 
+出す面と種別は `TaskSpawnTable`（`Assets/Data/TaskSpawnTable.asset`）が決める。現在は PC にタイピング・仕分け・連打、タブレットになぞりが出る。
+
 ```mermaid
 flowchart LR
-    Spawn[TrySpawnTask] --> Create[TaskManager.CreateTask]
+    Table[TaskSpawnTable] --> Spawn[TrySpawnTask]
+    Spawn --> Create[TaskManager.CreateTask]
     Create --> Bubble[TaskBubble.prefab を<br/>TaskSpawnArea 配下に生成]
     Bubble -->|左クリック| Player[TryAssignPlayer]
     Bubble -->|右クリック| Ai[TryAssignAi]
@@ -98,7 +101,7 @@ flowchart LR
 1. ミニゲームを追加する場合は [ミニゲームの追加・改造手順](mini-game-catalog.md) に従う。Prefab とカタログ 1 行だけで完結し、`Game.unity` は触らない。
 2. UI 要素を追加する場合は Scene / Prefab に実体を置き、対応する View の `[SerializeField]` に足す。コードで `new GameObject` しない。
 3. 共有の調整値は `GameTuningSettings` へ追加する前に、全ミニゲームで共有する値か個別データかを判断する。個別の値は自分の Prefab か個別 ScriptableObject に置く。
-4. `MainGameController` にタスク種別ごとの分岐を増やさない。種別ごとの差は `MiniGameCatalog` の行として表す。
+4. `MainGameController` にタスク種別やデバイス面ごとの分岐を増やさない。種別ごとの差は `MiniGameCatalog` の行、出現場所の差は `TaskSpawnTable` の行として表す。
 5. 新しい責務または依存を足したら、この図とカタログ、必要に応じて詳細ページを更新する。
 
 ## 未確定事項
