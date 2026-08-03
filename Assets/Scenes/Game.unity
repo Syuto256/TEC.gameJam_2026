@@ -2584,6 +2584,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Overwork.Core::MainGameController
   taskBubblePrefab: {fileID: 3536882397502017118, guid: 620390de7d894f349a463b993f75a2db, type: 3}
   miniGameCatalog: {fileID: 11400000, guid: 7d63179f8a0eb87448be680a2a6d6766, type: 2}
+  taskSpawnTable: {fileID: 11400000, guid: 22dff04e80ea0764ea8788c3c9a5e75d, type: 2}
 --- !u!1001 &1576202600
 PrefabInstance:
   m_ObjectHideFlags: 0

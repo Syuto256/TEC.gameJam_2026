@@ -4,15 +4,17 @@ using UnityEngine;
 /// <summary>Game シーンでセッション、タスク生成、AI 処理、HUD、終了遷移を接続する。</summary>
 public sealed class MainGameController : MonoBehaviour
 {
-    private static readonly TaskKind[] SpawnKinds = { TaskKind.Typing, TaskKind.Tracing, TaskKind.RapidClick, TaskKind.DragDrop };
-
     [Tooltip("タスク吹き出しの見た目はこの Prefab で調整する。")]
     [SerializeField] private TaskBubbleView taskBubblePrefab;
 
     [Tooltip("ミニゲームの登録簿。追加・差し替えはこのアセットだけで完結する。")]
     [SerializeField] private MiniGameCatalog miniGameCatalog;
 
+    [Tooltip("デバイス面ごとの出現タスク。どの面に何が出るかはこのアセットで決める。")]
+    [SerializeField] private TaskSpawnTable taskSpawnTable;
+
     private readonly Dictionary<int, TaskBubbleView> taskViews = new Dictionary<int, TaskBubbleView>();
+    private readonly Dictionary<TaskSurface, int> nextKindIndexBySurface = new Dictionary<TaskSurface, int>();
     private GameTuningSettings tuningSettings;
     private GameTuningSettings.DifficultyProfile difficultyProfile;
     private TaskManager taskManager;
@@ -23,7 +25,6 @@ public sealed class MainGameController : MonoBehaviour
     private PauseMenuView pauseMenu;
     private int activePlayerTaskId = -1;
     private float spawnElapsedSec;
-    private int nextTaskKindIndex;
     private bool initialized;
     private bool ending;
     private bool paused;
@@ -85,6 +86,24 @@ public sealed class MainGameController : MonoBehaviour
 
         if (!miniGameCatalog.Validate())
         {
+            return;
+        }
+
+        if (taskSpawnTable == null)
+        {
+            Debug.LogError("MainGameController requires a TaskSpawnTable.", this);
+            return;
+        }
+
+        if (!taskSpawnTable.Validate(miniGameCatalog))
+        {
+            return;
+        }
+
+        if (!HasSpawnableSurface(deviceWorkspaces))
+        {
+            Debug.LogError(
+                "MainGameController: TaskSpawnTable にタスクが設定された面が、workspaces に 1 つもありません。", this);
             return;
         }
 
@@ -225,17 +244,13 @@ public sealed class MainGameController : MonoBehaviour
 
     private void TrySpawnTask()
     {
-        var pcCount = CountActiveTasks(TaskSurface.Pc);
-        var padCount = CountActiveTasks(TaskSurface.Pad);
-        var maxTasks = Mathf.Max(1, difficultyProfile.maxTasksPerSurface);
-        if (pcCount >= maxTasks && padCount >= maxTasks)
+        if (!TryPickSpawnSurface(out var surface) || !taskSpawnTable.TryGetKinds(surface, out var kinds))
         {
             return;
         }
 
-        var surface = pcCount <= padCount && pcCount < maxTasks ? TaskSurface.Pc : TaskSurface.Pad;
         var level = CalculateTaskLevel();
-        var kind = SpawnKinds[nextTaskKindIndex++ % SpawnKinds.Length];
+        var kind = kinds[NextKindIndex(surface) % kinds.Length];
         var parent = ResolveSpawnArea(surface);
         if (parent == null)
         {
@@ -250,6 +265,46 @@ public sealed class MainGameController : MonoBehaviour
         taskViews.Add(task.Id, bubble);
     }
 
+    /// <summary>
+    /// タスクを出す面を選ぶ。出現タスクが設定されていない面と、上限に達している面は対象外にする。
+    /// 候補が複数ある場合は未解決タスクの少ない面を選ぶ。デバイス面が 3 つ以上でもそのまま動く。
+    /// </summary>
+    private bool TryPickSpawnSurface(out TaskSurface surface)
+    {
+        surface = default;
+        var maxTasks = Mathf.Max(1, difficultyProfile.maxTasksPerSurface);
+        var fewest = int.MaxValue;
+        var found = false;
+
+        foreach (var workspace in workspaces)
+        {
+            if (workspace == null || !taskSpawnTable.HasAnyKind(workspace.Surface))
+            {
+                continue;
+            }
+
+            var count = CountActiveTasks(workspace.Surface);
+            if (count >= maxTasks || count >= fewest)
+            {
+                continue;
+            }
+
+            fewest = count;
+            surface = workspace.Surface;
+            found = true;
+        }
+
+        return found;
+    }
+
+    /// <summary>面ごとに独立した順番でタスク種別を選ぶ。</summary>
+    private int NextKindIndex(TaskSurface surface)
+    {
+        nextKindIndexBySurface.TryGetValue(surface, out var index);
+        nextKindIndexBySurface[surface] = index + 1;
+        return index;
+    }
+
     /// <summary>自力ミニゲームの担当タスクを更新し、開始・終了の変化だけを通知する。</summary>
     private void SetActivePlayerTask(int taskId)
     {
@@ -260,6 +315,20 @@ public sealed class MainGameController : MonoBehaviour
         {
             PlayerMiniGameActiveChanged?.Invoke(isActive);
         }
+    }
+
+    /// <summary>出現タスクが設定された面が、実際に置かれているデバイス面の中に 1 つ以上あるか。</summary>
+    private bool HasSpawnableSurface(DeviceWorkspaceView[] deviceWorkspaces)
+    {
+        foreach (var workspace in deviceWorkspaces)
+        {
+            if (workspace != null && taskSpawnTable.HasAnyKind(workspace.Surface))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private RectTransform ResolveSpawnArea(TaskSurface surface)

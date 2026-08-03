@@ -35,6 +35,7 @@
 | --- | --- | --- | --- |
 | `MainGameController` | `Assets/Scripts/Core/MainGameController.cs` | セッションを作り、タスクを生成し、結果を適用し、HUD を更新し、終了遷移する。ミニゲームはカタログから引いて `MiniGameHost` に生成する。 | `GameTuningSettings`, `TaskManager`, `GameSession`, `MiniGameCatalog`, `GameFlowController` |
 | `MiniGameCatalog` | `Assets/Scripts/Core/MiniGameCatalog.cs` | タスク種別とミニゲーム Prefab・表示名・アイコン・レベル別制限時間の対応を持つ唯一の登録簿。 | UnityEngine, `MiniGameBase` |
+| `TaskSpawnTable` | `Assets/Scripts/Core/TaskSpawnTable.cs` | どのデバイス面にどの種別のタスクが出るかを持つ表。出現場所だけを決め、Prefab や制限時間は持たない。 | UnityEngine, `TaskSurface`, `TaskKind` |
 | `MiniGameBase` | `Assets/Scripts/Core/MiniGameBase.cs` | ミニゲーム共通のライフサイクル、制限時間、完了イベント、および残り時間の共通表示（ゲージと数値）を提供する抽象基底クラス。 | UnityEngine, uGUI, TextMeshPro |
 | `TaskBubbleView` | `Assets/Scripts/Core/TaskBubbleView.cs` | 1 件のタスクの種別・状態・残り寿命を Prefab のウィジェットへ書き込み、左右クリックを Controller へ渡す。座標もサイズも持たない。 | uGUI, TextMeshPro, EventSystem |
 | `DeviceScreenController` | `Assets/Scripts/Core/DeviceScreenController.cs` | PC / Tablet ワークスペースの排他表示と切替可否を決める。 | `DeviceTabsView`, `TaskSurface` |
@@ -113,8 +114,11 @@
 | --- | --- |
 | どのタスク種別にどのミニゲームを割り当てるか | `Assets/Data/MiniGameCatalog.asset` |
 | レベル別の制限時間 | 同上（`timeLimitsByLevel`） |
+| **PC / タブレットそれぞれに出るタスク種別** | `Assets/Data/TaskSpawnTable.asset` |
 | 各ミニゲームの画面と難度パラメータ | `Assets/Prefabs/MiniGames/` の各 Prefab |
 | ミニゲームの表示範囲 | `Shared/MiniGameHost` の `RectTransform` |
+
+現在の出現パターンは PC がタイピング・仕分け・連打、タブレットがなぞりのみである。面ごとに登録順で繰り返し出る。
 
 手順は [ミニゲームの追加・改造手順](mini-game-catalog.md) を参照する。
 

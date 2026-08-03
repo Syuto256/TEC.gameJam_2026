@@ -7,7 +7,12 @@
 ## 結論
 
 **自分の Prefab とスクリプトだけを触れば、ミニゲームは 1 本追加できる。**  
-`Game.unity` も `MainGameController` も他の人のミニゲームも変更しない。共有ファイルの変更は `MiniGameCatalog.asset` の 1 行だけである。
+`Game.unity` も `MainGameController` も他の人のミニゲームも変更しない。共有ファイルの変更は次の 2 つだけである。
+
+| アセット | 決めること |
+| --- | --- |
+| `Assets/Data/MiniGameCatalog.asset` | そのミニゲームを**どう動かすか**（Prefab・表示名・制限時間） |
+| `Assets/Data/TaskSpawnTable.asset` | そのタスクが**どの面に出るか**（PC / タブレット） |
 
 ## 登録簿が持つもの
 
@@ -35,8 +40,27 @@
    - 画面に出したいものは、この Prefab の子として実体で置く。コードで `new GameObject` しない。
    - 自分のスクリプトをルートに付け、表示先とデータを `[SerializeField]` でつなぐ。
 4. `Assets/Data/MiniGameCatalog.asset` に行を 1 つ足し、`kind` と `prefab` と制限時間を設定する。
+5. `Assets/Data/TaskSpawnTable.asset` の、出したい面の `kinds` へその種別を足す。
 
-これで完了である。`MainGameController` はタスクの種別からカタログを引き、Prefab を `MiniGameHost` に生成して `Initialize` を呼ぶ。
+これで完了である。`MainGameController` は出現表から面と種別を決め、種別からカタログを引き、Prefab を `MiniGameHost` に生成して `Initialize` を呼ぶ。
+
+## どの面に出すかを決める
+
+`Assets/Data/TaskSpawnTable.asset` が、デバイス面ごとの出現タスクを持つ。
+
+| 面 | 現在の出現タスク |
+| --- | --- |
+| `Pc`（PC） | タイピング、仕分け、連打 |
+| `Pad`（タブレット） | なぞり |
+
+- 面ごとに、登録した順で繰り返し出る。順番を変えたい場合は並べ替える。
+- 同じ種別を複数の面に入れてよい。両方に出るようになる。
+- `kinds` を空にすると、その面にはタスクが出ない。開始時に警告が出るだけで停止はしない。
+- 面を増やす場合は行を 1 つ足す。`MainGameController` は面の数を知らないので、コードは変更しない。
+
+**カタログに無い種別を書くと開始時にエラーで停止する。** 出現表とカタログの食い違いを実行前に見つけるためである。
+
+生成先の面は「出現タスクが設定されていて、まだ上限（`maxTasksPerSurface`）に達していない面のうち、未解決タスクがいちばん少ない面」が選ばれる。
 
 ## 画面の共通の並び
 
