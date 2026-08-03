@@ -6,8 +6,9 @@ namespace Overwork.MiniGames.Typing
 {
     /// <summary>Keyboard.onTextInput でローマ字入力を受ける共有タイピングミニゲーム。</summary>
     /// <remarks>
-    /// 画面の配置・配色・文字サイズは <c>Assets/Prefabs/MiniGames/TypingMiniGame.prefab</c> で調整する。
-    /// このクラスは割り当てられた表示先へ文字を書き込むだけで、座標もサイズも持たない。
+    /// 表示の並びは Suzuki の試作（`Assets/Personal/Suzuki/Suzuki.unity`）から取り込んでいる。
+    /// お題・ローマ字・入力済み・残りを縦に並べ、ミスを左下、残り時間を右下に置く。
+    /// 配置・配色・文字サイズは `Assets/Prefabs/MiniGames/TypingMiniGame.prefab` で調整する。
     /// </remarks>
     public sealed class TypingMiniGame : MiniGameBase
     {
@@ -16,16 +17,31 @@ namespace Overwork.MiniGames.Typing
         [SerializeField] private TypingQuestionDatabase database;
 
         [Header("View")]
-        [SerializeField] private TextMeshProUGUI questionText;
-        [SerializeField] private TextMeshProUGUI inputText;
-        [SerializeField] private TextMeshProUGUI statusText;
+        [Tooltip("お題（漢字表記）。")]
+        [SerializeField] private TMP_Text questionText;
+
+        [Tooltip("打つべきローマ字の全体。任意。")]
+        [SerializeField] private TMP_Text targetRomanizationText;
+
+        [Tooltip("すでに正しく打てた部分。")]
+        [SerializeField] private TMP_Text acceptedInputText;
+
+        [Tooltip("これから打つ部分。")]
+        [SerializeField] private TMP_Text remainingInputText;
+
+        [Tooltip("ミス数。任意。")]
+        [SerializeField] private TMP_Text missText;
+
+        [Header("Text format")]
+        [SerializeField] private string questionFormat = "お題: {0}";
+        [SerializeField] private string targetRomanizationFormat = "ローマ字: {0}";
+        [SerializeField] private string acceptedInputFormat = "入力済み: {0}";
+        [SerializeField] private string remainingInputFormat = "残り: {0}";
+        [SerializeField] private string missFormat = "ミス: {0} / {1}";
 
         [Header("Tuning")]
         [Tooltip("何回打ち間違えたら失敗にするか。")]
         [Min(1)] [SerializeField] private int allowedMisses = 2;
-
-        [Tooltip("まだ打っていない部分の文字色。")]
-        [SerializeField] private Color remainingInputColor = new Color(0.54f, 0.65f, 0.78f, 1f);
 
         private TypingQuestion question;
         private TypingInputEvaluator evaluator;
@@ -40,8 +56,8 @@ namespace Overwork.MiniGames.Typing
             if (!SceneUiValidation.Require(this,
                     (nameof(database), database),
                     (nameof(questionText), questionText),
-                    (nameof(inputText), inputText),
-                    (nameof(statusText), statusText)))
+                    (nameof(acceptedInputText), acceptedInputText),
+                    (nameof(remainingInputText), remainingInputText)))
             {
                 base.Initialize(difficulty, timeLimit);
                 FinishGame(false, "PREFAB NOT CONFIGURED");
@@ -57,7 +73,14 @@ namespace Overwork.MiniGames.Typing
 
             evaluator = new TypingInputEvaluator(question.acceptedRomanizations);
             base.Initialize(difficulty, timeLimit);
-            questionText.text = question.displayText;
+
+            questionText.text = string.Format(questionFormat, question.displayText);
+            if (targetRomanizationText != null)
+            {
+                targetRomanizationText.text = string.Format(
+                    targetRomanizationFormat, evaluator.AcceptedInput + evaluator.RemainingInput);
+            }
+
             RefreshUi();
             Subscribe();
         }
@@ -92,7 +115,6 @@ namespace Overwork.MiniGames.Typing
 
         protected override void OnUpdate(float deltaTime)
         {
-            RefreshUi();
         }
 
         protected override void OnDestroy()
@@ -147,16 +169,18 @@ namespace Overwork.MiniGames.Typing
 
         private void RefreshUi()
         {
-            if (evaluator == null || inputText == null || statusText == null)
+            if (evaluator == null)
             {
                 return;
             }
 
-            inputText.text = evaluator.AcceptedInput
-                + "<color=#" + ColorUtility.ToHtmlStringRGB(remainingInputColor) + ">"
-                + evaluator.RemainingInput + "</color>";
-            statusText.text = "MISS " + missCount + " / " + allowedMisses
-                + "    TIME " + Mathf.CeilToInt(TimeRemaining).ToString("00");
+            acceptedInputText.text = string.Format(acceptedInputFormat, evaluator.AcceptedInput);
+            remainingInputText.text = string.Format(remainingInputFormat, evaluator.RemainingInput);
+
+            if (missText != null)
+            {
+                missText.text = string.Format(missFormat, missCount, allowedMisses);
+            }
         }
     }
 }

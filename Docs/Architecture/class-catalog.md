@@ -35,7 +35,7 @@
 | --- | --- | --- | --- |
 | `MainGameController` | `Assets/Scripts/Core/MainGameController.cs` | セッションを作り、タスクを生成し、結果を適用し、HUD を更新し、終了遷移する。ミニゲームはカタログから引いて `MiniGameHost` に生成する。 | `GameTuningSettings`, `TaskManager`, `GameSession`, `MiniGameCatalog`, `GameFlowController` |
 | `MiniGameCatalog` | `Assets/Scripts/Core/MiniGameCatalog.cs` | タスク種別とミニゲーム Prefab・表示名・アイコン・レベル別制限時間の対応を持つ唯一の登録簿。 | UnityEngine, `MiniGameBase` |
-| `MiniGameBase` | `Assets/Scripts/Core/MiniGameBase.cs` | ミニゲーム共通のライフサイクル、制限時間、完了イベントを提供する抽象基底クラス。 | UnityEngine |
+| `MiniGameBase` | `Assets/Scripts/Core/MiniGameBase.cs` | ミニゲーム共通のライフサイクル、制限時間、完了イベント、および残り時間の共通表示（ゲージと数値）を提供する抽象基底クラス。 | UnityEngine, uGUI, TextMeshPro |
 | `TaskBubbleView` | `Assets/Scripts/Core/TaskBubbleView.cs` | 1 件のタスクの種別・状態・残り寿命を Prefab のウィジェットへ書き込み、左右クリックを Controller へ渡す。座標もサイズも持たない。 | uGUI, TextMeshPro, EventSystem |
 | `DeviceScreenController` | `Assets/Scripts/Core/DeviceScreenController.cs` | PC / Tablet ワークスペースの排他表示と切替可否を決める。 | `DeviceTabsView`, `TaskSurface` |
 
@@ -136,6 +136,7 @@
 ## MiniGameBase の契約
 
 - `Initialize(difficulty, timeLimit)` が初期状態を設定し、`IsPlaying` を有効にする。
+- 任意の `timeGaugeFill`（Filled Image）と `timeText` を Prefab で割り当てると、残り時間表示を基底クラスが更新する。各ミニゲームは何も書かなくてよい。
 - `Update` が残り時間を減算し、派生クラスの `OnUpdate(deltaTime)` を実行する。
 - 時間切れは `FinishGame(false, "TIME OUT")` で通知する。
 - 派生クラスは成功・失敗を `FinishGame(success, reason)` で一度だけ通知する。
@@ -152,7 +153,9 @@
 - タスクレベル別のスコアと時間ボーナス
 - 難易度プロファイル（生成間隔、タスク寿命、面あたり最大数、タスクレベルの上下限と上昇間隔）
 
-**注意:** 現在 `difficultyProfiles` は空である。そのため全難易度がフォールバック値で動き、タスクレベルは 1 に固定される。難易度差を付けるにはこのリストへ行を足す。
+**注意:** 現在 `difficultyProfiles` には Easy の 1 行しか無く、その値もフォールバックと同じである。そのため全難易度が同じ設定で動き、タスクレベルは 1 に固定される。難易度差を付けるにはこのリストへ行を足し、各項目を埋める。
+
+**Inspector でリストに行を足すときの注意:** Unity は追加した行の全項目を 0 にする（C# の初期値は使われない）。`maxHp = 0` のまま再生すると開始と同時にゲームオーバーになる。`GetDifficultyProfile` は 0 の項目を既定値で埋めてから返すため止まりはしないが、**意図した値を入れたつもりで既定値のまま遊んでいる**状態になりうるので、行を足したら必ず全項目を確認する。
 
 ## 個人試作（`Assets/Personal/`）
 

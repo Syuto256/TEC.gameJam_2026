@@ -12,7 +12,11 @@ namespace Overwork.MiniGames.DragDrop
     public sealed class SortingMiniGame : MiniGameBase
     {
         [Header("View")]
-        [SerializeField] private TextMeshProUGUI statusText;
+        [Tooltip("ミス数。画面左上に置くのが共通の並びである。")]
+        [SerializeField] private TMP_Text missText;
+
+        [Tooltip("ミス数の書式。{0} が現在のミス、{1} が上限。")]
+        [SerializeField] private string missFormat = "ミス: {0} / {1}";
 
         [Header("Content")]
         [Tooltip("仕分け先の箱。Prefab 上に置いたものを並べる。")]
@@ -31,7 +35,7 @@ namespace Overwork.MiniGames.DragDrop
         public override void Initialize(int difficulty, float timeLimit)
         {
             base.Initialize(difficulty, timeLimit);
-            if (!SceneUiValidation.Require(this, (nameof(statusText), statusText)))
+            if (!SceneUiValidation.Require(this, (nameof(missText), missText)))
             {
                 FinishGame(false, "PREFAB NOT CONFIGURED");
                 return;
@@ -90,18 +94,14 @@ namespace Overwork.MiniGames.DragDrop
 
         protected override void OnUpdate(float deltaTime)
         {
-            Refresh();
         }
 
         private void Refresh()
         {
-            if (statusText == null)
+            if (missText != null)
             {
-                return;
+                missText.text = string.Format(missFormat, misses, allowedMisses);
             }
-
-            statusText.text = "SORT THE MAIL\nMISS " + misses + " / " + allowedMisses
-                + "   TIME " + Mathf.CeilToInt(TimeRemaining).ToString("00");
         }
     }
 }

@@ -19,7 +19,13 @@ namespace Overwork.MiniGames.Tracing
         [Header("View")]
         [Tooltip("経路を描く領域。マーカーとガイド線はこの子になる。")]
         [SerializeField] private RectTransform board;
-        [SerializeField] private TextMeshProUGUI statusText;
+
+        [Tooltip("操作の案内。画面下中央に置くのが共通の並びである。")]
+        [SerializeField] private TMP_Text statusText;
+
+        [Tooltip("ミス数。画面左上に置くのが共通の並びである。")]
+        [SerializeField] private TMP_Text missText;
+
         [SerializeField] private RectTransform startMarker;
         [SerializeField] private RectTransform endMarker;
         [SerializeField] private RectTransform pointerMarker;
@@ -33,6 +39,13 @@ namespace Overwork.MiniGames.Tracing
 
         [Tooltip("何回経路から外れたら失敗にするか。")]
         [Min(1)] [SerializeField] private int allowedMisses = 2;
+
+        [Header("Text")]
+        [SerializeField] private string startPrompt = "始点から左ドラッグでなぞる";
+        [SerializeField] private string tracingPrompt = "なぞり中";
+        [SerializeField] private string releasedPrompt = "始点からやり直し";
+        [SerializeField] private string missedPrompt = "外れました。始点からやり直し";
+        [SerializeField] private string missFormat = "ミス: {0} / {1}";
 
         private TracingPathEntry path;
         private bool tracing;
@@ -60,7 +73,7 @@ namespace Overwork.MiniGames.Tracing
             startMarker.anchoredPosition = NormalizedToLocal(path.points[0]);
             endMarker.anchoredPosition = NormalizedToLocal(path.points[path.points.Count - 1]);
             pointerMarker.gameObject.SetActive(false);
-            RefreshStatus("HOLD LEFT MOUSE AT START");
+            RefreshStatus(startPrompt);
         }
 
         protected override void OnUpdate(float deltaTime)
@@ -84,7 +97,7 @@ namespace Overwork.MiniGames.Tracing
                 {
                     tracing = true;
                     ShowPointer(local);
-                    RefreshStatus("TRACING");
+                    RefreshStatus(tracingPrompt);
                 }
 
                 return;
@@ -93,7 +106,7 @@ namespace Overwork.MiniGames.Tracing
             if (!Mouse.current.leftButton.isPressed)
             {
                 ResetTrace();
-                RefreshStatus("RESTART FROM START");
+                RefreshStatus(releasedPrompt);
                 return;
             }
 
@@ -120,7 +133,7 @@ namespace Overwork.MiniGames.Tracing
                 return;
             }
 
-            RefreshStatus("MISS - RETRY FROM START");
+            RefreshStatus(missedPrompt);
         }
 
         private void ResetTrace()
@@ -142,8 +155,12 @@ namespace Overwork.MiniGames.Tracing
         {
             if (statusText != null)
             {
-                statusText.text = message + "\nMISS " + misses + " / " + allowedMisses
-                    + "    TIME " + Mathf.CeilToInt(TimeRemaining).ToString("00");
+                statusText.text = message;
+            }
+
+            if (missText != null)
+            {
+                missText.text = string.Format(missFormat, misses, allowedMisses);
             }
         }
 

@@ -72,19 +72,45 @@ public class GameTuningSettings : ScriptableObject
 
     public DifficultyProfile GetDifficultyProfile(GameDifficulty difficulty)
     {
-        var profile = difficultyProfiles?.Find(candidate => candidate != null && candidate.difficulty == difficulty);
-        if (profile != null)
-        {
-            return profile;
-        }
-
-        return new DifficultyProfile
+        var fallback = new DifficultyProfile
         {
             difficulty = difficulty,
             durationSec = gameDurationSec,
             maxHp = maxHP,
             isEndless = difficulty == GameDifficulty.Endless
         };
+
+        var profile = difficultyProfiles?.Find(candidate => candidate != null && candidate.difficulty == difficulty);
+        return profile == null ? fallback : Normalize(profile, fallback);
+    }
+
+    /// <summary>
+    /// 未入力（0）の項目を既定値で埋めた複製を返す。
+    /// Inspector のリストに行を足すと全項目が 0 になり、そのままでは
+    /// 最大 HP 0 で即ゲームオーバーになるため、ここで吸収する。
+    /// </summary>
+    private static DifficultyProfile Normalize(DifficultyProfile source, DifficultyProfile fallback)
+    {
+        var result = new DifficultyProfile
+        {
+            difficulty = source.difficulty,
+            durationSec = source.durationSec > 0f ? source.durationSec : fallback.durationSec,
+            maxHp = source.maxHp > 0 ? source.maxHp : fallback.maxHp,
+            spawnIntervalSec = source.spawnIntervalSec > 0f ? source.spawnIntervalSec : fallback.spawnIntervalSec,
+            taskLifetimeSec = source.taskLifetimeSec > 0f ? source.taskLifetimeSec : fallback.taskLifetimeSec,
+            maxTasksPerSurface = source.maxTasksPerSurface > 0 ? source.maxTasksPerSurface : fallback.maxTasksPerSurface,
+            startingTaskLevel = source.startingTaskLevel > 0 ? source.startingTaskLevel : fallback.startingTaskLevel,
+            maxTaskLevel = source.maxTaskLevel > 0 ? source.maxTaskLevel : fallback.maxTaskLevel,
+            taskLevelIncreaseIntervalSec = source.taskLevelIncreaseIntervalSec,
+            isEndless = source.isEndless || fallback.isEndless
+        };
+
+        if (result.maxTaskLevel < result.startingTaskLevel)
+        {
+            result.maxTaskLevel = result.startingTaskLevel;
+        }
+
+        return result;
     }
 
     public int GetBaseScoreForTaskLevel(int level)

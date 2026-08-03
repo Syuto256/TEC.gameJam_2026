@@ -1,4 +1,14 @@
 {
-  "name":"Overwork.MiniGames.RapidClick","rootNamespace":"Overwork.MiniGames.RapidClick",
-  "references":["Overwork.Core","Unity.TextMeshPro"],"includePlatforms":[],"excludePlatforms":[],"allowUnsafeCode":false,"overrideReferences":false,"precompiledReferences":[],"autoReferenced":true,"defineConstraints":[],"versionDefines":[],"noEngineReferences":false
+  "name": "Overwork.MiniGames.RapidClick",
+  "rootNamespace": "Overwork.MiniGames.RapidClick",
+  "references": ["Overwork.Core", "Unity.InputSystem", "Unity.TextMeshPro"],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
 }
