@@ -7,13 +7,11 @@ using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 /// <summary>
-/// シーン名に応じた P0 の操作可能な Canvas UI を生成する。
-/// 見た目の詳細調整は M6 で Prefab 化・置換する前提の基盤である。
+/// タイトル等の暫定 Canvas UI を生成し、Game ではシーン配置済み UI を起動する。
 /// </summary>
 public sealed class SceneUiBootstrap : MonoBehaviour
 {
     private static readonly Color BackgroundColor = new Color(0.06f, 0.09f, 0.15f, 1f);
-    private static readonly Color PanelColor = new Color(0.12f, 0.18f, 0.27f, 0.96f);
     private static readonly Color ButtonColor = new Color(0.18f, 0.43f, 0.63f, 1f);
 
     [SerializeField] private GameTuningSettings tuningSettings;
@@ -23,6 +21,20 @@ public sealed class SceneUiBootstrap : MonoBehaviour
         GameFlowController.EnsureInstance();
         AudioManager.EnsureInstance();
         EnsureEventSystem();
+
+        if (SceneManager.GetActiveScene().name == GameFlowController.GameSceneName)
+        {
+            var gameSceneUi = GetComponent<GameSceneUiReferences>();
+            if (gameSceneUi == null)
+            {
+                Debug.LogError("Game scene requires GameSceneUiReferences.");
+                return;
+            }
+
+            gameSceneUi.Initialize(tuningSettings, GetMiniGameLaunchers());
+            return;
+        }
+
         BuildCanvasFor(SceneManager.GetActiveScene().name);
     }
 
@@ -63,12 +75,6 @@ public sealed class SceneUiBootstrap : MonoBehaviour
             case GameFlowController.DifficultySelectSceneName:
                 BuildDifficultySelect(root.transform);
                 break;
-            case GameFlowController.GameSceneName:
-                BuildGame(
-                    root.transform,
-                    tuningSettings,
-                    GetMiniGameLaunchers());
-                break;
             case GameFlowController.ClearSceneName:
                 BuildResult(root.transform, true);
                 break;
@@ -101,44 +107,6 @@ public sealed class SceneUiBootstrap : MonoBehaviour
     private static void CreateDifficultyButton(Transform parent, string label, GameDifficulty difficulty, float y)
     {
         CreateButton(parent, label, new Vector2(0.5f, y), () => GameFlowController.EnsureInstance().SelectDifficulty(difficulty));
-    }
-
-    private static void BuildGame(
-        Transform parent,
-        GameTuningSettings tuningSettings,
-        IPlayerMiniGameLauncher[] miniGameLaunchers)
-    {
-        var flow = GameFlowController.EnsureInstance();
-        var hud = CreatePanel(parent, "HudPanel", new Vector2(0.02f, 0.87f), new Vector2(0.98f, 0.98f), PanelColor);
-        var hudText = CreateText(hud.transform, "HP 100     SCORE 0     TIME 03:00     " + flow.SelectedDifficulty, Vector2.zero, Vector2.one, 32f, TextAlignmentOptions.Center);
-
-        var pcPanel = CreatePanel(parent, "PcTaskPanel", new Vector2(0.02f, 0.18f), new Vector2(0.48f, 0.82f), PanelColor);
-        CreateText(pcPanel.transform, "PC TASK AREA", new Vector2(0f, 0.86f), Vector2.one, 26f, TextAlignmentOptions.Center);
-        var pcTaskSpawnArea = CreateRectTransform(pcPanel.transform, "TaskSpawnArea", Vector2.zero, new Vector2(1f, 0.84f));
-
-        var padPanel = CreatePanel(parent, "PadTaskPanel", new Vector2(0.52f, 0.18f), new Vector2(0.98f, 0.82f), PanelColor);
-        CreateText(padPanel.transform, "PAD TASK AREA", new Vector2(0f, 0.86f), Vector2.one, 26f, TextAlignmentOptions.Center);
-        var padTaskSpawnArea = CreateRectTransform(padPanel.transform, "TaskSpawnArea", Vector2.zero, new Vector2(1f, 0.84f));
-
-        var miniGameHost = CreatePanel(parent, "MiniGameHost", new Vector2(0.3f, 0.3f), new Vector2(0.7f, 0.7f), new Color(0.04f, 0.06f, 0.1f, 0.96f));
-        CreateText(miniGameHost.transform, "MINI GAME HOST\n(M4 / M5)", Vector2.zero, Vector2.one, 30f, TextAlignmentOptions.Center);
-        miniGameHost.SetActive(false);
-
-        var pausePanel = CreatePanel(parent, "PausePanel", new Vector2(0.32f, 0.3f), new Vector2(0.68f, 0.7f), PanelColor);
-        CreateText(pausePanel.transform, "PAUSED", new Vector2(0.1f, 0.68f), new Vector2(0.9f, 0.9f), 48f, TextAlignmentOptions.Center);
-        var controller = parent.gameObject.AddComponent<MainGameController>();
-        controller.Initialize(tuningSettings, hudText, pcTaskSpawnArea, padTaskSpawnArea, miniGameHost, pausePanel, miniGameLaunchers);
-
-        CreateButton(pausePanel.transform, "Resume", new Vector2(0.5f, 0.5f), controller.Resume);
-        CreateButton(pausePanel.transform, "Back to Difficulty", new Vector2(0.5f, 0.25f), controller.ReturnToDifficultySelect);
-        pausePanel.SetActive(false);
-
-        var optionPanel = CreatePanel(parent, "OptionPanel", new Vector2(0.32f, 0.3f), new Vector2(0.68f, 0.7f), PanelColor);
-        CreateText(optionPanel.transform, "OPTIONS\n(M6)", Vector2.zero, Vector2.one, 40f, TextAlignmentOptions.Center);
-        optionPanel.SetActive(false);
-
-        CreateButton(parent, "Pause", new Vector2(0.88f, 0.08f), controller.TogglePause, new Vector2(180f, 56f));
-        CreateButton(parent, "Difficulty", new Vector2(0.12f, 0.08f), controller.ReturnToDifficultySelect, new Vector2(180f, 56f));
     }
 
     private IPlayerMiniGameLauncher[] GetMiniGameLaunchers()
@@ -189,18 +157,6 @@ public sealed class SceneUiBootstrap : MonoBehaviour
         rect.offsetMax = Vector2.zero;
         panel.GetComponent<Image>().color = color;
         return panel;
-    }
-
-    private static Transform CreateRectTransform(Transform parent, string name, Vector2 anchorMin, Vector2 anchorMax)
-    {
-        var area = new GameObject(name, typeof(RectTransform));
-        area.transform.SetParent(parent, false);
-        var rect = area.GetComponent<RectTransform>();
-        rect.anchorMin = anchorMin;
-        rect.anchorMax = anchorMax;
-        rect.offsetMin = Vector2.zero;
-        rect.offsetMax = Vector2.zero;
-        return area.transform;
     }
 
     private static TextMeshProUGUI CreateText(Transform parent, string value, Vector2 anchorMin, Vector2 anchorMax, float fontSize, TextAlignmentOptions alignment)

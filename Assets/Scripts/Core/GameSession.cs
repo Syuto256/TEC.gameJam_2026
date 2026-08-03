@@ -33,6 +33,8 @@ public sealed class GameSession
     }
 
     public GameDifficulty Difficulty => settings.Difficulty;
+    public bool IsEndless => settings.IsEndless;
+    public int MaxHp => Math.Max(0, settings.MaxHp);
     public float RemainingTimeSec { get; private set; }
     public int Hp { get; private set; }
     public int Score { get; private set; }

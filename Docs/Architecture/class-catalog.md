@@ -92,6 +92,22 @@ See [Shared rapid-click mini-game detail](rapid-click-mini-game.md) and [Shared 
 
 See [Shared audio manager detail](audio-manager.md).
 
+## M7: Game screen layout（承認済み設計・再構成中）
+
+ゲーム画面の承認済み構成は [Game 画面レイアウト案](../GameDesign/game-screen-layout.md) を参照する。シーン上のレイアウトとゲーム進行ロジックの分離は、[DeviceScreenController の設計](device-screen-controller.md) と [GameSceneUiReferences の設計](game-scene-ui-references.md) に従う。
+
+| クラス | パス | 役割 | 主な依存先 |
+| --- | --- | --- | --- |
+| `GameSceneUiReferences` | `Assets/Scripts/Core/GameSceneUiReferences.cs` | Scene 上の View と Controller を接続するだけの入口。ウィジェット参照は持たない。 | 各 View, `MainGameController`, `DeviceScreenController` |
+| `DeviceScreenController` | `Assets/Scripts/Core/DeviceScreenController.cs` | PC / Tablet ワークスペースの排他表示と切替可否を決める。 | `DeviceTabsView`, `TaskSurface` |
+| `HudView` / `HudSnapshot` | `Assets/Scripts/Core/UI/HudView.cs` | HP バー・残り時間・スコア・難易度の表示と Pause 要求。時刻書式もここが持つ。 | uGUI, TextMeshPro |
+| `DeviceTabsView` | `Assets/Scripts/Core/UI/DeviceTabsView.cs` | PC / Tablet タブの外観と入力。どちらを表示するかは決めない。 | uGUI, `TaskSurface` |
+| `MiniGameHostView` | `Assets/Scripts/Core/UI/MiniGameHostView.cs` | 共通ミニゲーム領域の表示状態と Prefab 生成先の提供。 | UnityEngine |
+| `PauseMenuView` | `Assets/Scripts/Core/UI/PauseMenuView.cs` | ポーズ／オプションのパネル表示とボタン入力。ゲーム進行は判断しない。 | uGUI |
+| `SceneUiValidation` | `Assets/Scripts/Core/UI/SceneUiValidation.cs` | 各 View の必須参照不足を、フィールド名を列挙して一度に報告する。 | UnityEngine |
+
+**契約:** View は `Awake` ではなく `Initialize()` で自身のボタンを配線する。`PausePanel` のように非表示で開始する枝に置かれた場合、`Awake` は走らないためである。`MiniGameHostView.ContentRoot` は Launcher へ渡す親であり、Launcher はこの下の子だけを破棄する。ホスト直下に見出しや装飾を置く場合は `contentArea` の外に置くこと。
+
 ## GameManager
 
 - `Start` で `settings.maxHP` を初期 HP に設定する。

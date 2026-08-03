@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using TMPro;
 using UnityEngine;
 
 /// <summary>Game シーンでセッション、タスク生成、AI 処理、HUD、終了遷移を接続する。</summary>
@@ -12,12 +11,11 @@ public sealed class MainGameController : MonoBehaviour
     private GameTuningSettings.DifficultyProfile difficultyProfile;
     private TaskManager taskManager;
     private GameSession session;
-    private TextMeshProUGUI hudText;
+    private HudView hudView;
     private Transform pcTaskSpawnArea;
     private Transform padTaskSpawnArea;
-    private GameObject miniGameHost;
-    private TextMeshProUGUI miniGameHostText;
-    private GameObject pausePanel;
+    private MiniGameHostView miniGameHost;
+    private PauseMenuView pauseMenu;
     private IPlayerMiniGameLauncher[] miniGameLaunchers;
     private int activePlayerTaskId = -1;
     private float spawnElapsedSec;
@@ -32,11 +30,11 @@ public sealed class MainGameController : MonoBehaviour
 
     public void Initialize(
         GameTuningSettings settings,
-        TextMeshProUGUI hud,
+        HudView hud,
         Transform pcSpawnArea,
         Transform padSpawnArea,
-        GameObject host,
-        GameObject pause,
+        MiniGameHostView host,
+        PauseMenuView pause,
         IPlayerMiniGameLauncher[] launchers)
     {
         if (initialized)
@@ -50,13 +48,18 @@ public sealed class MainGameController : MonoBehaviour
             return;
         }
 
+        if (hud == null || host == null || pause == null || pcSpawnArea == null || padSpawnArea == null)
+        {
+            Debug.LogError("MainGameController requires HudView, MiniGameHostView, PauseMenuView, and both task spawn areas.");
+            return;
+        }
+
         tuningSettings = settings;
-        hudText = hud;
+        hudView = hud;
         pcTaskSpawnArea = pcSpawnArea;
         padTaskSpawnArea = padSpawnArea;
         miniGameHost = host;
-        miniGameHostText = host.GetComponentInChildren<TextMeshProUGUI>(true);
-        pausePanel = pause;
+        pauseMenu = pause;
         miniGameLaunchers = launchers ?? System.Array.Empty<IPlayerMiniGameLauncher>();
 
         var flow = GameFlowController.EnsureInstance();
@@ -141,26 +144,19 @@ public sealed class MainGameController : MonoBehaviour
             view.Refresh();
         }
 
-        miniGameHost.SetActive(true);
-        if (task.Kind == TaskKind.Typing || task.Kind == TaskKind.Tracing || task.Kind == TaskKind.RapidClick || task.Kind == TaskKind.DragDrop)
+        miniGameHost.Show();
+        activePlayerTaskId = taskId;
+        var timeLimit = task.Kind == TaskKind.Typing ? tuningSettings.miniGameTimes.typing :
+            task.Kind == TaskKind.Tracing ? tuningSettings.miniGameTimes.tracing :
+            task.Kind == TaskKind.RapidClick ? tuningSettings.miniGameTimes.rapidClick : tuningSettings.miniGameTimes.dragDrop;
+        if (!launcher.TryStart(miniGameHost.ContentRoot, task.Level, timeLimit, (success, reason) => CompletePlayerMiniGame(taskId, success)))
         {
-            activePlayerTaskId = taskId;
-            var timeLimit = task.Kind == TaskKind.Typing ? tuningSettings.miniGameTimes.typing :
-                task.Kind == TaskKind.Tracing ? tuningSettings.miniGameTimes.tracing :
-                task.Kind == TaskKind.RapidClick ? tuningSettings.miniGameTimes.rapidClick : tuningSettings.miniGameTimes.dragDrop;
-            if (!launcher.TryStart(miniGameHost, task.Level, timeLimit, (success, reason) => CompletePlayerMiniGame(taskId, success)))
-            {
-                activePlayerTaskId = -1;
-                taskManager.CompletePlayer(taskId, false);
-                return false;
-            }
+            activePlayerTaskId = -1;
+            miniGameHost.Hide();
+            taskManager.CompletePlayer(taskId, false);
+            return false;
         }
-        else
-        {
-            miniGameHostText.gameObject.SetActive(true);
-            miniGameHostText.text = "SELF TASK RESERVED\n" + task.Kind + "  Lv." + task.Level + "\n" +
-                "The mini-game will connect here in M5.";
-        }
+
         return true;
     }
 
@@ -246,7 +242,7 @@ public sealed class MainGameController : MonoBehaviour
         if (activePlayerTaskId == result.Task.Id)
         {
             activePlayerTaskId = -1;
-            miniGameHost.SetActive(false);
+            miniGameHost.Hide();
         }
         if (taskViews.TryGetValue(result.Task.Id, out var view))
         {
@@ -289,16 +285,18 @@ public sealed class MainGameController : MonoBehaviour
 
     private void RefreshHud()
     {
-        if (hudText == null || session == null)
+        if (hudView == null || session == null)
         {
             return;
         }
 
-        var totalSeconds = Mathf.CeilToInt(session.RemainingTimeSec);
-        var time = session.Difficulty == GameDifficulty.Endless
-            ? "--:--"
-            : (totalSeconds / 60).ToString("00") + ":" + (totalSeconds % 60).ToString("00");
-        hudText.text = "HP " + session.Hp + "     SCORE " + session.Score + "     TIME " + time + "     " + session.Difficulty;
+        hudView.Render(new HudSnapshot(
+            session.Hp,
+            session.MaxHp,
+            session.Score,
+            session.RemainingTimeSec,
+            session.IsEndless,
+            session.Difficulty));
     }
 
     private void FinishSession()
@@ -317,7 +315,7 @@ public sealed class MainGameController : MonoBehaviour
 
         paused = value;
         Time.timeScale = paused ? 0f : 1f;
-        pausePanel.SetActive(paused);
+        pauseMenu.SetVisible(paused);
     }
 
     private void OnDestroy()
