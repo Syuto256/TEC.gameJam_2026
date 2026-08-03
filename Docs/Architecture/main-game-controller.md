@@ -1,36 +1,74 @@
 # クラス詳細: MainGameController と TaskBubbleView
 
-最終更新: 2026-08-03  
+最終更新: 2026-08-04  
 実装: `Assets/Scripts/Core/MainGameController.cs`, `Assets/Scripts/Core/TaskBubbleView.cs`  
-状態: M3 実装済み
+状態: 実装済み
 
 ## 責務
 
-`MainGameController` は Game シーンだけで生成され、`GameTuningSettings` と選択難易度から `TaskManager` / `GameSession` を生成する。一定間隔のタスク生成、AI 処理、期限切れ、HP/スコア/HUD 更新、Clear/GameOver への遷移を接続する。
+`MainGameController` は Game シーンのゲーム進行を持つ。`GameTuningSettings` と選択難易度から `TaskManager` / `GameSession` を作り、一定間隔のタスク生成、AI 処理、期限切れ、HP / スコア / HUD 更新、Clear / GameOver への遷移を接続する。
 
-`TaskBubbleView` は一件の `TaskInstance` を PC または Pad の `TaskSpawnArea` に表示する UI である。Collider は使わず、EventSystem の `IPointerClickHandler` を通じて操作する。
+Scene 上の View との配線は `GameManager` が行う。このクラスは View の参照を `Initialize` で受け取るだけで、自分で探さない。
+
+`TaskBubbleView` は 1 件の `TaskInstance` を表示する UI である。Collider は使わず、EventSystem の `IPointerClickHandler` で操作する。座標もサイズも持たず、書き込み先は `Assets/Prefabs/UI/TaskBubble.prefab` にある。
+
+## Inspector で持つもの
+
+| 項目 | 用途 |
+| --- | --- |
+| `taskBubblePrefab` | タスク吹き出しの見た目 |
+| `miniGameCatalog` | ミニゲームの登録簿。開始時に一度だけ内容を検証する |
+
+## 1 フレームの順序
+
+```text
+1. taskManager.Tick   寿命を減らす / AI 処理を進める
+2. session.Tick       残り時間を減らす
+   └ 終了なら FinishSession して以降を中断
+3. 生成間隔を超えていれば TrySpawnTask
+4. RefreshTaskViews   全吹き出しの表示更新
+5. RefreshHud         HudSnapshot を作って HudView へ
+```
+
+`taskManager.Tick` を `session.Tick` より先に呼ぶため、HP 0 による GameOver が時間切れ Clear より優先される。
 
 ## 操作と状態
 
 | 入力 | 処理 | 状態 |
 | --- | --- | --- |
-| 左クリック | `TryAssignPlayer` | `PlayerPlaying`。期限を停止し、MiniGameHost を表示する。 |
+| 左クリック | `TryAssignPlayer` | `PlayerPlaying`。寿命を停止し、カタログから引いた Prefab を `MiniGameHost` に生成する。 |
 | 右クリック | `TryAssignAi` | `AiProcessing`。設定時間後、成功率に従って一度だけ解決する。 |
 | 未操作 | `TaskManager.Tick` | 寿命が尽きると `Expired`。HP を減らす。 |
 
-初期値 `ai.cooldownSec = 0` では、複数タスクへ連続して AI を依頼できる。正の値に変更すれば M1 の全体 AI 依頼クールタイムが有効になる。
+初期値 `ai.cooldownSec = 0` では、複数タスクへ連続して AI を依頼できる。正の値に変更すれば全体 AI 依頼クールタイムが有効になる。
 
-## M4/M5 への接続点
+## ミニゲームの起動と後片付け
 
-M3 の左クリックは、タスクを自力担当へ移して `MiniGameHost` に「実装待ち」を表示する。成功/失敗の完了通知はまだ発生させない。M4/M5 はここへ本物のミニゲーム Prefab を表示し、`MiniGameBase.OnCompleted` を `TaskManager.CompletePlayer` へ一度だけ渡す。
+```text
+TryAssignPlayer
+  └ miniGameCatalog.TryGetEntry(task.Kind)
+      └ miniGameHost.Spawn(entry.prefab)
+          └ OnCompleted を購読
+          └ Initialize(task.Level, entry.GetTimeLimit(task.Level))
 
-## 実行時 View の扱い
+OnTaskResolved（成功・失敗・AI・寿命切れのすべてを通る）
+  └ miniGameHost.Hide()   ← ここで生成物が破棄される
+```
 
-M3 では `TaskBubbleView` をコードで生成する。最終的な Task Bubble Prefab、画像、細かな位置・サイズは M6 の常設 Canvas/UI View 移行時に置き換える。状態モデルと `MainGameController` の API は維持する。
+生成物の破棄は必ず `Hide()` が行う。ミニゲーム側は自分を破棄しない。この経路は、ミニゲーム実行中にタスクが寿命切れした場合も同じである。
+
+自力ミニゲームの開始・終了は `PlayerMiniGameActiveChanged` で通知する。`GameManager` がこれを `DeviceScreenController.SetSwitchEnabled` へ繋いで、ミニゲーム中のデバイス切替を止めている。2 つの Controller は互いを参照しない。
+
+## タスクレベル
+
+`CalculateTaskLevel()` は難易度プロファイルの `startingTaskLevel` から始まり、`taskLevelIncreaseIntervalSec` ごとに `maxTaskLevel` まで上がる。
+
+**現状の注意:** `GameTuningSettings.difficultyProfiles` が空のため、フォールバック値（`startingTaskLevel = 1` / `maxTaskLevel = 1`）が使われ、レベルは常に 1 になる。難易度差を付けるにはプロファイルを追加する。
 
 ## 検証
 
-- 5 秒間隔で PC / Pad の `TaskSpawnArea` に TaskBubble が生成される。
-- AI 依頼後に対象 View が解決時に除去される。
-- 自力担当で MiniGameHost が表示され、タスクの期限が停止する。
+- 生成間隔ごとに PC / Pad の `TaskSpawnArea` に吹き出しが生成される。
+- AI 依頼後、解決時に対象の吹き出しが除去される。
+- 自力担当で `MiniGameHost` が表示され、タスクの寿命が停止する。
+- ミニゲーム終了後に Host が閉じ、生成物が残らない。
 - タスク期限切れによる HP 減少が GameOver 遷移へ反映される。

@@ -827,6 +827,85 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 176833310}
   m_CullTransparentMesh: 1
+--- !u!1 &186874931
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 186874934}
+  - component: {fileID: 186874933}
+  - component: {fileID: 186874932}
+  m_Layer: 0
+  m_Name: EventSystem
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &186874932
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 186874931}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 01614664b831546d2ae94a42149d80ac, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.InputSystem::UnityEngine.InputSystem.UI.InputSystemUIInputModule
+  m_SendPointerHoverToParent: 1
+  m_MoveRepeatDelay: 0.5
+  m_MoveRepeatRate: 0.1
+  m_XRTrackingOrigin: {fileID: 0}
+  m_ActionsAsset: {fileID: -944628639613478452, guid: ca9f5fa95ffab41fb9a615ab714db018, type: 3}
+  m_PointAction: {fileID: -1654692200621890270, guid: ca9f5fa95ffab41fb9a615ab714db018, type: 3}
+  m_MoveAction: {fileID: -8784545083839296357, guid: ca9f5fa95ffab41fb9a615ab714db018, type: 3}
+  m_SubmitAction: {fileID: 392368643174621059, guid: ca9f5fa95ffab41fb9a615ab714db018, type: 3}
+  m_CancelAction: {fileID: 7727032971491509709, guid: ca9f5fa95ffab41fb9a615ab714db018, type: 3}
+  m_LeftClickAction: {fileID: 3001919216989983466, guid: ca9f5fa95ffab41fb9a615ab714db018, type: 3}
+  m_MiddleClickAction: {fileID: -2185481485913320682, guid: ca9f5fa95ffab41fb9a615ab714db018, type: 3}
+  m_RightClickAction: {fileID: -4090225696740746782, guid: ca9f5fa95ffab41fb9a615ab714db018, type: 3}
+  m_ScrollWheelAction: {fileID: 6240969308177333660, guid: ca9f5fa95ffab41fb9a615ab714db018, type: 3}
+  m_TrackedDevicePositionAction: {fileID: 6564999863303420839, guid: ca9f5fa95ffab41fb9a615ab714db018, type: 3}
+  m_TrackedDeviceOrientationAction: {fileID: 7970375526676320489, guid: ca9f5fa95ffab41fb9a615ab714db018, type: 3}
+  m_DeselectOnBackgroundClick: 1
+  m_PointerBehavior: 0
+  m_CursorLockBehavior: 0
+  m_ScrollDeltaPerTick: 6
+--- !u!114 &186874933
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 186874931}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 76c392e42b5098c458856cdf6ecaaaa1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.EventSystems.EventSystem
+  m_FirstSelected: {fileID: 0}
+  m_sendNavigationEvents: 1
+  m_DragThreshold: 10
+--- !u!4 &186874934
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 186874931}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &192159352
 GameObject:
   m_ObjectHideFlags: 0
@@ -2432,16 +2511,11 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1481473233}
-  - component: {fileID: 1481473234}
-  - component: {fileID: 1481473235}
-  - component: {fileID: 1481473236}
-  - component: {fileID: 1481473237}
-  - component: {fileID: 1481473238}
   - component: {fileID: 1481473241}
   - component: {fileID: 1481473240}
   - component: {fileID: 1481473239}
   m_Layer: 0
-  m_Name: UiBootstrap
+  m_Name: GameManager
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2462,73 +2536,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1481473234
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1481473229}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b2532d03040c28047b390882ec23f7b1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Overwork.Core::SceneUiBootstrap
-  tuningSettings: {fileID: 11400000, guid: de6ff50e26b8c854baaa7cd3364b7600, type: 2}
---- !u!114 &1481473235
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1481473229}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5e1e787943a4d144a991c07b934e62e8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Overwork.MiniGames.Typing::Overwork.MiniGames.Typing.TypingMiniGameLauncher
-  questionDatabase: {fileID: 11400000, guid: 9b479589176861a4f9b7a35f7182d260, type: 2}
-  miniGamePrefab: {fileID: 8827452368946370434, guid: 05dafb9aa8a8ec141a3f4f45f6db4191, type: 3}
---- !u!114 &1481473236
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1481473229}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5a137d7fa16369f419bb3a5638c527cb, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Overwork.MiniGames.Tracing::Overwork.MiniGames.Tracing.TracingMiniGameLauncher
-  pathDatabase: {fileID: 11400000, guid: 066be7f477701924c8f911775c1f5de2, type: 2}
-  miniGamePrefab: {fileID: 800562403701734181, guid: 01813cae13401b841bfcbfbcb785124e, type: 3}
---- !u!114 &1481473237
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1481473229}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 90ac2bbed82f412458e2c670f7b6855e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Overwork.MiniGames.RapidClick::Overwork.MiniGames.RapidClick.RapidClickMiniGameLauncher
-  miniGamePrefab: {fileID: 6376002635238043940, guid: c9f983224a485ef49969a836cbbf2b01, type: 3}
---- !u!114 &1481473238
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1481473229}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b55df44f6048f21438531d6c62d49fce, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Overwork.MiniGames.DragDrop::Overwork.MiniGames.DragDrop.SortingMiniGameLauncher
-  miniGamePrefab: {fileID: 2527230923838134837, guid: 523d38558cb883a488c7296c6d772814, type: 3}
 --- !u!114 &1481473239
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2541,6 +2548,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ae05dbd4098d7b1439a7b5335d7bc00a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Overwork.Core::GameSceneUiReferences
+  tuningSettings: {fileID: 11400000, guid: de6ff50e26b8c854baaa7cd3364b7600, type: 2}
   hudView: {fileID: 1182708768}
   deviceTabsView: {fileID: 1966246333}
   miniGameHostView: {fileID: 1579076576}
@@ -2575,6 +2583,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Overwork.Core::MainGameController
   taskBubblePrefab: {fileID: 3536882397502017118, guid: 620390de7d894f349a463b993f75a2db, type: 3}
+  miniGameCatalog: {fileID: 11400000, guid: 7d63179f8a0eb87448be680a2a6d6766, type: 2}
 --- !u!1001 &1576202600
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -4248,3 +4257,4 @@ SceneRoots:
   - {fileID: 2071254703}
   - {fileID: 1481473233}
   - {fileID: 1884999033}
+  - {fileID: 186874934}

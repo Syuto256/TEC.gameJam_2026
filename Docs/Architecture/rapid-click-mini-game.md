@@ -1,25 +1,31 @@
-# Class detail: shared rapid-click mini-game
+# クラス詳細: 連打ミニゲーム
 
-Last updated: 2026-08-04  
-Files: `Assets/Scripts/MiniGameS/RapidClick/RapidClickMiniGame.cs`, `RapidClickMiniGameLauncher.cs`
+最終更新: 2026-08-04  
+実装: `Assets/Scripts/MiniGameS/RapidClick/RapidClickMiniGame.cs`  
+Prefab: `Assets/Prefabs/MiniGames/RapidClickMiniGame.prefab`
 
-## Responsibility
+## 責務
 
-This feature connects the existing rapid-click sample to `TaskKind.RapidClick` through the shared launcher contract. The original sample remains in `Assets/Scripts/MiniGameSample/` as reference material.
+規定回数に達するまでの連打を uGUI のクリックイベントで数える。
 
-## Rules and lifecycle
+## ルールとライフサイクル
 
-- One visible button receives uGUI click events until the required count is reached.
-- The temporary requirement is `8 + level * 4` clicks, preserving the sample's formula for levels 1-4.
-- The base `MiniGameBase` owns the time limit and emits a single timeout result; a completed count emits `COMPLETE`.
-- `RapidClickMiniGameLauncher` owns construction and destruction of the temporary child of `MiniGameHost`, then forwards the result to `MainGameController`.
+- Prefab のルートに付いた `Image` がクリックを受ける。`Raycast Target` を無効にすると反応しなくなる。
+- 必要クリック数は `baseClicks + (レベル - 1) * clicksPerLevel` で決まる。既定値は 12 と 4 で、レベル 1 で 12 回である。
+- 制限時間と時間切れの通知は `MiniGameBase` が持つ。必要数に達すると `COMPLETE` を通知する。
+- 生成と破棄は `MiniGameHostView` が行う。このクラスは自分を破棄しない。
 
-## TODO
+## 設定
 
-- The click requirement, button presentation, and per-level balancing are M6 tuning items, not fixed game specifications.
-- `Assets/Prefabs/MiniGames/RapidClickMiniGame.prefab` is the approved shared root and is instantiated/destroyed by the launcher. Replace the code-generated inner controls with the authored Prefab view while retaining the same launcher contract.
+| 項目 | 場所 |
+| --- | --- |
+| 制限時間 | `Assets/Data/MiniGameCatalog.asset` の `RapidClick` 行 |
+| レベル 1 の必要数、レベルごとの増加数 | Prefab 上の `RapidClickMiniGame` |
+| 背景色、文字サイズ・配置 | Prefab のルートと `Status` |
 
-## Verification
+## 検証と TODO
 
-- Unity compiled with no Console errors.
-- In the Game scene, a `RapidClick` task was created and assigned through `MainGameController`; the launcher started successfully.
+- Play モードで Game シーンの `RapidClick` タスクから起動できることを確認済み。Console エラー 0 件。
+- TODO: 必要クリック数とレベル別のバランスはプレイテストで調整する。現在の値は暫定である。
+
+かつて `Assets/Scripts/MiniGameSample/` に、本編と同名の `RapidClickMiniGame` をグローバル名前空間で定義したサンプルがあった。同名クラスが 2 つ存在することが混乱の原因になっていたため 2026-08-04 に削除している。

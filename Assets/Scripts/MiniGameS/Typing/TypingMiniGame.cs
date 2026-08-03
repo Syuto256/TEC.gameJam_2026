@@ -1,33 +1,54 @@
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.UI;
 
 namespace Overwork.MiniGames.Typing
 {
     /// <summary>Keyboard.onTextInput でローマ字入力を受ける共有タイピングミニゲーム。</summary>
+    /// <remarks>
+    /// 画面の配置・配色・文字サイズは <c>Assets/Prefabs/MiniGames/TypingMiniGame.prefab</c> で調整する。
+    /// このクラスは割り当てられた表示先へ文字を書き込むだけで、座標もサイズも持たない。
+    /// </remarks>
     public sealed class TypingMiniGame : MiniGameBase
     {
-        private TypingQuestionDatabase database;
+        [Header("Data")]
+        [Tooltip("出題に使う問題集。この Prefab が自分で持つ。")]
+        [SerializeField] private TypingQuestionDatabase database;
+
+        [Header("View")]
+        [SerializeField] private TextMeshProUGUI questionText;
+        [SerializeField] private TextMeshProUGUI inputText;
+        [SerializeField] private TextMeshProUGUI statusText;
+
+        [Header("Tuning")]
+        [Tooltip("何回打ち間違えたら失敗にするか。")]
+        [Min(1)] [SerializeField] private int allowedMisses = 2;
+
+        [Tooltip("まだ打っていない部分の文字色。")]
+        [SerializeField] private Color remainingInputColor = new Color(0.54f, 0.65f, 0.78f, 1f);
+
         private TypingQuestion question;
         private TypingInputEvaluator evaluator;
-        private TextMeshProUGUI questionText;
-        private TextMeshProUGUI inputText;
-        private TextMeshProUGUI statusText;
         private int missCount;
         private bool subscribed;
         private Keyboard subscribedKeyboard;
 
         public string CurrentQuestionText => question == null ? string.Empty : question.displayText;
 
-        public void Configure(TypingQuestionDatabase questionDatabase)
-        {
-            database = questionDatabase;
-        }
-
         public override void Initialize(int difficulty, float timeLimit)
         {
-            if (database == null || !database.TryGetRandomQuestion(difficulty, out question))
+            if (!SceneUiValidation.Require(this,
+                    (nameof(database), database),
+                    (nameof(questionText), questionText),
+                    (nameof(inputText), inputText),
+                    (nameof(statusText), statusText)))
+            {
+                base.Initialize(difficulty, timeLimit);
+                FinishGame(false, "PREFAB NOT CONFIGURED");
+                return;
+            }
+
+            if (!database.TryGetRandomQuestion(difficulty, out question))
             {
                 base.Initialize(difficulty, timeLimit);
                 FinishGame(false, "NO QUESTION CONFIGURED");
@@ -35,8 +56,8 @@ namespace Overwork.MiniGames.Typing
             }
 
             evaluator = new TypingInputEvaluator(question.acceptedRomanizations);
-            BuildUi();
             base.Initialize(difficulty, timeLimit);
+            questionText.text = question.displayText;
             RefreshUi();
             Subscribe();
         }
@@ -61,7 +82,7 @@ namespace Overwork.MiniGames.Typing
 
             missCount++;
             RefreshUi();
-            if (missCount >= 2)
+            if (missCount >= allowedMisses)
             {
                 FinishGame(false, "MISSED");
             }
@@ -124,16 +145,6 @@ namespace Overwork.MiniGames.Typing
             ProcessInput(input);
         }
 
-        private void BuildUi()
-        {
-            var panel = gameObject.AddComponent<Image>();
-            panel.color = new Color(0.07f, 0.12f, 0.2f, 0.98f);
-            CreateText("Title", "TYPE THE ROMANIZATION", new Vector2(0.08f, 0.78f), new Vector2(0.92f, 0.92f), 34f, TextAlignmentOptions.Center);
-            questionText = CreateText("Question", question.displayText, new Vector2(0.08f, 0.52f), new Vector2(0.92f, 0.76f), 64f, TextAlignmentOptions.Center);
-            inputText = CreateText("Input", string.Empty, new Vector2(0.08f, 0.35f), new Vector2(0.92f, 0.5f), 38f, TextAlignmentOptions.Center);
-            statusText = CreateText("Status", string.Empty, new Vector2(0.08f, 0.14f), new Vector2(0.92f, 0.32f), 25f, TextAlignmentOptions.Center);
-        }
-
         private void RefreshUi()
         {
             if (evaluator == null || inputText == null || statusText == null)
@@ -141,28 +152,11 @@ namespace Overwork.MiniGames.Typing
                 return;
             }
 
-            inputText.text = evaluator.AcceptedInput + "<color=#8AA6C6>" + evaluator.RemainingInput + "</color>";
-            statusText.text = "MISS " + missCount + " / 2    TIME " + Mathf.CeilToInt(TimeRemaining).ToString("00");
-        }
-
-        private TextMeshProUGUI CreateText(string name, string value, Vector2 anchorMin, Vector2 anchorMax, float fontSize, TextAlignmentOptions alignment)
-        {
-            var textObject = new GameObject(name, typeof(RectTransform), typeof(TextMeshProUGUI));
-            textObject.transform.SetParent(transform, false);
-            var rect = textObject.GetComponent<RectTransform>();
-            rect.anchorMin = anchorMin;
-            rect.anchorMax = anchorMax;
-            rect.offsetMin = new Vector2(16f, 8f);
-            rect.offsetMax = new Vector2(-16f, -8f);
-
-            var text = textObject.GetComponent<TextMeshProUGUI>();
-            text.font = TMP_Settings.defaultFontAsset;
-            text.text = value;
-            text.fontSize = fontSize;
-            text.alignment = alignment;
-            text.enableWordWrapping = true;
-            text.color = Color.white;
-            return text;
+            inputText.text = evaluator.AcceptedInput
+                + "<color=#" + ColorUtility.ToHtmlStringRGB(remainingInputColor) + ">"
+                + evaluator.RemainingInput + "</color>";
+            statusText.text = "MISS " + missCount + " / " + allowedMisses
+                + "    TIME " + Mathf.CeilToInt(TimeRemaining).ToString("00");
         }
     }
 }

@@ -53,7 +53,7 @@ stateDiagram-v2
 | 3 | 長い経路・急な曲がり | 狭い | 短い |
 | 4 | 複雑な経路・密な点列 | 最も狭い | 最も短い |
 
-具体値は問題データと `GameTuningSettings.miniGameTimes.tracing` に集約し、プレイテストで決定する。
+具体値は `TracingPathDatabase.asset`（経路と許容逸脱量）、Prefab 上の `TracingMiniGame`（判定半径・許容ミス数）、`MiniGameCatalog.asset`（レベル別の制限時間）に分かれる。プレイテストで決定する。
 
 ## 5. UI
 

@@ -1,7 +1,7 @@
 # DeviceScreenController（ゲーム画面構成の設計）
 
 最終更新: 2026-08-04  
-状態: 実装済み。Scene 配線は未了。画面構成の合意内容は [Game 画面レイアウト案](../GameDesign/game-screen-layout.md) を正とする。
+状態: 実装済み・Scene 配線済み。画面構成の合意内容は [Game 画面レイアウト案](../GameDesign/game-screen-layout.md) を正とする。
 
 ## 責務
 
@@ -23,7 +23,7 @@
 | `Show(TaskSurface)` | 切替入力が有効 | 一致する `Surface` の面だけを表示し、View へ選択状態を伝える。 |
 | `SetSwitchEnabled(bool)` | ミニゲーム開始・終了時 | View へ入力可否を伝える。無効中は `Show` を受け付けない。 |
 
-ミニゲーム中の切替禁止は、`MainGameController.PlayerMiniGameActiveChanged` を `GameSceneUiReferences` が `SetSwitchEnabled` へ繋ぐことで成立する。二つの Controller は互いを参照しない。
+ミニゲーム中の切替禁止は、`MainGameController.PlayerMiniGameActiveChanged` を `GameManager` が `SetSwitchEnabled` へ繋ぐことで成立する。二つの Controller は互いを参照しない。
 
 ## 検証
 

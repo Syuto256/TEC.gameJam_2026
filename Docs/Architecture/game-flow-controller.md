@@ -1,34 +1,53 @@
-# クラス詳細: GameFlowController と SceneUiBootstrap
+# クラス詳細: シーン遷移と各シーンの入口
 
-最終更新: 2026-08-03  
-実装: `Assets/Scripts/Core/GameFlowController.cs`, `Assets/Scripts/Core/SceneUiBootstrap.cs`  
-状態: M2 実装済み
+最終更新: 2026-08-04  
+実装: `Assets/Scripts/Core/GameFlowController.cs`, `AppServices.cs`, `TitleManager.cs`, `DifficultySelectManager.cs`, `ResultManager.cs`  
+状態: 実装済み
+
+かつてここには `SceneUiBootstrap` の説明があった。実行時 UI 生成の全廃にともない削除し、シーンごとの Manager に置き換えている（[決定記録](../Decisions/2026-08-04-remove-runtime-ui-construction.md)）。
 
 ## 責務
 
-`GameFlowController` は `DontDestroyOnLoad` で 1 個だけ存在し、選択中の難易度と終了結果を保持して 5 シーン間を遷移する。`SceneUiBootstrap` は各共有シーンに置かれ、開始時に必要な Canvas、Canvas Scaler、Graphic Raycaster、EventSystem と P0 用の操作 UI を生成する。
+`GameFlowController` は `DontDestroyOnLoad` で 1 個だけ存在し、選択中の難易度と終了結果を保持して 5 シーン間を遷移する。UI は一切持たない。
+
+各シーンの UI 側は、そのシーンの Manager が担当する。Manager は「Scene 上の実体を参照して、ボタンを `GameFlowController` の遷移 API へつなぐ」だけである。
 
 ## 遷移 API
 
 | API | 動作 |
 | --- | --- |
 | `OpenDifficultySelect()` | DifficultySelect を開く |
-| `SelectDifficulty(difficulty)` | 選択難易度を保存し、Game を開く |
+| `SelectDifficulty(difficulty)` | 選択難易度を保存し、直前の結果を消して Game を開く |
 | `Retry()` | 保存済みの難易度を保持したまま Game を開く |
 | `PresentResult(result)` | 終了結果を保存し、Clear または GameOver を開く |
 
+## シーンごとの入口
+
+| シーン | Manager | Inspector で持つもの |
+| --- | --- | --- |
+| Title | `TitleManager` | `startButton` |
+| DifficultySelect | `DifficultySelectManager` | `choices`（`GameDifficulty` と `Button` の対） |
+| Game | `GameManager` | 設定・各 View・ワークスペース配列・2 つの Controller |
+| Clear / GameOver | `ResultManager` | `summaryText`、`backToDifficultyButton`、`retryButton`（GameOver のみ）|
+
+`Clear` と `GameOver` は同じ `ResultManager` を使う。違いは Inspector の参照だけで、`Clear` では `retryButton` を未設定にする。
+
+難易度を増減する場合は、シーンにボタンを置いて `choices` へ 1 行足す。コードは変更しない。
+
+## 常駐サービスの用意
+
+各 Manager は `Start` の先頭で `AppServices.Ensure()` を呼ぶ。これが `GameFlowController` と `AudioManager` を用意するため、**どのシーンから再生を始めても動く**。
+
+`EventSystem` は常駐させず、各シーンに実体として置く。Hierarchy から見えることを優先した判断である。
+
 ## UI 基盤
 
-- Canvas は `Screen Space - Overlay`、基準解像度 1920x1080、`Scale With Screen Size`。
+- Canvas は `Screen Space - Overlay`、基準解像度 1920x1080、`Scale With Screen Size`、`matchWidthOrHeight = 0.5`。
 - EventSystem は Input System の `InputSystemUIInputModule` を使用する。
-- Game では `HudPanel`、`PcTaskPanel`、`PadTaskPanel`、`MiniGameHost`、`PausePanel`、`OptionPanel` を生成する。
-- `MiniGameHost` / Pause / Option は M2 では初期非表示。M3 以降の実装が既存の名前を起点として連携できる。
-
-## M6 で置き換える範囲
-
-現在の UI は機能確認用のアンカー配置と色だけで構成する。フォント、画像、余白、最終的なボタン設計、アニメーション、オプション画面の実装は M6 で Prefab / 専用 View に置き換える。`Assets/Personal/` の資産は直接参照・変更しない。
+- Title / DifficultySelect / Clear / GameOver は `MainCanvas/ScreenRoot` の下に文字とボタンを実体で持つ。実行時に生成する UI は無い。
 
 ## 検証
 
-- Play Mode で Title の Canvas と EventSystem、Game の各領域を確認する。
-- `GameFlowController` 経由で Title → DifficultySelect → Game の遷移を確認する。
+- Play Mode で Title → DifficultySelect → Game → Clear / GameOver の遷移を確認する。
+- GameOver の Retry で難易度を保ったまま Game へ戻ることを確認する。
+- Game 以外のシーンから直接再生しても、`AppServices.Ensure()` により常駐サービスがそろうことを確認する。結果が無い状態の Clear / GameOver は `emptyResultText` を表示する。

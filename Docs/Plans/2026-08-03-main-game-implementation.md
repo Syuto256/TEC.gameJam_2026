@@ -1,6 +1,8 @@
 # メインゲーム実装計画
 
 > **ステータス: 実装開始前の合意済み計画（2026-08-03）**
+>
+> **注意（2026-08-04）:** この計画とその実装ログは当時の記録である。以降の構造変更により、`SceneUiBootstrap` と `IPlayerMiniGameLauncher` および 4 つの Launcher クラスは削除され、ミニゲームの登録は `MiniGameCatalog` に一本化されている。現在の構造は [シーン構造](../Architecture/scene-structure.md) を正とする。
 
 企画: [ゲーム企画概要](../GameDesign/game-overview.md)
 仕様: [コアゲームプレイ仕様](../Specifications/gameplay-core.md) / [メインゲーム画面・接続仕様](../Specifications/main-game-flow.md)

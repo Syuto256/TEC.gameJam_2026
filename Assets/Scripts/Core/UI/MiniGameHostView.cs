@@ -4,7 +4,7 @@ using UnityEngine;
 public sealed class MiniGameHostView : MonoBehaviour
 {
     [Header("Required")]
-    [Tooltip("ミニゲーム Prefab の生成先。Launcher はこの下の子だけを破棄する。")]
+    [Tooltip("ミニゲーム Prefab の生成先。この下の子だけを差し替える。")]
     [SerializeField] private RectTransform contentArea;
 
     [Header("Optional")]
@@ -12,9 +12,6 @@ public sealed class MiniGameHostView : MonoBehaviour
     [SerializeField] private GameObject root;
 
     private bool initialized;
-
-    /// <summary>Launcher へ渡すミニゲームの親。</summary>
-    public GameObject ContentRoot => contentArea != null ? contentArea.gameObject : null;
 
     public bool IsVisible => Root != null && Root.activeSelf;
 
@@ -40,6 +37,22 @@ public sealed class MiniGameHostView : MonoBehaviour
     public void Show()
     {
         SetVisible(true);
+    }
+
+    /// <summary>ミニゲーム Prefab を生成先へ差し替える。前の内容は破棄する。</summary>
+    /// <remarks>
+    /// 生成物の大きさ・位置は Prefab 自身の <see cref="RectTransform"/> が決める。ここでは上書きしない。
+    /// Host いっぱいに広げたい場合は Prefab 側でアンカーを Stretch にする。
+    /// </remarks>
+    public MiniGameBase Spawn(MiniGameBase prefab)
+    {
+        if (prefab == null || contentArea == null)
+        {
+            return null;
+        }
+
+        ClearContent();
+        return Instantiate(prefab, contentArea, false);
     }
 
     public void Hide()

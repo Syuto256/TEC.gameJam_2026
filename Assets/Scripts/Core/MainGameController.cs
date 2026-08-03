@@ -9,6 +9,9 @@ public sealed class MainGameController : MonoBehaviour
     [Tooltip("タスク吹き出しの見た目はこの Prefab で調整する。")]
     [SerializeField] private TaskBubbleView taskBubblePrefab;
 
+    [Tooltip("ミニゲームの登録簿。追加・差し替えはこのアセットだけで完結する。")]
+    [SerializeField] private MiniGameCatalog miniGameCatalog;
+
     private readonly Dictionary<int, TaskBubbleView> taskViews = new Dictionary<int, TaskBubbleView>();
     private GameTuningSettings tuningSettings;
     private GameTuningSettings.DifficultyProfile difficultyProfile;
@@ -18,7 +21,6 @@ public sealed class MainGameController : MonoBehaviour
     private DeviceWorkspaceView[] workspaces;
     private MiniGameHostView miniGameHost;
     private PauseMenuView pauseMenu;
-    private IPlayerMiniGameLauncher[] miniGameLaunchers;
     private int activePlayerTaskId = -1;
     private float spawnElapsedSec;
     private int nextTaskKindIndex;
@@ -38,8 +40,7 @@ public sealed class MainGameController : MonoBehaviour
         HudView hud,
         DeviceWorkspaceView[] deviceWorkspaces,
         MiniGameHostView host,
-        PauseMenuView pause,
-        IPlayerMiniGameLauncher[] launchers)
+        PauseMenuView pause)
     {
         if (initialized)
         {
@@ -76,11 +77,21 @@ public sealed class MainGameController : MonoBehaviour
             return;
         }
 
+        if (miniGameCatalog == null)
+        {
+            Debug.LogError("MainGameController requires a MiniGameCatalog.", this);
+            return;
+        }
+
+        if (!miniGameCatalog.Validate())
+        {
+            return;
+        }
+
         tuningSettings = settings;
         hudView = hud;
         miniGameHost = host;
         pauseMenu = pause;
-        miniGameLaunchers = launchers ?? System.Array.Empty<IPlayerMiniGameLauncher>();
 
         var flow = GameFlowController.EnsureInstance();
         difficultyProfile = tuningSettings.GetDifficultyProfile(flow.SelectedDifficulty);
@@ -147,10 +158,9 @@ public sealed class MainGameController : MonoBehaviour
             return false;
         }
 
-        var launcher = FindLauncher(task.Kind);
-        if (launcher == null || !launcher.IsReady)
+        if (!miniGameCatalog.TryGetEntry(task.Kind, out var entry) || entry.prefab == null)
         {
-            Debug.LogError("Mini-game launcher or its data is missing for " + task.Kind + ".");
+            Debug.LogError("MiniGameCatalog に " + task.Kind + " の Prefab が登録されていません。", this);
             return false;
         }
 
@@ -166,10 +176,9 @@ public sealed class MainGameController : MonoBehaviour
 
         miniGameHost.Show();
         SetActivePlayerTask(taskId);
-        var timeLimit = task.Kind == TaskKind.Typing ? tuningSettings.miniGameTimes.typing :
-            task.Kind == TaskKind.Tracing ? tuningSettings.miniGameTimes.tracing :
-            task.Kind == TaskKind.RapidClick ? tuningSettings.miniGameTimes.rapidClick : tuningSettings.miniGameTimes.dragDrop;
-        if (!launcher.TryStart(miniGameHost.ContentRoot, task.Level, timeLimit, (success, reason) => CompletePlayerMiniGame(taskId, success)))
+
+        var miniGame = miniGameHost.Spawn(entry.prefab);
+        if (miniGame == null)
         {
             SetActivePlayerTask(-1);
             miniGameHost.Hide();
@@ -177,6 +186,9 @@ public sealed class MainGameController : MonoBehaviour
             return false;
         }
 
+        // 生成物の破棄は TaskResolved -> miniGameHost.Hide() が担当する。
+        miniGame.OnCompleted += (success, reason) => CompletePlayerMiniGame(taskId, success);
+        miniGame.Initialize(task.Level, entry.GetTimeLimit(task.Level));
         return true;
     }
 
@@ -233,7 +245,8 @@ public sealed class MainGameController : MonoBehaviour
         var task = taskManager.CreateTask(kind, surface, level, difficultyProfile.taskLifetimeSec);
         var bubble = Instantiate(taskBubblePrefab, parent, false);
         bubble.name = "TaskBubble_" + task.Id;
-        bubble.Bind(this, task);
+        miniGameCatalog.TryGetEntry(kind, out var entry);
+        bubble.Bind(this, task, entry?.displayName, entry?.icon);
         taskViews.Add(task.Id, bubble);
     }
 
@@ -313,19 +326,6 @@ public sealed class MainGameController : MonoBehaviour
 
         AudioManager.PlaySfx(success ? AudioCue.MiniGameSuccess : AudioCue.MiniGameFailure);
         taskManager.CompletePlayer(taskId, success);
-    }
-
-    private IPlayerMiniGameLauncher FindLauncher(TaskKind kind)
-    {
-        foreach (var launcher in miniGameLaunchers)
-        {
-            if (launcher != null && launcher.Kind == kind)
-            {
-                return launcher;
-            }
-        }
-
-        return null;
     }
 
     private void RefreshTaskViews()

@@ -1,52 +1,112 @@
+using System;
 using UnityEngine;
 
-public class GameManager : MonoBehaviour
+/// <summary>Game シーンの入口。View とゲーム進行コンポーネントを接続するだけを担当する。</summary>
+/// <remarks>
+/// ゲーム進行そのものは <see cref="MainGameController"/> が持つ。このクラスは配線係であり、
+/// 表示の見た目・座標も、タスクや HP の計算も持たない。
+/// </remarks>
+public sealed class GameManager : MonoBehaviour
 {
-    [SerializeField] private GameTuningSettings settings;
-    [SerializeField] private MiniGameBase currentMiniGame; // テスト用
+    [Header("Settings")]
+    [SerializeField] private GameTuningSettings tuningSettings;
 
-    private int currentHP;
-    private int currentScore;
+    [Header("Views")]
+    [SerializeField] private HudView hudView;
+    [SerializeField] private DeviceTabsView deviceTabsView;
+    [SerializeField] private MiniGameHostView miniGameHostView;
+    [SerializeField] private PauseMenuView pauseMenuView;
+
+    [Header("Device workspaces")]
+    [Tooltip("デバイス面を並べる。Surface が重複しないこと。3 つ目の面を足す場合もここへ追加する。")]
+    [SerializeField] private DeviceWorkspaceView[] workspaces = Array.Empty<DeviceWorkspaceView>();
+
+    [Header("Controllers")]
+    [SerializeField] private MainGameController mainGameController;
+    [SerializeField] private DeviceScreenController deviceScreenController;
 
     private void Start()
     {
-        // パラメータの初期化
-        if (settings != null)
+        AppServices.Ensure();
+
+        if (!SceneUiValidation.Require(this,
+                (nameof(tuningSettings), tuningSettings),
+                (nameof(hudView), hudView), (nameof(deviceTabsView), deviceTabsView),
+                (nameof(miniGameHostView), miniGameHostView), (nameof(pauseMenuView), pauseMenuView),
+                (nameof(mainGameController), mainGameController), (nameof(deviceScreenController), deviceScreenController)))
         {
-            currentHP = settings.maxHP;
+            return;
         }
 
-        // テスト用のミニゲームがあればイベントを登録して開始
-        if (currentMiniGame != null)
+        if (!HasValidWorkspaces())
         {
-            // イベントの購読（通知が来たら OnMiniGameFinished を実行する予約）
-            currentMiniGame.OnCompleted += OnMiniGameFinished;
-
-            // ミニゲーム初期化（難易度1、制限時間4秒）
-            currentMiniGame.Initialize(1, settings.miniGameTimes.rapidClick);
+            return;
         }
+
+        // 単一の & で全 View の不足を一度に報告する。
+        var viewsReady = hudView.Initialize() & deviceTabsView.Initialize()
+            & miniGameHostView.Initialize() & pauseMenuView.Initialize();
+        foreach (var workspace in workspaces)
+        {
+            viewsReady = workspace.Initialize() & viewsReady;
+        }
+
+        if (!viewsReady)
+        {
+            return;
+        }
+
+        deviceScreenController.Initialize(workspaces, deviceTabsView);
+        mainGameController.Initialize(tuningSettings, hudView, workspaces, miniGameHostView, pauseMenuView);
+
+        hudView.PauseRequested += mainGameController.TogglePause;
+        pauseMenuView.ResumeRequested += mainGameController.Resume;
+        pauseMenuView.BackToDifficultyRequested += mainGameController.ReturnToDifficultySelect;
+        mainGameController.PlayerMiniGameActiveChanged += OnPlayerMiniGameActiveChanged;
+        miniGameHostView.Hide();
     }
 
-    /// <summary>
-    /// ミニゲームから OnCompleted の通知が飛んできた時に呼ばれる関数
-    /// </summary>
-    private void OnMiniGameFinished(bool isSuccess, string reason)
+    /// <summary>ミニゲーム中はデバイス切替を受け付けない（暫定仕様）。</summary>
+    private void OnPlayerMiniGameActiveChanged(bool active)
     {
-        if (isSuccess)
+        deviceScreenController.SetSwitchEnabled(!active);
+    }
+
+    private bool HasValidWorkspaces()
+    {
+        if (workspaces == null || workspaces.Length == 0)
         {
-            currentScore += settings.score.baseScoreDiff1;
-            Debug.Log($"<color=green>【成功】</color> スコア加算! 現在のスコア: {currentScore} (理由: {reason})");
-        }
-        else
-        {
-            currentHP -= settings.damage.playerFail;
-            Debug.Log($"<color=red>【失敗】</color> HPダメージ! 残りHP: {currentHP} (理由: {reason})");
+            Debug.LogError("GameManager (" + name + "): workspaces が空です。", this);
+            return false;
         }
 
-        // イベント解除（メモリリーク防止）
-        if (currentMiniGame != null)
+        for (var i = 0; i < workspaces.Length; i++)
         {
-            currentMiniGame.OnCompleted -= OnMiniGameFinished;
+            if (workspaces[i] == null)
+            {
+                Debug.LogError("GameManager (" + name + "): workspaces[" + i + "] が未設定です。", this);
+                return false;
+            }
+
+            for (var j = i + 1; j < workspaces.Length; j++)
+            {
+                if (workspaces[j] != null && workspaces[j].Surface == workspaces[i].Surface)
+                {
+                    Debug.LogError(
+                        "GameManager (" + name + "): Surface が重複しています -> " + workspaces[i].Surface, this);
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    private void OnDestroy()
+    {
+        if (mainGameController != null)
+        {
+            mainGameController.PlayerMiniGameActiveChanged -= OnPlayerMiniGameActiveChanged;
         }
     }
 }

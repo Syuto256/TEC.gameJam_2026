@@ -14,14 +14,15 @@
 
 ## 読む順番
 
-1. [アーキテクチャ概要](Architecture/overview.md)
-2. [クラスカタログ](Architecture/class-catalog.md)
-3. [ゲーム企画概要](GameDesign/game-overview.md)
-4. [コアゲームプレイ仕様](Specifications/gameplay-core.md)
-5. [メインゲーム画面・接続仕様](Specifications/main-game-flow.md)
-6. [メインゲーム実装計画](Plans/2026-08-03-main-game-implementation.md)
-7. [Unity CLI / Pipeline 運用](Operations/unity-pipeline.md)
-8. 対象機能に対応する企画・仕様・決定記録
+1. [シーン構造](Architecture/scene-structure.md) — どこを触れば何が変わるか
+2. [ミニゲームの追加・改造手順](Architecture/mini-game-catalog.md) — 自分の担当分に手を入れる人はここまでで足りる
+3. [アーキテクチャ概要](Architecture/overview.md)
+4. [クラスカタログ](Architecture/class-catalog.md)
+5. [ゲーム企画概要](GameDesign/game-overview.md)
+6. [コアゲームプレイ仕様](Specifications/gameplay-core.md)
+7. [メインゲーム画面・接続仕様](Specifications/main-game-flow.md)
+8. [Unity CLI / Pipeline 運用](Operations/unity-pipeline.md)
+9. 対象機能に対応する企画・仕様・決定記録
 
 ## 記載の原則
 

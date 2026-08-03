@@ -1,46 +1,58 @@
-# Class detail: shared drag-and-drop mini-game
+# クラス詳細: 仕分けミニゲーム
 
-Last updated: 2026-08-04  
-Files: `Assets/Scripts/MiniGameS/DragDrop/SortingMiniGame.cs`, `SortingMiniGameLauncher.cs`
+最終更新: 2026-08-04  
+実装: `Assets/Scripts/MiniGameS/DragDrop/SortingMiniGame.cs`, `SortingDraggable.cs`, `SortingDropBox.cs`  
+Prefab: `Assets/Prefabs/MiniGames/SortingMiniGame.prefab`
 
-## Responsibility
+## 責務
 
-This feature adapts the Motonaga sorting prototype into the shared `TaskKind.DragDrop` player-mini-game contract. It uses uGUI drag events only; no 2D or 3D physics is involved. The Personal prototype remains unmodified.
+Motonaga の仕分け試作を本編の `TaskKind.DragDrop` へ取り込んだもの。uGUI のドラッグイベントだけを使い、2D / 3D の物理演算は使わない。試作元は変更していない。
 
-## Public contract
+## 公開契約
 
-| API / event | Meaning |
+| API / イベント | 意味 |
 | --- | --- |
-| `SortingMiniGameLauncher.TryStart` | Creates one temporary sorting game below `MiniGameHost` and reports its single completion callback to Core. |
-| `SortingDraggable` | Tracks the pointer while dragging one card and restores it when no valid box receives it. |
-| `SortingDropBox.OnDrop` | Accepts a card, then delegates correct/incorrect handling to `SortingMiniGame`. |
-| `SortingMiniGame.Drop` | Removes correct cards; two incorrect drops finish with `MISSED`. |
+| `SortingDraggable` | カード 1 枚を掴んで動かす。どの箱にも入らなければ元の位置へ戻す。 |
+| `SortingDropBox.OnDrop` | 落とされたカードを受け、正誤の判断を `SortingMiniGame` へ渡す。 |
+| `SortingMiniGame.Drop` | 正解のカードを取り除く。許容ミス数に達すると `MISSED` で終了し、全部片付くと `COMPLETE` で終了する。 |
 
-## Lifecycle
+正誤は、カードと箱が同じ `categoryId`（文字列）を持つかどうかで決まる。カードと箱を増やす場合は Prefab に置いてから `SortingMiniGame` の配列へ追加する。
+
+## ライフサイクル
 
 ```mermaid
 sequenceDiagram
     participant Core as MainGameController
-    participant Launcher as SortingMiniGameLauncher
+    participant Host as MiniGameHostView
     participant Game as SortingMiniGame
     participant Tasks as TaskManager
-    Core->>Launcher: TryStart(host, level, limit)
-    Launcher->>Game: Initialize
-    Game->>Game: uGUI drag / drop
-    Game-->>Launcher: OnCompleted(success, reason)
-    Launcher-->>Core: completion callback
-    Core->>Tasks: CompletePlayer once
+    Core->>Core: MiniGameCatalog から Prefab を引く
+    Core->>Host: Spawn(prefab)
+    Core->>Game: Initialize(level, timeLimit)
+    Game->>Game: 各 SortingDropBox に自分を Bind
+    Game->>Game: uGUI の drag / drop
+    Game-->>Core: OnCompleted(success, reason)
+    Core->>Tasks: CompletePlayer を 1 回
+    Core->>Host: Hide()（生成物を破棄）
 ```
 
-## Current rules and TODO
+## 設定
 
-- Three cards must be sorted into two boxes (`INBOX` and `ARCHIVE`). This is a small shared vertical slice derived from the prototype.
-- Two incorrect drops end the mini-game with failure, matching the prototype's miss cap.
-- The supplied task level and time limit are accepted by the launcher. The current card composition is intentionally fixed; per-level card count, labels, and timing are M6 tuning TODOs rather than settled specifications.
-- `Assets/Prefabs/MiniGames/SortingMiniGame.prefab` is the approved shared root and is instantiated/destroyed by the launcher. The current inner controls are still code-generated; author the final child view in that shared Prefab without changing the launcher contract.
+| 項目 | 場所 |
+| --- | --- |
+| 制限時間 | `Assets/Data/MiniGameCatalog.asset` の `DragDrop` 行 |
+| 箱とカードの配置・枚数・見た目 | Prefab の子（`InboxBox` / `ArchiveBox` / `Card_*`） |
+| 正解の対応 | 各 `SortingDropBox` と `SortingDraggable` の `categoryId` |
+| 許容ミス数 | Prefab 上の `SortingMiniGame` |
 
-## Verification
+## 現在のルールと TODO
 
-- Unity compiled with no Console errors.
-- In the Game scene, a `DragDrop` task was created and assigned through `MainGameController`; the launcher started successfully.
-- TODO: visually tune the card and box layout, then manually play-test pointer drag/drop using the final shared Prefab view.
+- カード 3 枚を 2 つの箱（`INBOX` / `ARCHIVE`）へ仕分ける。試作から取った小さな縦切りである。
+- 2 回入れ間違えると失敗で終わる。試作のミス上限に合わせている。
+- TODO: レベル別のカード枚数・ラベル・時間はプレイテストで調整する。現在の構成は暫定である。
+
+## 検証
+
+- Play モードで Game シーンの `DragDrop` タスクから起動できることを確認済み。Console エラー 0 件。
+- ドラッグ量は Canvas の拡大率で補正している。1920x1080 以外の解像度でもカードがポインタからずれない。
+- TODO: 実機のポインタ操作でドラッグ＆ドロップを手動確認する。

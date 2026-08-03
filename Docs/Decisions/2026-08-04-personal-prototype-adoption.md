@@ -14,4 +14,6 @@ Motonagaさんのタイトル遷移試作はEnter入力でシーンを開く最�
 
 ## 取り込み方法
 
-`Assets/Personal/` の原本は変更しない。本編用の独立クラスへ複製・再設計し、`IPlayerMiniGameLauncher`、`MiniGameBase`、`MiniGameHost` の契約に接続する。
+`Assets/Personal/` の原本は変更しない。本編用の独立クラスへ複製・再設計し、`MiniGameBase` と `MiniGameHost` の契約に接続する。
+
+> 2026-08-04 更新: 当時あった `IPlayerMiniGameLauncher` は `MiniGameCatalog` へ置き換えた。また、参照元だった `MiniGameSample/RepidClickMiniGame` は本編と同名クラスを重複定義していたため削除している（[実行時 UI 生成の全廃](2026-08-04-remove-runtime-ui-construction.md)）。

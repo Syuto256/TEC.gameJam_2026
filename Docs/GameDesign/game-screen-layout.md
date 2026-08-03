@@ -45,7 +45,9 @@ MainCanvas
       └─ OptionPanel
 ```
 
-デバイス面の子は両面で同じ名前とする。`Background` / `DeviceFrame` / `TaskAreas` に `Pc` / `Tablet` の接頭辞を付けない。共通の骨格を `DeviceWorkspace.prefab` に置き、デバイス固有の背景色・端末枠・待機文言だけを Prefab Variant で上書きするためである。3 つ目のデバイス面が必要になった場合も、Variant を 1 つ作って `GameSceneUiReferences` の `workspaces` へ追加するだけで足りる。
+デバイス面の子は両面で同じ名前とする。`Background` / `DeviceFrame` / `TaskAreas` に `Pc` / `Tablet` の接頭辞を付けない。共通の骨格を `DeviceWorkspace.prefab` に置き、デバイス固有の背景色・端末枠・待機文言だけを Prefab Variant で上書きするためである。3 つ目のデバイス面が必要になった場合も、Variant を 1 つ作って `GameManager` の `workspaces` へ追加するだけで足りる。
+
+`MainCanvas` と同じ階層に `GameManager` GameObject があり、`GameManager` / `MainGameController` / `DeviceScreenController` の 3 つを持つ。ほかに `Main Camera` と `EventSystem` が常設されている。
 
 | 所属 | 含めるもの | 表示条件 |
 | --- | --- | --- |
@@ -70,7 +72,9 @@ MainCanvas
 | タスクが出現できる範囲 | 各 `TaskSpawnArea` の `RectTransform` | その領域の子としてタスクを生成 |
 | タスク吹き出しの見た目 | `Assets/Prefabs/UI/TaskBubble.prefab` | 種別・状態・残り時間を書き込むだけ |
 | タスク吹き出しの並び方 | 各 `TaskSpawnArea` の Layout Group | 並びに関与しない |
+| タスク種別の表示名・アイコン | `Assets/Data/MiniGameCatalog.asset` | 登録内容を吹き出しへ渡すだけ |
 | ミニゲームの表示範囲 | `Shared/MiniGameHost` の `RectTransform` | Host の表示・非表示と Prefab の生成・破棄のみ |
+| ミニゲーム 1 本ごとの見た目 | `Assets/Prefabs/MiniGames/` の各 Prefab | 生成して `Initialize` を呼ぶだけ |
 
 タスク吹き出しの縦位置は、`TaskSpawnArea` に付けた `VerticalLayoutGroup`（`childAlignment = MiddleCenter`）で出現エリアの中央に固定する。件数が増えても中央を基準に上下へ広がる。並ぶ向きを変える場合は Layout Group を差し替える。
 
@@ -133,6 +137,6 @@ MainCanvas
 
 ## 実装時の構造
 
-`Game.unity` に Canvas・共通 UI・PCワークスペース・Tabletワークスペース・オーバーレイを常設する。共通 UI は HUD、デバイス切替タブ、`MiniGameHost`、ポーズなどを保持し、PC / Tablet 固有の装飾・待機画面・タスク領域から分離する。画面配置と装飾は Hierarchy から直接編集し、`GameSceneUiReferences` はそれらをゲームロジックへ参照渡しするだけにする。実行時に生成するのは、左右のタスク吹き出しと共通 `MiniGameHost` に出すミニゲーム Prefab のみである。
+`Game.unity` に Canvas・共通 UI・PCワークスペース・Tabletワークスペース・オーバーレイを常設する。共通 UI は HUD、デバイス切替タブ、`MiniGameHost`、ポーズなどを保持し、PC / Tablet 固有の装飾・待機画面・タスク領域から分離する。画面配置と装飾は Hierarchy から直接編集し、`GameManager` はそれらをゲームロジックへ参照渡しするだけにする。実行時に生成するのは、左右のタスク吹き出しと、共通 `MiniGameHost` に出すミニゲーム Prefab と、なぞりミニゲームのガイド線のみである。
 
 画面構成と素材受け入れが安定した後に、暗い部屋と選択デバイス画面の発光を表現する疑似 2D ライティングを技術検証する。詳細は [延期した技術検証の記録](../Decisions/2026-08-04-deferred-ui-lighting-prototype.md) を参照。

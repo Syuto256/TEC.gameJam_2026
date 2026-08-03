@@ -20,9 +20,6 @@ public class GameTuningSettings : ScriptableObject
     [Header("【スコア設定】")]
     public ScoreSettings score;
 
-    [Header("【ミニゲーム制限時間（秒）】")]
-    public MiniGameTimeLimits miniGameTimes;
-
     [Header("Difficulty profiles")]
     [Tooltip("Difficulty-select used by the shared game loop. Empty entries use the legacy values above as a fallback.")]
     public List<DifficultyProfile> difficultyProfiles = new List<DifficultyProfile>();
@@ -56,17 +53,6 @@ public class GameTuningSettings : ScriptableObject
         public int craftPointsDiff2 = 15;
         public int craftPointsDiff3 = 25;
         public float maxTimeBonusAdd = 0.50f;
-    }
-
-    [Serializable]
-    public class MiniGameTimeLimits
-    {
-        public float typing = 7.0f;
-        public float dragDrop = 8.0f;
-        public float qte = 1.5f; // 1入力あたりの時間
-        public float timing = 6.5f;
-        public float rapidClick = 4.0f;
-        public float tracing = 7.0f;
     }
 
     [Serializable]

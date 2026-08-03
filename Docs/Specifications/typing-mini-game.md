@@ -58,7 +58,7 @@
 | 3 | 長い単語、複雑な音節 | サグラダファミリア、シンギュラリティ |
 | 4 | 文、長い外来語、記号を含む表示 | 行く春を惜しむこのごろです、アーティフィカルインテリジェンス |
 
-問題レベルはゲーム難易度とは別である。ゲーム難易度からの出題範囲は [ゲーム企画概要](../GameDesign/game-overview.md) を正とする。制限時間は `MiniGameCatalog` と `GameTuningSettings.miniGameTimes.typing` で調整する。
+問題レベルはゲーム難易度とは別である。ゲーム難易度からの出題範囲は [ゲーム企画概要](../GameDesign/game-overview.md) を正とする。制限時間は `Assets/Data/MiniGameCatalog.asset` の `Typing` 行でレベル別に調整する。
 
 ## 6. UI
 

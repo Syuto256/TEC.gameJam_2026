@@ -19,6 +19,8 @@ public sealed class TaskBubbleView : MonoBehaviour, IPointerClickHandler
     [SerializeField] private TextMeshProUGUI timeText;
     [Tooltip("残り寿命を表すバー。Sprite を割り当て、Image Type を Filled にする。")]
     [SerializeField] private Image lifetimeGauge;
+    [Tooltip("種別アイコン。MiniGameCatalog の icon が空なら非表示にする。")]
+    [SerializeField] private Image kindIcon;
 
     [Header("State colors")]
     [SerializeField] private Color availableColor = new Color(0.16f, 0.42f, 0.66f, 1f);
@@ -34,6 +36,7 @@ public sealed class TaskBubbleView : MonoBehaviour, IPointerClickHandler
 
     private MainGameController controller;
     private TaskInstance task;
+    private string kindLabel;
 
     public int TaskId => task?.Id ?? -1;
 
@@ -44,11 +47,19 @@ public sealed class TaskBubbleView : MonoBehaviour, IPointerClickHandler
             (nameof(background), background), (nameof(kindText), kindText), (nameof(stateText), stateText));
     }
 
-    /// <summary>表示するタスクと通知先を割り当てる。</summary>
-    public void Bind(MainGameController owner, TaskInstance instance)
+    /// <summary>表示するタスクと通知先を割り当てる。表示名とアイコンは MiniGameCatalog の登録内容を渡す。</summary>
+    public void Bind(MainGameController owner, TaskInstance instance, string displayName, Sprite icon)
     {
         controller = owner;
         task = instance;
+        kindLabel = displayName;
+
+        if (kindIcon != null)
+        {
+            kindIcon.sprite = icon;
+            kindIcon.enabled = icon != null;
+        }
+
         Refresh();
     }
 
@@ -61,7 +72,7 @@ public sealed class TaskBubbleView : MonoBehaviour, IPointerClickHandler
 
         if (kindText != null)
         {
-            kindText.text = task.Kind + "  Lv." + task.Level;
+            kindText.text = (string.IsNullOrWhiteSpace(kindLabel) ? task.Kind.ToString() : kindLabel) + "  Lv." + task.Level;
         }
 
         if (stateText != null)

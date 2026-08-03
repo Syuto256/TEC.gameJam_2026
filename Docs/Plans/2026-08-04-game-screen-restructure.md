@@ -1,9 +1,9 @@
 # Game 画面の静的 UI 化・再構成計画
 
 最終更新: 2026-08-04  
-状態: 要件整理中
+状態: R1〜R6 完了。後続として、旧来のやり方の全廃（[実行時 UI 生成の全廃](../Decisions/2026-08-04-remove-runtime-ui-construction.md)）まで実施済み。
 
-関連資料: [Game 画面レイアウト案](../GameDesign/game-screen-layout.md) / [共通 MiniGameHost の決定](../Decisions/2026-08-04-shared-mini-game-host.md) / [メインゲーム画面・接続仕様](../Specifications/main-game-flow.md)
+関連資料: [シーン構造](../Architecture/scene-structure.md) / [Game 画面レイアウト案](../GameDesign/game-screen-layout.md) / [共通 MiniGameHost の決定](../Decisions/2026-08-04-shared-mini-game-host.md) / [メインゲーム画面・接続仕様](../Specifications/main-game-flow.md)
 
 ## 目的
 
@@ -74,12 +74,27 @@ View の分割方針と各 View の保持する参照は [GameSceneUiReferences 
 ### R6: 調整可能化と検証
 
 - 背景、端末枠、タスク領域、HUD、タブ、モーダルを個別に Prefab 化する範囲を決める。（タスク吹き出しとデバイス面を Prefab 化済み。HUD・タブ・モーダルは Scene 直置きのまま）
-- 素材差し替え手順と、Scene 上で調整する項目を資料化する。（[クラスカタログ](../Architecture/class-catalog.md) の「デバイス面の調整場所」「タスク吹き出しの調整場所」に記載済み）
+- 素材差し替え手順と、Scene 上で調整する項目を資料化する。（[クラスカタログ](../Architecture/class-catalog.md) の「調整場所の索引」に記載済み）
 
 デバイス面は共通骨格の `DeviceWorkspace.prefab` と、デバイス固有値だけを上書きする Variant 2 つに分けた。子の名前は両面で共通化し、`Pc` / `Tablet` の接頭辞を外している（[画面レイアウト案](../GameDesign/game-screen-layout.md) の Hierarchy を更新済み）。
 - 1920×1080 と低解像度一種、PC / Tablet 切替、ミニゲーム、ポーズ、Clear / GameOver を確認する。
 
 **確認ゲート:** Console エラー 0 件。配置・素材をコード変更なしで差し替えられる。
+
+### R7: 旧来のやり方の全廃（2026-08-04 追加・完了）
+
+R1〜R6 で Game シーンだけが静的 UI になった結果、「見た目を変えたいとき Scene を見るのかコードを見るのか」が対象ごとに逆になり、担当者が構造を把握できない状態になった。移行を最後まで進めて、覚える規則を 1 つにする。
+
+- `SceneUiBootstrap` を削除し、常駐サービスの用意を `AppServices` へ移す。（完了）
+- シーンごとに `<シーン名>Manager` を置く。`GameSceneUiReferences` は `GameManager` へ改名する。（完了）
+- Title / DifficultySelect / Clear / GameOver の UI を Scene 上の実体にする。（完了）
+- `IPlayerMiniGameLauncher` と 4 つの Launcher を削除し、`MiniGameCatalog` を唯一の登録点にする。（完了）
+- ミニゲーム 4 本の `BuildUi` を廃し、Prefab 上の実体を参照する形にする。（完了。なぞりのガイド線のみ複製で生成）
+- 死にコード（旧 `GameManager.cs`、`MiniGameSample/`）を削除する。（完了）
+
+決定と検証結果は [実行時 UI 生成の全廃](../Decisions/2026-08-04-remove-runtime-ui-construction.md) に記録した。
+
+**確認ゲート:** Title から GameOver までの一巡が Console エラー 0 件で通り、ミニゲームを 1 本追加するのに `Game.unity` を触らずに済む。（達成）
 
 ## 実装上の制約
 
