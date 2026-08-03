@@ -15,8 +15,7 @@ public sealed class MainGameController : MonoBehaviour
     private TaskManager taskManager;
     private GameSession session;
     private HudView hudView;
-    private Transform pcTaskSpawnArea;
-    private Transform padTaskSpawnArea;
+    private DeviceWorkspaceView[] workspaces;
     private MiniGameHostView miniGameHost;
     private PauseMenuView pauseMenu;
     private IPlayerMiniGameLauncher[] miniGameLaunchers;
@@ -31,11 +30,13 @@ public sealed class MainGameController : MonoBehaviour
     public TaskManager TaskManager => taskManager;
     public bool IsPaused => paused;
 
+    /// <summary>自力ミニゲームの進行中・終了を通知する。デバイス切替の可否に使う。</summary>
+    public event System.Action<bool> PlayerMiniGameActiveChanged;
+
     public void Initialize(
         GameTuningSettings settings,
         HudView hud,
-        Transform pcSpawnArea,
-        Transform padSpawnArea,
+        DeviceWorkspaceView[] deviceWorkspaces,
         MiniGameHostView host,
         PauseMenuView pause,
         IPlayerMiniGameLauncher[] launchers)
@@ -51,9 +52,16 @@ public sealed class MainGameController : MonoBehaviour
             return;
         }
 
-        if (hud == null || host == null || pause == null || pcSpawnArea == null || padSpawnArea == null)
+        if (hud == null || host == null || pause == null)
         {
-            Debug.LogError("MainGameController requires HudView, MiniGameHostView, PauseMenuView, and both task spawn areas.");
+            Debug.LogError("MainGameController requires HudView, MiniGameHostView, and PauseMenuView.");
+            return;
+        }
+
+        workspaces = deviceWorkspaces ?? System.Array.Empty<DeviceWorkspaceView>();
+        if (ResolveSpawnArea(TaskSurface.Pc) == null || ResolveSpawnArea(TaskSurface.Pad) == null)
+        {
+            Debug.LogError("MainGameController requires a DeviceWorkspaceView with a spawn area for Pc and for Pad.", this);
             return;
         }
 
@@ -70,8 +78,6 @@ public sealed class MainGameController : MonoBehaviour
 
         tuningSettings = settings;
         hudView = hud;
-        pcTaskSpawnArea = pcSpawnArea;
-        padTaskSpawnArea = padSpawnArea;
         miniGameHost = host;
         pauseMenu = pause;
         miniGameLaunchers = launchers ?? System.Array.Empty<IPlayerMiniGameLauncher>();
@@ -159,13 +165,13 @@ public sealed class MainGameController : MonoBehaviour
         }
 
         miniGameHost.Show();
-        activePlayerTaskId = taskId;
+        SetActivePlayerTask(taskId);
         var timeLimit = task.Kind == TaskKind.Typing ? tuningSettings.miniGameTimes.typing :
             task.Kind == TaskKind.Tracing ? tuningSettings.miniGameTimes.tracing :
             task.Kind == TaskKind.RapidClick ? tuningSettings.miniGameTimes.rapidClick : tuningSettings.miniGameTimes.dragDrop;
         if (!launcher.TryStart(miniGameHost.ContentRoot, task.Level, timeLimit, (success, reason) => CompletePlayerMiniGame(taskId, success)))
         {
-            activePlayerTaskId = -1;
+            SetActivePlayerTask(-1);
             miniGameHost.Hide();
             taskManager.CompletePlayer(taskId, false);
             return false;
@@ -218,12 +224,42 @@ public sealed class MainGameController : MonoBehaviour
         var surface = pcCount <= padCount && pcCount < maxTasks ? TaskSurface.Pc : TaskSurface.Pad;
         var level = CalculateTaskLevel();
         var kind = SpawnKinds[nextTaskKindIndex++ % SpawnKinds.Length];
+        var parent = ResolveSpawnArea(surface);
+        if (parent == null)
+        {
+            return;
+        }
+
         var task = taskManager.CreateTask(kind, surface, level, difficultyProfile.taskLifetimeSec);
-        var parent = surface == TaskSurface.Pc ? pcTaskSpawnArea : padTaskSpawnArea;
         var bubble = Instantiate(taskBubblePrefab, parent, false);
         bubble.name = "TaskBubble_" + task.Id;
         bubble.Bind(this, task);
         taskViews.Add(task.Id, bubble);
+    }
+
+    /// <summary>自力ミニゲームの担当タスクを更新し、開始・終了の変化だけを通知する。</summary>
+    private void SetActivePlayerTask(int taskId)
+    {
+        var wasActive = activePlayerTaskId >= 0;
+        activePlayerTaskId = taskId;
+        var isActive = activePlayerTaskId >= 0;
+        if (wasActive != isActive)
+        {
+            PlayerMiniGameActiveChanged?.Invoke(isActive);
+        }
+    }
+
+    private RectTransform ResolveSpawnArea(TaskSurface surface)
+    {
+        foreach (var workspace in workspaces)
+        {
+            if (workspace != null && workspace.Surface == surface)
+            {
+                return workspace.PickSpawnArea();
+            }
+        }
+
+        return null;
     }
 
     private int CountActiveTasks(TaskSurface surface)
@@ -258,7 +294,7 @@ public sealed class MainGameController : MonoBehaviour
         session.Apply(result);
         if (activePlayerTaskId == result.Task.Id)
         {
-            activePlayerTaskId = -1;
+            SetActivePlayerTask(-1);
             miniGameHost.Hide();
         }
         if (taskViews.TryGetValue(result.Task.Id, out var view))

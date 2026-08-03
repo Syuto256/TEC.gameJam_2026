@@ -17,6 +17,7 @@ HUD の HP バー・残り時間・スコアのように、レイアウト案が
 | `DeviceTabsView` | `Shared/DeviceTabs` | PC / Tablet タブ、選択強調表示（任意） | `SurfaceRequested(TaskSurface)` |
 | `MiniGameHostView` | `Shared/MiniGameHost` | ミニゲーム Prefab の生成先 `contentArea`、表示を切り替える `root`（任意） | なし |
 | `PauseMenuView` | `Shared/ModalLayer` | ポーズパネル、再開、難易度選択へ戻る、オプション（任意） | `ResumeRequested` / `BackToDifficultyRequested` |
+| `DeviceWorkspaceView` | 各デバイス面のルート | `Surface`、左右の `TaskSpawnArea`、`CanvasGroup` | なし |
 
 各 View は `Initialize()` を持ち、必須参照の検証と自身のボタン配線をここで行う。
 
@@ -29,12 +30,12 @@ HUD の HP バー・残り時間・スコアのように、レイアウト案が
 | 区分 | 参照 |
 | --- | --- |
 | View | `HudView`、`DeviceTabsView`、`MiniGameHostView`、`PauseMenuView` |
-| ワークスペース | PC / Tablet の各ルート、各タスク生成領域 |
+| ワークスペース | `DeviceWorkspaceView[] workspaces`（配列 1 つ） |
 | 制御 | `MainGameController`、`DeviceScreenController` |
 
-> ワークスペースの 4 参照は、デバイス面を Prefab 化して `DeviceWorkspaceView` の配列にまとめる案がある。3 つ目のデバイス面が必要になった時点で検討する。
+デバイス面は個別フィールドではなく配列で持つ。3 つ目の面を足す場合は Variant を 1 つ作って配列へ追加するだけで、`GameSceneUiReferences` も `DeviceScreenController` も `MainGameController` も変更しない。配列の `Surface` 重複と未設定要素は開始時に検出して停止する。
 
-> TODO（2026-08-04）: タスク生成領域は現在 `LeftTaskArea/TaskSpawnArea` だけを参照している。左右への振り分けは R5 の範囲。
+左右のタスク生成領域は `DeviceWorkspaceView.PickSpawnArea()` が持ち、吹き出しの少ない側を返す。`MainGameController` は `Surface` から面を引いてこれを呼ぶだけで、左右を判断しない。
 
 ## 配置上の注意
 

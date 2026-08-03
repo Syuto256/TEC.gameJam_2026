@@ -102,9 +102,21 @@ See [Shared audio manager detail](audio-manager.md).
 | `DeviceScreenController` | `Assets/Scripts/Core/DeviceScreenController.cs` | PC / Tablet ワークスペースの排他表示と切替可否を決める。 | `DeviceTabsView`, `TaskSurface` |
 | `HudView` / `HudSnapshot` | `Assets/Scripts/Core/UI/HudView.cs` | HP バー・残り時間・スコア・難易度の表示と Pause 要求。時刻書式もここが持つ。 | uGUI, TextMeshPro |
 | `DeviceTabsView` | `Assets/Scripts/Core/UI/DeviceTabsView.cs` | PC / Tablet タブの外観と入力。どちらを表示するかは決めない。 | uGUI, `TaskSurface` |
+| `DeviceWorkspaceView` | `Assets/Scripts/Core/UI/DeviceWorkspaceView.cs` | 1 デバイス面の表示状態（`CanvasGroup`）と、左右のタスク生成先の選択。 | uGUI, `TaskSurface` |
 | `MiniGameHostView` | `Assets/Scripts/Core/UI/MiniGameHostView.cs` | 共通ミニゲーム領域の表示状態と Prefab 生成先の提供。 | UnityEngine |
 | `PauseMenuView` | `Assets/Scripts/Core/UI/PauseMenuView.cs` | ポーズ／オプションのパネル表示とボタン入力。ゲーム進行は判断しない。 | uGUI |
 | `SceneUiValidation` | `Assets/Scripts/Core/UI/SceneUiValidation.cs` | 各 View の必須参照不足を、フィールド名を列挙して一度に報告する。 | UnityEngine |
+
+### デバイス面の調整場所
+
+| 調整対象 | 場所 |
+| --- | --- |
+| 両面に共通する骨格・タスク領域の配置 | `Assets/Prefabs/UI/DeviceWorkspace.prefab` |
+| PC 固有の背景色・端末枠・待機文言 | `Assets/Prefabs/UI/DeviceWorkspace_Pc.prefab`（Variant） |
+| Tablet 固有の同上 | `Assets/Prefabs/UI/DeviceWorkspace_Tablet.prefab`（Variant） |
+| どの面を使うか | `GameSceneUiReferences` の `workspaces` 配列 |
+
+`DeviceWorkspaceView.Surface` は Variant ごとに設定する。同じ `Surface` を持つ面を 2 つ登録すると開始時にエラーで停止する。
 
 ### タスク吹き出しの調整場所
 

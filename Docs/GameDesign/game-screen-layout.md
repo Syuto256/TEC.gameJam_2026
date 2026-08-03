@@ -24,30 +24,28 @@ PC とタブレットは左右に同時表示する二分割画面ではない�
 
 ```text
 MainCanvas
-├─ Shared
-│  ├─ Hud
-│  ├─ DeviceTabs
-│  ├─ MiniGameHost
-│  └─ ModalLayer
-│     ├─ PausePanel
-│     └─ OptionPanel
-├─ PcOnly
-│  ├─ PcBackground
-│  ├─ PcDeviceFrame
-│  └─ PcTaskAreas
+├─ PcOnly              ← DeviceWorkspace_Pc.prefab のインスタンス
+│  ├─ Background
+│  ├─ DeviceFrame
+│  │  └─ WaitingLabel
+│  └─ TaskAreas
 │     ├─ LeftTaskArea
 │     │  └─ TaskSpawnArea
 │     └─ RightTaskArea
 │        └─ TaskSpawnArea
-└─ TabletOnly
-   ├─ TabletBackground
-   ├─ TabletDeviceFrame
-   └─ TabletTaskAreas
-      ├─ LeftTaskArea
-      │  └─ TaskSpawnArea
-      └─ RightTaskArea
-         └─ TaskSpawnArea
+├─ TabletOnly          ← DeviceWorkspace_Tablet.prefab のインスタンス
+│  └─ （PcOnly と同一構造）
+└─ Shared
+   ├─ Hud
+   ├─ DeviceTabs
+   ├─ MiniGameHost
+   │  └─ Content
+   └─ ModalLayer
+      ├─ PausePanel
+      └─ OptionPanel
 ```
+
+デバイス面の子は両面で同じ名前とする。`Background` / `DeviceFrame` / `TaskAreas` に `Pc` / `Tablet` の接頭辞を付けない。共通の骨格を `DeviceWorkspace.prefab` に置き、デバイス固有の背景色・端末枠・待機文言だけを Prefab Variant で上書きするためである。3 つ目のデバイス面が必要になった場合も、Variant を 1 つ作って `GameSceneUiReferences` の `workspaces` へ追加するだけで足りる。
 
 | 所属 | 含めるもの | 表示条件 |
 | --- | --- | --- |
@@ -55,7 +53,9 @@ MainCanvas
 | `PcOnly` | PC 固有の背景、端末枠、待機表示、PC タスク領域 | PC が選択中のときだけ表示する。 |
 | `TabletOnly` | Tablet 固有の背景、端末枠、待機表示、Tablet タスク領域 | Tablet が選択中のときだけ表示する。 |
 
-`Shared` の表示順はデバイス画面より前とする。`MiniGameHost` はデバイスの子にせず、共通 UI の最前面に置く。
+`Shared` の表示順はデバイス画面より前とする。uGUI の描画順は Hierarchy の並び順なので、`Shared` は `MainCanvas` の**最後の子**に置く。`MiniGameHost` はデバイスの子にせず、共通 UI の最前面に置く。
+
+非選択側のデバイス面は `SetActive(false)` にせず、`CanvasGroup` の `alpha` / `interactable` / `blocksRaycasts` で隠す。枝を無効化すると吹き出しの演出や Coroutine が止まり、切替演出も作れなくなるためである。非表示側のタスク寿命は `TaskManager` 側で進むため、どちらの方式でも仕様は満たす。
 
 ## 調整の所有者
 
@@ -64,6 +64,8 @@ MainCanvas
 | 調整対象 | 調整場所 | コードの責務 |
 | --- | --- | --- |
 | HUD、タブ、モーダル、端末枠、背景 | 各 GameObject の `RectTransform` と UI コンポーネント | 参照取得と表示状態の切替のみ |
+| デバイス面の共通骨格 | `Assets/Prefabs/UI/DeviceWorkspace.prefab` | 触れない |
+| デバイス固有の背景・端末枠・待機文言 | `DeviceWorkspace_Pc` / `DeviceWorkspace_Tablet` の Variant | 触れない |
 | PC / Tablet の表示範囲 | `PcOnly` / `TabletOnly` の `RectTransform` | 選択中の一方だけを表示 |
 | タスクが出現できる範囲 | 各 `TaskSpawnArea` の `RectTransform` | その領域の子としてタスクを生成 |
 | タスク吹き出しの見た目 | `Assets/Prefabs/UI/TaskBubble.prefab` | 種別・状態・残り時間を書き込むだけ |

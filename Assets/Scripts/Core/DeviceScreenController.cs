@@ -1,19 +1,18 @@
+using System;
 using UnityEngine;
 
-/// <summary>PC / Tablet ワークスペースの排他表示と、切替可否だけを担当する。</summary>
+/// <summary>どのデバイス面を主作業画面として表示するかと、切替可否だけを担当する。</summary>
 public sealed class DeviceScreenController : MonoBehaviour
 {
-    private GameObject pcOnly;
-    private GameObject tabletOnly;
+    private DeviceWorkspaceView[] workspaces = Array.Empty<DeviceWorkspaceView>();
     private DeviceTabsView tabs;
     private bool switchEnabled = true;
 
     public TaskSurface ActiveSurface { get; private set; } = TaskSurface.Pc;
 
-    public void Initialize(GameObject pc, GameObject tablet, DeviceTabsView deviceTabs)
+    public void Initialize(DeviceWorkspaceView[] deviceWorkspaces, DeviceTabsView deviceTabs)
     {
-        pcOnly = pc;
-        tabletOnly = tablet;
+        workspaces = deviceWorkspaces ?? Array.Empty<DeviceWorkspaceView>();
         tabs = deviceTabs;
 
         if (tabs != null)
@@ -35,14 +34,19 @@ public sealed class DeviceScreenController : MonoBehaviour
 
     public void Show(TaskSurface surface)
     {
-        if (!switchEnabled || pcOnly == null || tabletOnly == null)
+        if (!switchEnabled)
         {
             return;
         }
 
         ActiveSurface = surface;
-        pcOnly.SetActive(surface == TaskSurface.Pc);
-        tabletOnly.SetActive(surface == TaskSurface.Pad);
+        foreach (var workspace in workspaces)
+        {
+            if (workspace != null)
+            {
+                workspace.SetVisible(workspace.Surface == surface);
+            }
+        }
 
         if (tabs != null)
         {
