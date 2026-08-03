@@ -10,7 +10,7 @@
 | クラス | パス | 役割 | 主な依存先 |
 | --- | --- | --- | --- |
 | `AppServices` | `Assets/Scripts/Core/AppServices.cs` | 常駐サービス（`GameFlowController` / `AudioManager`）をそろえる静的クラス。各 Manager が `Start` の先頭で呼ぶ。 | `GameFlowController`, `AudioManager` |
-| `TitleManager` | `Assets/Scripts/Core/TitleManager.cs` | Title シーンの入口。Start ボタンを難易度選択へつなぐ。 | uGUI, `GameFlowController` |
+| `TitleManager` | `Assets/Scripts/Core/TitleManager.cs` | Title シーンの入口。Start ボタンとクレジットモーダルの開閉を配線する。 | uGUI, `GameFlowController` |
 | `DifficultySelectManager` | `Assets/Scripts/Core/DifficultySelectManager.cs` | DifficultySelect シーンの入口。ボタンと `GameDifficulty` の対応を配列で持つ。 | uGUI, `GameFlowController` |
 | `GameManager` | `Assets/Scripts/Core/GameManager.cs` | Game シーンの入口。View と Controller を接続するだけで、ウィジェット参照は持たない。 | 各 View, `MainGameController`, `DeviceScreenController` |
 | `ResultManager` | `Assets/Scripts/Core/ResultManager.cs` | Clear / GameOver シーンの入口。直前の結果を書き、ボタンをつなぐ。両シーンで同じクラスを使う。 | uGUI, TextMeshPro, `GameSessionResult` |
