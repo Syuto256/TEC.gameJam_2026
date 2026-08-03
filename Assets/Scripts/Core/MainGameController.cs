@@ -6,6 +6,9 @@ public sealed class MainGameController : MonoBehaviour
 {
     private static readonly TaskKind[] SpawnKinds = { TaskKind.Typing, TaskKind.Tracing, TaskKind.RapidClick, TaskKind.DragDrop };
 
+    [Tooltip("タスク吹き出しの見た目はこの Prefab で調整する。")]
+    [SerializeField] private TaskBubbleView taskBubblePrefab;
+
     private readonly Dictionary<int, TaskBubbleView> taskViews = new Dictionary<int, TaskBubbleView>();
     private GameTuningSettings tuningSettings;
     private GameTuningSettings.DifficultyProfile difficultyProfile;
@@ -51,6 +54,17 @@ public sealed class MainGameController : MonoBehaviour
         if (hud == null || host == null || pause == null || pcSpawnArea == null || padSpawnArea == null)
         {
             Debug.LogError("MainGameController requires HudView, MiniGameHostView, PauseMenuView, and both task spawn areas.");
+            return;
+        }
+
+        if (taskBubblePrefab == null)
+        {
+            Debug.LogError("MainGameController requires a TaskBubbleView prefab.", this);
+            return;
+        }
+
+        if (!taskBubblePrefab.ValidateReferences())
+        {
             return;
         }
 
@@ -206,7 +220,10 @@ public sealed class MainGameController : MonoBehaviour
         var kind = SpawnKinds[nextTaskKindIndex++ % SpawnKinds.Length];
         var task = taskManager.CreateTask(kind, surface, level, difficultyProfile.taskLifetimeSec);
         var parent = surface == TaskSurface.Pc ? pcTaskSpawnArea : padTaskSpawnArea;
-        taskViews.Add(task.Id, TaskBubbleView.Create(parent, this, task));
+        var bubble = Instantiate(taskBubblePrefab, parent, false);
+        bubble.name = "TaskBubble_" + task.Id;
+        bubble.Bind(this, task);
+        taskViews.Add(task.Id, bubble);
     }
 
     private int CountActiveTasks(TaskSurface surface)

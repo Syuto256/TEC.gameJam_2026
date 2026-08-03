@@ -46,7 +46,7 @@ See [Game flow and UI detail](game-flow-controller.md).
 | Class | Path | Responsibility | Dependencies |
 | --- | --- | --- | --- |
 | `MainGameController` | `Assets/Scripts/Core/MainGameController.cs` | Creates a session, spawns tasks, applies task results, refreshes HUD, and finishes the session. | `GameTuningSettings`, `TaskManager`, `GameSession`, `GameFlowController` |
-| `TaskBubbleView` | `Assets/Scripts/Core/TaskBubbleView.cs` | Draws one task and routes left/right pointer clicks to the controller. | uGUI, TextMeshPro, EventSystem, `TaskInstance` |
+| `TaskBubbleView` | `Assets/Scripts/Core/TaskBubbleView.cs` | Writes one task's kind, state, and remaining lifetime into the prefab's widgets, and routes left/right pointer clicks to the controller. Holds no position or size. | uGUI, TextMeshPro, EventSystem, `TaskInstance` |
 
 See [Main game controller detail](main-game-controller.md).
 
@@ -105,6 +105,19 @@ See [Shared audio manager detail](audio-manager.md).
 | `MiniGameHostView` | `Assets/Scripts/Core/UI/MiniGameHostView.cs` | 共通ミニゲーム領域の表示状態と Prefab 生成先の提供。 | UnityEngine |
 | `PauseMenuView` | `Assets/Scripts/Core/UI/PauseMenuView.cs` | ポーズ／オプションのパネル表示とボタン入力。ゲーム進行は判断しない。 | uGUI |
 | `SceneUiValidation` | `Assets/Scripts/Core/UI/SceneUiValidation.cs` | 各 View の必須参照不足を、フィールド名を列挙して一度に報告する。 | UnityEngine |
+
+### タスク吹き出しの調整場所
+
+| 調整対象 | 場所 |
+| --- | --- |
+| 大きさ、背景、フォント、文字配置、寿命バーの有無 | `Assets/Prefabs/UI/TaskBubble.prefab` |
+| 状態別の配色（未着手 / 自力 / AI / 解決済み） | Prefab 上の `TaskBubbleView` の State colors |
+| 状態別の表示文字列 | Prefab 上の `TaskBubbleView` の State labels |
+| 縦位置、間隔、余白、並ぶ向き | 各 `TaskSpawnArea` の Layout Group |
+
+`TaskSpawnArea` には `VerticalLayoutGroup`（`childAlignment = MiddleCenter`）を付け、吹き出しの並びを出現エリアの中央へ固定する。`HorizontalLayoutGroup` へ差し替えれば横並びになり、コードは変更しない。Layout Group は子の `anchorMin` / `anchorMax` / `anchoredPosition` を driven property として支配するため、Prefab 側でアンカーを設定しても位置には影響しない。大きさは `childControlWidth` / `childControlHeight` を無効にしているため Prefab の `sizeDelta` が保たれる。
+
+`MainGameController` は `taskBubblePrefab` を Inspector で保持し、生成時に親を指定して `Bind` するだけである。座標・サイズ・配色をゲーム進行コードへ戻さないこと。
 
 **契約:** View は `Awake` ではなく `Initialize()` で自身のボタンを配線する。`PausePanel` のように非表示で開始する枝に置かれた場合、`Awake` は走らないためである。`MiniGameHostView.ContentRoot` は Launcher へ渡す親であり、Launcher はこの下の子だけを破棄する。ホスト直下に見出しや装飾を置く場合は `contentArea` の外に置くこと。
 

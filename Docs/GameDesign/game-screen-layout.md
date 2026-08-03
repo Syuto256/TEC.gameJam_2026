@@ -66,9 +66,13 @@ MainCanvas
 | HUD、タブ、モーダル、端末枠、背景 | 各 GameObject の `RectTransform` と UI コンポーネント | 参照取得と表示状態の切替のみ |
 | PC / Tablet の表示範囲 | `PcOnly` / `TabletOnly` の `RectTransform` | 選択中の一方だけを表示 |
 | タスクが出現できる範囲 | 各 `TaskSpawnArea` の `RectTransform` | その領域の子としてタスクを生成 |
+| タスク吹き出しの見た目 | `Assets/Prefabs/UI/TaskBubble.prefab` | 種別・状態・残り時間を書き込むだけ |
+| タスク吹き出しの並び方 | 各 `TaskSpawnArea` の Layout Group | 並びに関与しない |
 | ミニゲームの表示範囲 | `Shared/MiniGameHost` の `RectTransform` | Host の表示・非表示と Prefab の生成・破棄のみ |
 
-タスク吹き出しの並び方は、`TaskSpawnArea` の大きさに追従する実装へ移行する。固定ピクセル座標や Scene 固有のレイアウト値をゲーム進行コードへ追加しない。
+タスク吹き出しの縦位置は、`TaskSpawnArea` に付けた `VerticalLayoutGroup`（`childAlignment = MiddleCenter`）で出現エリアの中央に固定する。件数が増えても中央を基準に上下へ広がる。並ぶ向きを変える場合は Layout Group を差し替える。
+
+固定ピクセル座標や Scene 固有のレイアウト値をゲーム進行コードへ追加しない。
 
 ## レイアウト構成
 
@@ -122,6 +126,8 @@ MainCanvas
 ## 素材差し替えと今後の演出
 
 背景、PC / タブレット外枠、発光表現、左右のタスク吹き出し領域、切替タブ、HUD を別々の UI / Prefab 単位として扱い、デザイナー素材をロジック変更なしで差し替えられる形を目指す。
+
+タスク吹き出しは `Assets/Prefabs/UI/TaskBubble.prefab` として先行して Prefab 化済みである。状態別の配色と表示文字列は Prefab 上の `TaskBubbleView` の Inspector に出しており、素材差し替えとあわせてコード変更なしで調整できる。
 
 ## 実装時の構造
 

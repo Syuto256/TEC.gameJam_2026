@@ -3,72 +3,100 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-/// <summary>一件の TaskInstance を表す暫定 Canvas UI。左クリックは自力、右クリックは AI を依頼する。</summary>
+/// <summary>一件の TaskInstance を表す吹き出し。左クリックは自力、右クリックは AI を依頼する。</summary>
+/// <remarks>
+/// 大きさ・配色・文字・配置は Prefab と `TaskSpawnArea` の Layout Group で調整する。
+/// このクラスはタスクの状態を割り当てられた表示先へ書き込むだけで、座標もサイズも持たない。
+/// </remarks>
 public sealed class TaskBubbleView : MonoBehaviour, IPointerClickHandler
 {
+    [Header("Required")]
+    [SerializeField] private Image background;
+    [SerializeField] private TextMeshProUGUI kindText;
+    [SerializeField] private TextMeshProUGUI stateText;
+
+    [Header("Optional")]
+    [SerializeField] private TextMeshProUGUI timeText;
+    [Tooltip("残り寿命を表すバー。Sprite を割り当て、Image Type を Filled にする。")]
+    [SerializeField] private Image lifetimeGauge;
+
+    [Header("State colors")]
+    [SerializeField] private Color availableColor = new Color(0.16f, 0.42f, 0.66f, 1f);
+    [SerializeField] private Color playerPlayingColor = new Color(0.56f, 0.24f, 0.59f, 1f);
+    [SerializeField] private Color aiProcessingColor = new Color(0.70f, 0.46f, 0.10f, 1f);
+    [SerializeField] private Color resolvedColor = new Color(0.24f, 0.24f, 0.24f, 1f);
+
+    [Header("State labels")]
+    [SerializeField] private string availableLabel = "L: SELF / R: AI";
+    [SerializeField] private string playerPlayingLabel = "SELF PLAYING";
+    [SerializeField] private string aiProcessingLabel = "AI PROCESSING";
+    [SerializeField] private string resolvedLabel = "RESOLVED";
+
     private MainGameController controller;
     private TaskInstance task;
-    private Image background;
-    private TextMeshProUGUI label;
 
     public int TaskId => task?.Id ?? -1;
 
-    public static TaskBubbleView Create(Transform parent, MainGameController controller, TaskInstance task)
+    /// <summary>Prefab の必須参照を検証する。生成前に一度だけ呼ぶ。</summary>
+    public bool ValidateReferences()
     {
-        var bubbleObject = new GameObject("TaskBubble_" + task.Id, typeof(RectTransform), typeof(Image), typeof(TaskBubbleView));
-        bubbleObject.transform.SetParent(parent, false);
+        return SceneUiValidation.Require(this,
+            (nameof(background), background), (nameof(kindText), kindText), (nameof(stateText), stateText));
+    }
 
-        var rect = bubbleObject.GetComponent<RectTransform>();
-        rect.anchorMin = new Vector2(0.5f, 0.5f);
-        rect.anchorMax = new Vector2(0.5f, 0.5f);
-        rect.pivot = new Vector2(0.5f, 0.5f);
-        rect.sizeDelta = new Vector2(220f, 110f);
-        rect.anchoredPosition = GetInitialPosition(task.Id);
-
-        var labelObject = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI));
-        labelObject.transform.SetParent(bubbleObject.transform, false);
-        var labelRect = labelObject.GetComponent<RectTransform>();
-        labelRect.anchorMin = Vector2.zero;
-        labelRect.anchorMax = Vector2.one;
-        labelRect.offsetMin = new Vector2(10f, 8f);
-        labelRect.offsetMax = new Vector2(-10f, -8f);
-
-        var view = bubbleObject.GetComponent<TaskBubbleView>();
-        view.controller = controller;
-        view.task = task;
-        view.background = bubbleObject.GetComponent<Image>();
-        view.label = labelObject.GetComponent<TextMeshProUGUI>();
-        view.label.font = TMP_Settings.defaultFontAsset;
-        view.label.fontSize = 22f;
-        view.label.alignment = TextAlignmentOptions.Center;
-        view.label.enableWordWrapping = true;
-        view.label.color = Color.white;
-        view.Refresh();
-        return view;
+    /// <summary>表示するタスクと通知先を割り当てる。</summary>
+    public void Bind(MainGameController owner, TaskInstance instance)
+    {
+        controller = owner;
+        task = instance;
+        Refresh();
     }
 
     public void Refresh()
     {
-        if (task == null || label == null)
+        if (task == null)
         {
             return;
         }
 
-        var stateText = task.State switch
+        if (kindText != null)
         {
-            TaskState.Available => "L: SELF / R: AI",
-            TaskState.PlayerPlaying => "SELF PLAYING\n(M4/M5)",
-            TaskState.AiProcessing => "AI PROCESSING",
-            _ => "RESOLVED"
-        };
-        label.text = task.Kind + "  Lv." + task.Level + "\n" + stateText + "\n" + task.RemainingLifetimeSec.ToString("0.0") + " sec";
-        background.color = task.State switch
+            kindText.text = task.Kind + "  Lv." + task.Level;
+        }
+
+        if (stateText != null)
         {
-            TaskState.Available => new Color(0.16f, 0.42f, 0.66f, 1f),
-            TaskState.PlayerPlaying => new Color(0.56f, 0.24f, 0.59f, 1f),
-            TaskState.AiProcessing => new Color(0.70f, 0.46f, 0.10f, 1f),
-            _ => new Color(0.24f, 0.24f, 0.24f, 1f)
-        };
+            stateText.text = task.State switch
+            {
+                TaskState.Available => availableLabel,
+                TaskState.PlayerPlaying => playerPlayingLabel,
+                TaskState.AiProcessing => aiProcessingLabel,
+                _ => resolvedLabel
+            };
+        }
+
+        if (timeText != null)
+        {
+            timeText.text = task.RemainingLifetimeSec.ToString("0.0");
+        }
+
+        if (lifetimeGauge != null)
+        {
+            lifetimeGauge.fillAmount = task.InitialLifetimeSec <= 0f
+                ? 0f
+                : Mathf.Clamp01(task.RemainingLifetimeSec / task.InitialLifetimeSec);
+        }
+
+        if (background != null)
+        {
+            background.color = task.State switch
+            {
+                TaskState.Available => availableColor,
+                TaskState.PlayerPlaying => playerPlayingColor,
+                TaskState.AiProcessing => aiProcessingColor,
+                _ => resolvedColor
+            };
+        }
     }
 
     public void OnPointerClick(PointerEventData eventData)
@@ -86,12 +114,5 @@ public sealed class TaskBubbleView : MonoBehaviour, IPointerClickHandler
         {
             controller.TryAssignAi(task.Id);
         }
-    }
-
-    private static Vector2 GetInitialPosition(int taskId)
-    {
-        var column = (taskId - 1) % 3;
-        var row = ((taskId - 1) / 3) % 2;
-        return new Vector2(-150f + column * 150f, 80f - row * 190f);
     }
 }
