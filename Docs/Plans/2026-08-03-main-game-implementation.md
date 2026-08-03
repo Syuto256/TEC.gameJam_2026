@@ -65,6 +65,15 @@ Assets/
 
 Build Settings は 5 シーンを確認してから置き換える。Personal 配下のシーンはビルド対象から外すが、削除はしない。
 
+### 3.3 配置の段階化
+
+| 段階 | この段階で確定すること | 後回しにすること |
+| --- | --- | --- |
+| M2〜M5: 機能配置 | Canvas のアンカー、パネルの領域、`TaskSpawnArea`、`TracingArea`、入力可能範囲、モーダルの描画順 | ピクセル単位の位置、余白、色、装飾、背景との重なり、演出位置 |
+| M6: 視覚調整 | 上記の見栄え、画面サイズごとの余白、アニメーションの終点 | ゲーム進行、タスク座標のデータ形式、入力判定の意味 |
+
+タスクの生成位置は `TaskSpawnArea` 内で決め、`TaskInstance` に Scene 座標を持たせない。なぞりの経路は `TracingArea` に対する正規化座標と距離比で管理する。これにより、後から Scene 上のオブジェクト位置や大きさを調整しても、ゲームロジックと問題データを変更しない。
+
 ## 4. 段階計画
 
 ### M0: 作業可能な共有土台
@@ -106,17 +115,19 @@ Build Settings は 5 シーンを確認してから置き換える。Personal �
 - `GameFlowController` を唯一のセッション入口とし、選択難易度と `GameSessionResult` をシーン間で保持する。
 - `Title`、`DifficultySelect`、`Clear`、`GameOver` に最小限のボタンと表示を置く。
 - `Game` に `HudPanel`、`PcTaskPanel`、`PadTaskPanel`、`MiniGameHost`、`PausePanel`、`OptionPanel` を置く。
+- 各タスク面に `TaskSpawnArea`、なぞり Prefab に `TracingArea` を置く。ここではアンカーと入力範囲だけを決め、詳細な位置・余白は調整しない。
 - PC / パッドの表示切替は `CanvasGroup` の alpha、interactable、blocksRaycasts をまとめて変更する。タスクのモデル更新は UI の可視状態に依存させない。
 - Input System の UI モジュールを確認し、Esc を `InputRouter` 経由でポーズへ接続する。
 - `AudioManager` と空の `AudioCatalog` を追加する。BGM / SFX の AudioSource を分け、クリップ未設定時は無音で終了する。
 
-**確認ゲート:** Title から全難易度を選択して Game に入れる。Esc で時間が止まり、再開・難易度選択へ戻るが動く。Clear / GameOver から DifficultySelect に戻る。画面サイズを変えても Canvas の主要 UI が読める。
+**確認ゲート:** Title から全難易度を選択して Game に入れる。Esc で時間が止まり、再開・難易度選択へ戻るが動く。Clear / GameOver から DifficultySelect に戻る。1920×1080 と低解像度の 1 種で、主要 UI が読めてクリックできる。
 
 ### M3: タスク UI と AI の縦切り
 
 **目的:** ミニゲームを起動せずとも、タスクを発生・選択・AI 処理・失効できるようにする。
 
 - `TaskBubbleView` Prefab にアイコン、問題レベル、寿命ゲージ、AI 処理中表示を置く。
+- タスク View は対応する `TaskSpawnArea` の子として生成し、最低限の重なり回避ルールだけを適用する。個別の見栄え調整は行わない。
 - `TaskManager` の `TaskInstance` と PC / パッドの各 View を 1 対 1 で結び、生成・破棄を同期する。
 - 左クリックは `MiniGameHost` へ起動要求を出し、Host が空でない場合は受け付けない。
 - 右クリックは AI 依頼を行い、クールダウン中・解決済み・実行中のタスクを拒否する。
@@ -142,7 +153,7 @@ Build Settings は 5 シーンを確認してから置き換える。Personal �
 
 - `TracingPathDatabase` とレベル別経路データを作成する。
 - `TracingMiniGame`、ガイド線描画、チェックポイント進捗、逸脱判定、離脱判定を実装する。
-- `RectTransformUtility` で Screen 座標を Canvas ローカル座標へ変換し、Canvas Scaler に依存しない判定にする。
+- `RectTransformUtility` で Screen 座標を `TracingArea` の正規化座標へ変換し、Canvas Scaler と後の位置調整に依存しない判定にする。
 - `MiniGameCatalog` に追加し、タスク生成候補へ含める。
 
 **確認ゲート:** 始点外クリック、正しい完走、許容距離超過、途中離脱、時間切れを確認する。異なる解像度でも見た目と判定が一致する。
@@ -154,7 +165,7 @@ Build Settings は 5 シーンを確認してから置き換える。Personal �
 - 連打とドラッグ＆ドロップを新規本番クラス・Prefab として移植し、`MiniGameCatalog` へ登録する。
 - BGM / SE を `AudioCatalog` に登録し、開始、タスク発生、AI、成功、失敗、HP、ポーズ、結果へ接続する。
 - 難易度プロファイルの生成間隔、寿命、上限、レベル曲線、スコアをプレイテストで調整する。
-- フェード、吹き出しゲージ、画面揺れ、スコア表示の優先度を再評価する。
+- フェード、吹き出しゲージ、画面揺れ、スコア表示と、Scene 上の詳細な位置・余白・背景との重なりを調整する。
 
 **確認ゲート:** P0 / P1 の各カタログ項目が同じ接続契約で動く。全難易度と Endless の開始・終了条件、音量操作、1 プレイ後の状態初期化を確認する。
 

@@ -20,16 +20,18 @@
 - プレイヤーが自力で起動できるミニゲームは 1 件まで、AI 処理は複数件まで許可する。
 - `Assets/Personal/` は編集・移動・削除しない原本領域とする。アセットは Pipeline で複製し、C# は新しい本番用クラスとしてロジックを移植する。
 - タイピングとなぞりを P0 の接続対象とする。なぞりは受領仕様で P2 相当だったが、今回の作業目的に合わせて優先度を上げる。
+- Scene 上の詳細な位置・余白・装飾の調整は M6 へ後回しにする。P0 では Canvas のアンカー、入力範囲、タスク生成領域、モーダル描画順だけを機能配置として確定する。
 
 ## 理由
 
-個人試作を保全すると担当者の確認・比較・再利用を妨げず、Prefab ホスト方式ではシーン遷移によるカメラ・EventSystem・ゲーム状態の重複を避けられる。Canvas UI は操作と表示に必要な機能を過不足なく満たし、ドラッグ・なぞりの判定も座標計算だけで実装できる。
+個人試作を保全すると担当者の確認・比較・再利用を妨げず、Prefab ホスト方式ではシーン遷移によるカメラ・EventSystem・ゲーム状態の重複を避けられる。Canvas UI は操作と表示に必要な機能を過不足なく満たし、ドラッグ・なぞりの判定も座標計算だけで実装できる。見栄えの調整を後回しにすると、ゲームループと接続の検証を先行できる。
 
 ## 影響範囲
 
 - `GameManager` は個別ミニゲームを直接制御するテスト責務から、`GameFlowController`、`MainGameController`、`TaskManager`、`MiniGameHost` へ段階的に置き換える。
 - 新規本番アセットは `Assets/Scripts/MiniGames/`、`Assets/Data/MiniGames/`、`Assets/Prefabs/MiniGames/`、`Assets/Scenes/` に置く。
 - 本決定に対応する仕様は `gameplay-core.md`、`main-game-flow.md`、`typing-mini-game.md`、`tracing-mini-game.md` とする。
+- タスクの実行時データは Scene 座標を持たない。なぞりの経路は `TracingArea` 基準の正規化座標と距離比で持つ。
 
 ## 見直し条件
 

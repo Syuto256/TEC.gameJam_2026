@@ -17,9 +17,9 @@
 | --- | --- | --- |
 | PathId | string | デバッグと重複回避に用いる識別子。 |
 | レベル | 1–4 | 出題対象の問題レベル。 |
-| Points | Vector2 配列 | Canvas のローカル座標で表した始点から終点までのチェックポイント列。 |
-| CheckpointRadius | float | 次の点を通過したとみなす距離。 |
-| AllowedDeviation | float | ガイド線から逸脱して失敗する距離。 |
+| Points | Vector2 配列 | `TracingArea` の左下を `(0, 0)`、右上を `(1, 1)` とした正規化座標で表した、始点から終点までのチェックポイント列。 |
+| CheckpointRadiusRatio | float | `TracingArea` の短辺に対する、次の点を通過したとみなす距離の比率。 |
+| AllowedDeviationRatio | float | `TracingArea` の短辺に対する、逸脱して失敗する距離の比率。 |
 | TimeLimit | float | この問題の制限時間。カタログ設定を上書きする場合のみ使用する。 |
 
 各レベルには最低 1 件の有効な経路を置く。レベルに有効な問題がない場合は設定不備として開始せず、失敗理由 `NO PATH CONFIGURED` を 1 回だけ返す。
@@ -40,7 +40,7 @@ stateDiagram-v2
 - ドラッグ中は現在座標からガイド線への最短距離を測る。`AllowedDeviation` を超えた時点で失敗する。
 - チェックポイントは順番に通過する。終点を含む全点を通過した時点で成功する。
 - 左ボタンを途中で離した場合は `TRACE RELEASED` として失敗する。
-- Canvas の座標変換は `RectTransformUtility.ScreenPointToLocalPointInRectangle` を用いる。
+- Canvas の座標変換は `RectTransformUtility.ScreenPointToLocalPointInRectangle` を用いる。得たローカル座標を `TracingArea` 内の正規化座標へ変換して問題データと比較する。
 
 ## 4. 難易度
 
@@ -59,6 +59,7 @@ stateDiagram-v2
 - 通過済み区間は色を変え、次の目標点が分かるようにする。
 - 失敗時は逸脱または離したことを明確に表示し、成功時は完走を明確に表示する。
 - UI は `MiniGameHost` 配下の Prefab とし、ミニゲーム終了後に破棄する。
+- `TracingArea` の画面上の位置・大きさは後から調整してよい。経路データと判定しきい値は正規化座標・比率のため再作成しない。
 
 ## 6. 確認項目
 
