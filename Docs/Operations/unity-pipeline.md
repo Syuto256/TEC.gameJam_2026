@@ -1,0 +1,76 @@
+# Unity CLI / Pipeline 運用
+
+最終確認: 2026-08-03
+
+## 前提
+
+- プロジェクトの Unity バージョンは `6000.3.21f1`。
+- `Packages/manifest.json` で `com.unity.pipeline: 0.4.0-exp.1` を確認済み。
+- PipelinePackage は Unity Editor をローカル HTTP API として公開し、Unity CLI の `unity command` がそこへ接続する構成。
+- この確認環境では `unity` コマンドは検出されませんでした。一方、開いている Editor が作る `Library/Pipeline/.unity-pipeline-port` は存在します。**各メンバーは作業環境で CLI の有無を確認すること。**
+
+## 接続前チェック
+
+PowerShell では、プロジェクトルートで次を順に確認します。
+
+```powershell
+Get-Command unity -ErrorAction SilentlyContinue
+Test-Path Library/Pipeline/.unity-pipeline-port
+unity command --project-path "$PWD"
+```
+
+1 行目で何も出なければ Unity CLI が未導入または PATH 未設定です。2 行目が `False` なら Unity Editor が対象プロジェクトを開いていない、または Pipeline サーバーが起動していない可能性があります。3 行目は接続できれば利用可能なコマンドを表示します。
+
+CLI の導入は、利用する Unity CLI の公式手順に従ってください。PipelinePackage の README に記載された Windows 用の例は次のとおりです。
+
+```powershell
+$env:UNITY_CLI_CHANNEL='beta'; irm https://public-cdn.cloud.unity3d.com/hub/prod/cli/install.ps1 | iex
+```
+
+このインストールはローカル環境を変更するため、各メンバーが必要性を確認した上で実施します。導入後は新しいシェルを開き直して `Get-Command unity` を再実行してください。
+
+## 基本フロー
+
+```mermaid
+flowchart LR
+    A[対象プロジェクトを Unity Editor で開く] --> B{unity CLI は利用可能か}
+    B -- いいえ --> C[導入または作業を引き継ぐ]
+    B -- はい --> D{Pipeline ポート記述子があるか}
+    D -- いいえ --> E[Editor / Pipeline サーバー状態を確認]
+    D -- はい --> F[unity command で状態・利用可能コマンドを確認]
+    F --> G[読み取り・dry run]
+    G --> H[必要な変更を実行]
+    H --> I[Console・コンパイル・テストを確認]
+```
+
+代表例（`<project-path>` は絶対パスに置き換えます）。
+
+```powershell
+unity command --project-path "<project-path>" editor_status
+unity command --project-path "<project-path>" recompile_status
+```
+
+実際に利用できるコマンド・引数は PipelinePackage のバージョンで異なるため、最初に `unity command --project-path "<project-path>"` の出力を確認して決めます。
+
+## 安全な操作
+
+- 変更前に対象アセット・シーン・設定の現在値を読み取る。
+- `dry_run` がある変更コマンドは必ず先にプレビューする。
+- 削除・上書き・設定変更の `confirm=true` は、対象と影響を確認してから指定する。
+- 接続先はローカル Editor のみ。Pipeline サーバーは loopback にバインドされます。
+- domain reload、ビルド、ターゲット切替の途中は一時的に接続が切れることがあるため、状態確認コマンドで完了を待つ。
+
+## よくある問題
+
+| 症状 | 確認・対応 |
+| --- | --- |
+| `unity` が見つからない | CLI 未導入または PATH 未設定。導入後に新しいシェルで再確認する。 |
+| ポート記述子がない | 対象プロジェクトを Unity Editor で開く。必要なら Pipeline メニューからサーバーの状態を確認する。 |
+| 接続に失敗する | project path が対象と一致するか、Editor が起動中かを確認する。接続先は `localhost` ではなく Pipeline が自動検出する設定を使う。 |
+| 操作後に応答しない | 再コンパイル・domain reload・ビルド中の可能性がある。少し待って `editor_status` / 対応する `*_status` を確認する。 |
+
+## 参照
+
+- パッケージ同梱資料: `Library/PackageCache/com.unity.pipeline@*/README.md`
+- 接続仕様: `Library/PackageCache/com.unity.pipeline@*/Documentation~/connectivity.md`
+- コマンド一覧: `Library/PackageCache/com.unity.pipeline@*/Documentation~/index.md`
