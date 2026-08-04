@@ -13,6 +13,9 @@ public sealed class MainGameController : MonoBehaviour
     [Tooltip("デバイス面ごとの出現タスク。どの面に何が出るかはこのアセットで決める。")]
     [SerializeField] private TaskSpawnTable taskSpawnTable;
 
+    [Tooltip("タスクの決着を吹き出しの位置に知らせる層。未設定でも進行には影響しない（演出が出ないだけ）。")]
+    [SerializeField] private ResultEffectLayerView resultEffectLayer;
+
     [Header("【音】")]
     [Tooltip("HP がこの割合を下回ったら警告音を一度だけ鳴らす。")]
     [Range(0f, 1f)] [SerializeField] private float hpLowRatio = 0.3f;
@@ -116,6 +119,11 @@ public sealed class MainGameController : MonoBehaviour
         hudView = hud;
         miniGameHost = host;
         pauseMenu = pause;
+
+        if (resultEffectLayer != null && !resultEffectLayer.Initialize())
+        {
+            return;
+        }
 
         var flow = GameFlowController.EnsureInstance();
         difficultyProfile = tuningSettings.GetDifficultyProfile(flow.SelectedDifficulty);
@@ -422,6 +430,12 @@ public sealed class MainGameController : MonoBehaviour
 
         if (taskViews.TryGetValue(result.Task.Id, out var view))
         {
+            // 演出の位置は、吹き出しが消え始める前に控えておく。
+            if (resultEffectLayer != null)
+            {
+                resultEffectLayer.Play(view.transform.position, result.Resolution, addedScore);
+            }
+
             // 先に一覧から外すことで、消滅演出の間 Refresh の対象から外れる。破棄は View 自身が行う。
             taskViews.Remove(result.Task.Id);
             view.PlayExitAndDestroy();
