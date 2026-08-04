@@ -87,7 +87,7 @@ MonoBehaviour:
   m_spriteAsset: {fileID: 0}
   m_tintAllSprites: 0
   m_StyleSheet: {fileID: 0}
-  m_TextStyleHashCode: 0
+  m_TextStyleHashCode: -1183493901
   m_overrideHtmlColors: 0
   m_faceColor:
     serializedVersion: 2
@@ -636,7 +636,7 @@ MonoBehaviour:
   m_spriteAsset: {fileID: 0}
   m_tintAllSprites: 0
   m_StyleSheet: {fileID: 0}
-  m_TextStyleHashCode: 0
+  m_TextStyleHashCode: -1183493901
   m_overrideHtmlColors: 0
   m_faceColor:
     serializedVersion: 2
@@ -773,7 +773,7 @@ MonoBehaviour:
   m_spriteAsset: {fileID: 0}
   m_tintAllSprites: 0
   m_StyleSheet: {fileID: 0}
-  m_TextStyleHashCode: 0
+  m_TextStyleHashCode: -1183493901
   m_overrideHtmlColors: 0
   m_faceColor:
     serializedVersion: 2
@@ -900,11 +900,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3194494932225130900, guid: 3f142ad961c16aa42a65a2ac03837336, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 0
+      value: 240
       objectReference: {fileID: 0}
     - target: {fileID: 3194494932225130900, guid: 3f142ad961c16aa42a65a2ac03837336, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 0
+      value: 200
       objectReference: {fileID: 0}
     - target: {fileID: 3194494932225130900, guid: 3f142ad961c16aa42a65a2ac03837336, type: 3}
       propertyPath: m_LocalPosition.x
@@ -1126,11 +1126,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8274974104803278506, guid: f9f378c6eb8970147a76dca12cbb63ca, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 0
+      value: 240
       objectReference: {fileID: 0}
     - target: {fileID: 8274974104803278506, guid: f9f378c6eb8970147a76dca12cbb63ca, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 0
+      value: 200
       objectReference: {fileID: 0}
     - target: {fileID: 8274974104803278506, guid: f9f378c6eb8970147a76dca12cbb63ca, type: 3}
       propertyPath: m_LocalPosition.x
@@ -1348,11 +1348,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7122745014187172952, guid: 642e7b10e35b9b4498fa47eb142d193f, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 0
+      value: 240
       objectReference: {fileID: 0}
     - target: {fileID: 7122745014187172952, guid: 642e7b10e35b9b4498fa47eb142d193f, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 0
+      value: 200
       objectReference: {fileID: 0}
     - target: {fileID: 7122745014187172952, guid: 642e7b10e35b9b4498fa47eb142d193f, type: 3}
       propertyPath: m_LocalPosition.x
@@ -1435,6 +1435,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 6787797012768373597}
     m_Modifications:
+    - target: {fileID: 3188017128005146122, guid: 2cb34983f04524f438e819c6731f0339, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 3950221711791468077, guid: 2cb34983f04524f438e819c6731f0339, type: 3}
       propertyPath: m_Name
       value: Card_B2
@@ -1551,6 +1555,10 @@ PrefabInstance:
     - target: {fileID: 3895416865197661002, guid: f940c069545c94845916b0b4ce939e53, type: 3}
       propertyPath: m_Name
       value: Card_C1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5733347686297975355, guid: f940c069545c94845916b0b4ce939e53, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
       objectReference: {fileID: 0}
     - target: {fileID: 6497467503172145869, guid: f940c069545c94845916b0b4ce939e53, type: 3}
       propertyPath: m_Pivot.x
@@ -1800,11 +1808,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7122745014187172952, guid: 642e7b10e35b9b4498fa47eb142d193f, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 0
+      value: 240
       objectReference: {fileID: 0}
     - target: {fileID: 7122745014187172952, guid: 642e7b10e35b9b4498fa47eb142d193f, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 0
+      value: 200
       objectReference: {fileID: 0}
     - target: {fileID: 7122745014187172952, guid: 642e7b10e35b9b4498fa47eb142d193f, type: 3}
       propertyPath: m_LocalPosition.x
@@ -2084,6 +2092,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Card_A1
       objectReference: {fileID: 0}
+    - target: {fileID: 5871220250824126503, guid: d254580e91dc5be4f83b4a2de92429b4, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -2196,6 +2208,10 @@ PrefabInstance:
     - target: {fileID: 3743662135639918718, guid: d254580e91dc5be4f83b4a2de92429b4, type: 3}
       propertyPath: m_Name
       value: Card_A1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5871220250824126503, guid: d254580e91dc5be4f83b4a2de92429b4, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -2365,11 +2381,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7122745014187172952, guid: 642e7b10e35b9b4498fa47eb142d193f, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 0
+      value: 240
       objectReference: {fileID: 0}
     - target: {fileID: 7122745014187172952, guid: 642e7b10e35b9b4498fa47eb142d193f, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 0
+      value: 200
       objectReference: {fileID: 0}
     - target: {fileID: 7122745014187172952, guid: 642e7b10e35b9b4498fa47eb142d193f, type: 3}
       propertyPath: m_LocalPosition.x
@@ -2482,11 +2498,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8274974104803278506, guid: f9f378c6eb8970147a76dca12cbb63ca, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 0
+      value: 240
       objectReference: {fileID: 0}
     - target: {fileID: 8274974104803278506, guid: f9f378c6eb8970147a76dca12cbb63ca, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 0
+      value: 200
       objectReference: {fileID: 0}
     - target: {fileID: 8274974104803278506, guid: f9f378c6eb8970147a76dca12cbb63ca, type: 3}
       propertyPath: m_LocalPosition.x
@@ -2704,11 +2720,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7122745014187172952, guid: 642e7b10e35b9b4498fa47eb142d193f, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 0
+      value: 240
       objectReference: {fileID: 0}
     - target: {fileID: 7122745014187172952, guid: 642e7b10e35b9b4498fa47eb142d193f, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 0
+      value: 200
       objectReference: {fileID: 0}
     - target: {fileID: 7122745014187172952, guid: 642e7b10e35b9b4498fa47eb142d193f, type: 3}
       propertyPath: m_LocalPosition.x
@@ -2791,6 +2807,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 6787797012768373597}
     m_Modifications:
+    - target: {fileID: 3188017128005146122, guid: 2cb34983f04524f438e819c6731f0339, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 3950221711791468077, guid: 2cb34983f04524f438e819c6731f0339, type: 3}
       propertyPath: m_Name
       value: Card_B1
