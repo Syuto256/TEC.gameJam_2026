@@ -19,7 +19,14 @@ public enum TaskKind
     TimingStop
 }
 public enum TaskSurface { Pc, Pad }
-public enum TaskState { Available, PlayerPlaying, AiProcessing, Resolved }
+/// <summary>タスクの進行状態。</summary>
+/// <remarks>
+/// <c>Queued</c> は「発生したが表示枠が埋まっていて、まだ画面に出ていない」状態である。
+/// 画面に出ていない＝クリックできないため、この状態のあいだ寿命を減らすかどうかは
+/// <c>GameTuningSettings.taskQueue</c> の設定で切り替える。既定では減らさない。
+/// 値は末尾に足すこと。途中に挿入すると、保存済みの選択が別の状態を指すようになる。
+/// </remarks>
+public enum TaskState { Available, PlayerPlaying, AiProcessing, Resolved, Queued }
 public enum TaskResolution { PlayerSuccess, PlayerFailure, AiSuccess, AiFailure, Expired }
 public enum GameEndState { Playing, Clear, GameOver }
 

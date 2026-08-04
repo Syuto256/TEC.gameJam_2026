@@ -31,6 +31,12 @@ public sealed class MiniGameCatalog : ScriptableObject
                  "短くすると難しくなる。要素が4つ未満のときは、足りない分に最後の値が使われる。")]
         [Min(0f)] public float[] timeLimitsByLevel = { 7f, 7f, 7f, 7f };
 
+        [Tooltip("タスクの吹き出しの絵。左から順にレベル1・2・3・4。\n" +
+                 "名前・アイコン・難易度の星は絵に描き込まれているため、ここだけで見た目が決まる。\n" +
+                 "空欄や要素不足のときは、そのレベル以下で登録されている最も高いものが使われる。\n" +
+                 "レベル4の絵が無い場合はレベル3の絵がそのまま出る。")]
+        public Sprite[] bubbleSpritesByLevel = new Sprite[4];
+
         public float GetTimeLimit(int level)
         {
             if (timeLimitsByLevel == null || timeLimitsByLevel.Length == 0)
@@ -39,6 +45,29 @@ public sealed class MiniGameCatalog : ScriptableObject
             }
 
             return timeLimitsByLevel[Mathf.Clamp(level - 1, 0, timeLimitsByLevel.Length - 1)];
+        }
+
+        /// <summary>そのレベルの吹き出しの絵を返す。無い場合はレベルを下げて探す。</summary>
+        /// <remarks>
+        /// 絵が足りない分をここで吸収するため、種別ごとの例外をコードに書かなくてよい。
+        /// 未登録のレベルの絵が届いたら、アセットの空欄を埋めるだけで反映される。
+        /// </remarks>
+        public Sprite GetBubbleSprite(int level)
+        {
+            if (bubbleSpritesByLevel == null || bubbleSpritesByLevel.Length == 0)
+            {
+                return null;
+            }
+
+            for (var i = Mathf.Clamp(level - 1, 0, bubbleSpritesByLevel.Length - 1); i >= 0; i--)
+            {
+                if (bubbleSpritesByLevel[i] != null)
+                {
+                    return bubbleSpritesByLevel[i];
+                }
+            }
+
+            return null;
         }
     }
 

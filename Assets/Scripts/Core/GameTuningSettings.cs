@@ -24,6 +24,10 @@ public class GameTuningSettings : ScriptableObject
     [Tooltip("タスクを片付けたときに入るスコア。全難易度で共通。")]
     public ScoreSettings score;
 
+    [Header("【待機列の設定】")]
+    [Tooltip("表示枠が埋まっているときに、あふれたタスクをどう扱うか。全難易度で共通。")]
+    public TaskQueueSettings taskQueue;
+
     [Header("【難易度ごとの設定】")]
     [Tooltip("難易度選択で選ばれた難易度の設定を、ここから探して使う。\n" +
              "行が無い難易度は、上の【全体ゲーム設定】の値で動く。\n" +
@@ -41,6 +45,20 @@ public class GameTuningSettings : ScriptableObject
 
         [Tooltip("タスクを放置して時間切れになったときに減るHP。")]
         public int expired = 8;
+    }
+
+    [Serializable]
+    public class TaskQueueSettings
+    {
+        [Tooltip("待機中のタスクも寿命が減るようにする。\n" +
+                 "OFF（既定）だと、表示枠が空いて画面に出た時点から寿命が減り始める。\n" +
+                 "ON にすると、一度も画面に出ないまま時間切れになることがある。\n" +
+                 "出ていないタスクはクリックできないため、ON はプレイヤーに手立てが無い被弾を生む。")]
+        public bool lifetimeTicksWhileQueued;
+
+        [Tooltip("1つのデバイス面で待機列に積めるタスクの上限。0 で無制限。\n" +
+                 "上限に達している面には新しいタスクが出ない。")]
+        [Min(0)] public int maxQueuedPerSurface;
     }
 
     [Serializable]
@@ -146,9 +164,10 @@ public class GameTuningSettings : ScriptableObject
         [Tooltip("タスクが出現してから時間切れになるまでの秒数。短いほど余裕が無くなる。")]
         [Min(0.1f)] public float taskLifetimeSec = 20f;
 
-        [Tooltip("1つのデバイス面に同時に置いておけるタスクの数。\n" +
-                 "上限に達している面には新しいタスクが出ない。")]
-        [Min(1)] public int maxTasksPerSurface = 2;
+        [Tooltip("1つのデバイス面に同時に「表示」できるタスクの数。\n" +
+                 "上限に達している面で発生したタスクは、枠が空くまで待機列に積まれる。\n" +
+                 "画面の左右の帯には吹き出しが縦に2つまでしか入らないため、実質の上限は4。")]
+        [Min(1)] public int maxTasksPerSurface = 4;
 
         [Tooltip("ゲーム開始時のタスクの問題レベル（1〜4）。数字が大きいほどミニゲームが難しくなる。")]
         [Range(1, 4)] public int startingTaskLevel = 1;

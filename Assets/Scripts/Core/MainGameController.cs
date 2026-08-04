@@ -131,9 +131,13 @@ public sealed class MainGameController : MonoBehaviour
         {
             AiSuccessRate = tuningSettings.ai.successRate,
             AiProcessDurationSec = tuningSettings.ai.processDurationSec,
-            AiCooldownSec = tuningSettings.ai.cooldownSec
+            AiCooldownSec = tuningSettings.ai.cooldownSec,
+            MaxVisibleTasksPerSurface = difficultyProfile.maxTasksPerSurface,
+            MaxQueuedTasksPerSurface = tuningSettings.taskQueue.maxQueuedPerSurface,
+            QueuedLifetimeTicks = tuningSettings.taskQueue.lifetimeTicksWhileQueued
         });
         taskManager.TaskResolved += OnTaskResolved;
+        taskManager.TaskShown += OnTaskShown;
         session = new GameSession(new GameSessionSettings
         {
             Difficulty = flow.SelectedDifficulty,
@@ -294,10 +298,23 @@ public sealed class MainGameController : MonoBehaviour
             return;
         }
 
-        var task = taskManager.CreateTask(kind, surface, level, difficultyProfile.taskLifetimeSec);
+        // 吹き出しの生成は OnTaskShown が担当する。表示枠が埋まっていれば待機列に積まれ、
+        // 枠が空いたときに改めて通知が飛ぶ。
+        taskManager.CreateTask(kind, surface, level, difficultyProfile.taskLifetimeSec);
+    }
+
+    /// <summary>タスクが画面に出るときに吹き出しを作る。発生直後とは限らない（待機列からの繰り上げを含む）。</summary>
+    private void OnTaskShown(TaskInstance task)
+    {
+        var parent = ResolveSpawnArea(task.Surface);
+        if (parent == null)
+        {
+            return;
+        }
+
         var bubble = Instantiate(taskBubblePrefab, parent, false);
         bubble.name = "TaskBubble_" + task.Id;
-        miniGameCatalog.TryGetEntry(kind, out var entry);
+        miniGameCatalog.TryGetEntry(task.Kind, out var entry);
         bubble.Bind(this, task, entry?.displayName, entry?.icon);
         taskViews.Add(task.Id, bubble);
         AudioManager.PlaySfx(AudioCue.TaskSpawned);
@@ -310,7 +327,6 @@ public sealed class MainGameController : MonoBehaviour
     private bool TryPickSpawnSurface(out TaskSurface surface)
     {
         surface = default;
-        var maxTasks = Mathf.Max(1, difficultyProfile.maxTasksPerSurface);
         var fewest = int.MaxValue;
         var found = false;
 
@@ -321,8 +337,9 @@ public sealed class MainGameController : MonoBehaviour
                 continue;
             }
 
+            // 表示上限に達していても待機列があるので、ここで弾くのは待機列が満杯の面だけ。
             var count = CountActiveTasks(workspace.Surface);
-            if (count >= maxTasks || count >= fewest)
+            if (!taskManager.CanAcceptTask(workspace.Surface) || count >= fewest)
             {
                 continue;
             }
@@ -560,6 +577,7 @@ public sealed class MainGameController : MonoBehaviour
         if (taskManager != null)
         {
             taskManager.TaskResolved -= OnTaskResolved;
+            taskManager.TaskShown -= OnTaskShown;
         }
 
         Time.timeScale = 1f;
