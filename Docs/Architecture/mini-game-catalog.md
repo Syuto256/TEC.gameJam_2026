@@ -93,6 +93,18 @@
 | 連打 | `RapidClickMiniGame.prefab` | レベル 1 の必要クリック数、レベルごとの増加数、スペースキーを受けるか |
 | 仕分け | `SortingMiniGame.prefab` | 箱とカードの配置・枚数、正解の対応（`categoryId`）、許容ミス数 |
 
+## 音を鳴らす
+
+`MiniGameBase` に受け口があるので、`AudioManager` を直接呼ぶ必要はない。
+
+```csharp
+PlayInputFeedback(true);    // 一手成功（QTE の 1 押し、目押しの停止、連打の 1 回）
+PlayInputFeedback(false);   // 一手失敗
+PlayCue(AudioCue.〇〇);      // このミニゲーム固有の音
+```
+
+クリア・失敗そのものの音は `MainGameController` が鳴らすため、**各ミニゲームが鳴らすのは途中経過だけでよい。** 音源が未登録でも無音になるだけなので、素材が揃う前から呼んでよい。詳細は [AudioManager](audio-manager.md) を参照する。
+
 ## 表示できる範囲
 
 `MiniGameHost` は PC / Tablet どちらの `DeviceFrame` にも収まる大きさにしてある（`Content` は 1167.8 × 711.5）。Prefab のルートを Stretch にしておけば、この枠いっぱいに広がり、端末の枠からはみ出さない。

@@ -96,6 +96,7 @@ namespace Overwork.MiniGames.Tracing
                     && Vector2.Distance(normalized, path.points[0]) <= markerHitRadius)
                 {
                     tracing = true;
+                    PlayInputFeedback(true);
                     ShowPointer(local);
                     RefreshStatus(tracingPrompt);
                 }
@@ -125,6 +126,7 @@ namespace Overwork.MiniGames.Tracing
 
         private void RegisterMiss()
         {
+            PlayInputFeedback(false);
             misses++;
             ResetTrace();
             if (misses >= allowedMisses)

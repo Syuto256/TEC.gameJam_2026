@@ -79,6 +79,8 @@ namespace Overwork.MiniGames.DragDrop
                     return;
                 }
             }
+            PlayInputFeedback(matched);
+
             else
             {
                 misses++;

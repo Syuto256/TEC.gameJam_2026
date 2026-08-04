@@ -72,6 +72,25 @@ public abstract class MiniGameBase : MonoBehaviour
     protected abstract void OnUpdate(float deltaTime);
 
     /// <summary>
+    /// 一手ごとの成否を鳴らす。QTE の 1 押し、連打の 1 回、タイピングの 1 文字などで呼ぶ。
+    /// </summary>
+    /// <remarks>
+    /// クリア・失敗そのものの音は <see cref="MainGameController"/> がまとめて鳴らすため、
+    /// 各ミニゲームが鳴らすのは途中経過だけでよい。
+    /// 音源が未登録でも無音になるだけなので、素材が揃う前から呼んでよい。
+    /// </remarks>
+    protected static void PlayInputFeedback(bool hit)
+    {
+        AudioManager.PlaySfx(hit ? AudioCue.MiniGameInputHit : AudioCue.MiniGameInputMiss);
+    }
+
+    /// <summary>ミニゲーム固有の音を鳴らす。<see cref="AudioCue"/> へ種類を足してから使う。</summary>
+    protected static void PlayCue(AudioCue cue)
+    {
+        AudioManager.PlaySfx(cue);
+    }
+
+    /// <summary>
     /// ミニゲームの終了を通知する関数。
     /// 成功時・失敗時に各ミニゲームクラスから呼び出すこと。
     /// </summary>

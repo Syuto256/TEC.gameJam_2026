@@ -69,6 +69,7 @@ namespace Overwork.MiniGames.RapidClick
             }
 
             clicks++;
+            PlayInputFeedback(true);
             if (clicks >= requiredClicks)
             {
                 FinishGame(true, "COMPLETE");

@@ -94,6 +94,7 @@ namespace Overwork.MiniGames.Typing
 
             if (evaluator.TryInput(input))
             {
+                PlayInputFeedback(true);
                 RefreshUi();
                 if (evaluator.IsCompleted)
                 {
@@ -103,6 +104,7 @@ namespace Overwork.MiniGames.Typing
                 return true;
             }
 
+            PlayInputFeedback(false);
             missCount++;
             RefreshUi();
             if (missCount >= allowedMisses)

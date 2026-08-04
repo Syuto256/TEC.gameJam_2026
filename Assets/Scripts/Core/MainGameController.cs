@@ -13,6 +13,10 @@ public sealed class MainGameController : MonoBehaviour
     [Tooltip("デバイス面ごとの出現タスク。どの面に何が出るかはこのアセットで決める。")]
     [SerializeField] private TaskSpawnTable taskSpawnTable;
 
+    [Header("???")]
+    [Tooltip("HP ???????????????????????")]
+    [Range(0f, 1f)] [SerializeField] private float hpLowRatio = 0.3f;
+
     private readonly Dictionary<int, TaskBubbleView> taskViews = new Dictionary<int, TaskBubbleView>();
     private readonly Dictionary<TaskSurface, int> nextKindIndexBySurface = new Dictionary<TaskSurface, int>();
     private GameTuningSettings tuningSettings;
@@ -25,6 +29,7 @@ public sealed class MainGameController : MonoBehaviour
     private PauseMenuView pauseMenu;
     private int activePlayerTaskId = -1;
     private float spawnElapsedSec;
+    private bool hpLowNotified;
     private bool initialized;
     private bool ending;
     private bool paused;
@@ -171,6 +176,26 @@ public sealed class MainGameController : MonoBehaviour
     }
 
     public bool TryAssignPlayer(int taskId)
+    /// <summary>HP ???????????????????????</summary>
+    private void UpdateHpLowCue()
+    {
+        if (session.MaxHp <= 0)
+        {
+            return;
+        }
+
+        var ratio = (float)session.Hp / session.MaxHp;
+        if (!hpLowNotified && ratio <= hpLowRatio)
+        {
+            hpLowNotified = true;
+            AudioManager.PlaySfx(AudioCue.HpLow);
+        }
+        else if (hpLowNotified && ratio > hpLowRatio)
+        {
+            hpLowNotified = false;
+        }
+    }
+
     {
         if (!initialized || ending || paused || !taskManager.TryGetTask(taskId, out var task) || task.State != TaskState.Available)
         {
@@ -224,6 +249,7 @@ public sealed class MainGameController : MonoBehaviour
         }
 
         return true;
+        AudioManager.PlaySfx(AudioCue.AiRequested);
     }
 
     public void TogglePause()
@@ -264,6 +290,7 @@ public sealed class MainGameController : MonoBehaviour
         bubble.Bind(this, task, entry?.displayName, entry?.icon);
         taskViews.Add(task.Id, bubble);
     }
+        AudioManager.PlaySfx(AudioCue.TaskSpawned);
 
     /// <summary>
     /// タスクを出す面を選ぶ。出現タスクが設定されていない面と、上限に達している面は対象外にする。
@@ -380,6 +407,23 @@ public sealed class MainGameController : MonoBehaviour
             miniGameHost.Hide();
         }
         if (taskViews.TryGetValue(result.Task.Id, out var view))
+    /// <summary>?????????????????????? <see cref="CompletePlayerMiniGame"/> ?????</summary>
+    private static void PlayResolutionCue(TaskResolution resolution)
+    {
+        switch (resolution)
+        {
+            case TaskResolution.Expired:
+                AudioManager.PlaySfx(AudioCue.TaskExpired);
+                break;
+            case TaskResolution.AiSuccess:
+                AudioManager.PlaySfx(AudioCue.AiSucceeded);
+                break;
+            case TaskResolution.AiFailure:
+                AudioManager.PlaySfx(AudioCue.AiFailed);
+                break;
+        }
+    }
+
         {
             taskViews.Remove(result.Task.Id);
             Destroy(view.gameObject);
@@ -430,8 +474,9 @@ public sealed class MainGameController : MonoBehaviour
 
     private void SetPaused(bool value)
     {
-        if (!initialized || ending)
+        if (!initialized || ending || paused == value)
         {
+        AudioManager.PlaySfx(paused ? AudioCue.PauseOpen : AudioCue.PauseClose);
             return;
         }
 
