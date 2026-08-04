@@ -52,6 +52,9 @@ public sealed class TaskInstance
     public float RemainingLifetimeSec { get; internal set; }
     public float CapturedTimeRatio { get; internal set; }
     public float AiRemainingProcessSec { get; internal set; }
+
+    /// <summary>AI に依頼したときの処理時間の全体。円ゲージの進み具合を出すのに使う。</summary>
+    public float AiTotalProcessSec { get; internal set; }
     public TaskState State { get; internal set; }
     public TaskResolution? Resolution { get; internal set; }
     public bool IsTerminal => State == TaskState.Resolved;

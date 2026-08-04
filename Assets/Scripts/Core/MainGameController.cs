@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using DG.Tweening;
 using UnityEngine;
 
 /// <summary>Game シーンでセッション、タスク生成、AI 処理、HUD、終了遷移を接続する。</summary>
@@ -387,6 +388,25 @@ public sealed class MainGameController : MonoBehaviour
         return false;
     }
 
+    /// <summary>決着の演出を出す。待ち時間が指定されていれば、その分だけ遅らせる。</summary>
+    private void PlayResultEffect(Vector3 position, TaskResolution resolution, int addedScore, float delaySec)
+    {
+        if (resultEffectLayer == null)
+        {
+            return;
+        }
+
+        if (delaySec <= 0f)
+        {
+            resultEffectLayer.Play(position, resolution, addedScore);
+            return;
+        }
+
+        // 遅らせているあいだにシーンが終わることがあるため、この GameObject に寿命を紐づける。
+        DOVirtual.DelayedCall(delaySec, () => resultEffectLayer.Play(position, resolution, addedScore), false)
+            .SetLink(gameObject);
+    }
+
     /// <summary>枠が足りない面を報告する。足りないと、表示されるはずのタスクが画面に出ない。</summary>
     /// <remarks>
     /// 吹き出しの大きさと画面の空きから、1 面に置けるのは 4 つまで。
@@ -483,14 +503,15 @@ public sealed class MainGameController : MonoBehaviour
         if (taskViews.TryGetValue(result.Task.Id, out var view))
         {
             // 演出の位置は、吹き出しが消え始める前に控えておく。
-            if (resultEffectLayer != null)
-            {
-                resultEffectLayer.Play(view.transform.position, result.Resolution, addedScore);
-            }
+            var effectPosition = view.transform.position;
 
             // 先に一覧から外すことで、消滅演出の間 Refresh の対象から外れる。破棄は View 自身が行う。
             taskViews.Remove(result.Task.Id);
-            view.PlayExitAndDestroy();
+
+            // AI の決着では吹き出しの上に結果が出る。同時に粒を飛ばすと読み取りが喧嘩するため、
+            // 結果を見せ終わってから出す。待ち時間は吹き出し側が持っている値を使う。
+            var holdSec = view.PlayExitAndDestroy(result.Resolution);
+            PlayResultEffect(effectPosition, result.Resolution, addedScore, holdSec);
         }
     }
 

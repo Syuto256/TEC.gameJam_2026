@@ -1,4 +1,5 @@
 using DG.Tweening;
+using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -27,12 +28,49 @@ public sealed class TaskBubbleView : MonoBehaviour, IPointerClickHandler
     [SerializeField] private Image grayBase;
 
     [Header("【任意】")]
-    [Tooltip("AI が作業しているあいだ重ねる暗幕。未設定なら暗くならない。\n" +
-             "作業中の文字や円ゲージは、この上に別途載せる。")]
+    [Tooltip("AI が作業しているあいだ重ねる暗幕。未設定なら暗くならない。")]
     [SerializeField] private Image workingDimmer;
 
     [Tooltip("AI が作業しているあいだの暗幕の濃さ。")]
     [Range(0f, 1f)] [SerializeField] private float workingDimAlpha = 0.55f;
+
+    [Header("【AI に任せているときの表示】")]
+    [Tooltip("作業中と結果をまとめた層。AI に任せているあいだだけ有効になる。未設定なら何も出ない。")]
+    [SerializeField] private GameObject aiOverlay;
+
+    [Tooltip("進み具合を表す円ゲージ。Image Type を Filled、Fill Method を Radial 360 にすること。")]
+    [SerializeField] private Image aiGauge;
+
+    [Tooltip("円ゲージの下に敷く輪。減っていない部分を見せる。無くてもよい。")]
+    [SerializeField] private Image aiGaugeBase;
+
+    [Tooltip("「AIが作業中」と結果を出す文字。色も状態に応じて変える。")]
+    [SerializeField] private TextMeshProUGUI aiLabel;
+
+    [Tooltip("失敗を表すバツ印。円ゲージと入れ替えて出す。無くてもよい。")]
+    [SerializeField] private GameObject aiFailMark;
+
+    [Tooltip("作業中に出す文字。")]
+    [SerializeField] private string aiWorkingLabel = "AIが作業中";
+
+    [Tooltip("成功したときに出す文字。")]
+    [SerializeField] private string aiSuccessLabel = "Success";
+
+    [Tooltip("失敗したときに出す文字。")]
+    [SerializeField] private string aiFailureLabel = "FAILED";
+
+    [Tooltip("作業中の色。")]
+    [SerializeField] private Color aiWorkingColor = new Color(0.35f, 0.70f, 1f, 1f);
+
+    [Tooltip("成功の色。")]
+    [SerializeField] private Color aiSuccessColor = new Color(0.35f, 1f, 0.50f, 1f);
+
+    [Tooltip("失敗の色。")]
+    [SerializeField] private Color aiFailureColor = new Color(1f, 0.35f, 0.35f, 1f);
+
+    [Tooltip("結果を見せてから吹き出しが閉じ始めるまでの秒数。\n" +
+             "0 にすると結果を見せずにすぐ閉じる。")]
+    [Min(0f)] [SerializeField] private float aiResultHoldSec = 0.6f;
 
     [Header("【出現・消滅の演出】")]
     [Tooltip("出現するとき、この倍率から等倍まで拡大する。1 にすると拡大せずそのまま出る。")]
@@ -83,6 +121,11 @@ public sealed class TaskBubbleView : MonoBehaviour, IPointerClickHandler
             workingDimmer.enabled = false;
         }
 
+        if (aiOverlay != null)
+        {
+            aiOverlay.SetActive(false);
+        }
+
         PlayAppear();
         Refresh();
     }
@@ -114,9 +157,19 @@ public sealed class TaskBubbleView : MonoBehaviour, IPointerClickHandler
         // 色が残っている量がそのまま残り時間になる。
         colorFill.fillAmount = lifetimeRatio;
 
+        UpdateAiWorking(task.State == TaskState.AiProcessing);
+        UpdateWarning(lifetimeRatio);
+    }
+
+    /// <summary>AI が作業しているあいだ、暗幕と円ゲージを出して進み具合を見せる。</summary>
+    /// <remarks>
+    /// 残り秒数の数値は出さない。円ゲージと同じことを二重に言うためである。
+    /// ゲージが読めるだけの長さは AI の処理時間しだいなので、1 秒を下回る設定にしないこと。
+    /// </remarks>
+    private void UpdateAiWorking(bool working)
+    {
         if (workingDimmer != null)
         {
-            var working = task.State == TaskState.AiProcessing;
             workingDimmer.enabled = working;
             if (working)
             {
@@ -126,7 +179,85 @@ public sealed class TaskBubbleView : MonoBehaviour, IPointerClickHandler
             }
         }
 
-        UpdateWarning(lifetimeRatio);
+        if (aiOverlay == null)
+        {
+            return;
+        }
+
+        // 結果を見せている最中は、こちらから触らない。
+        if (exiting)
+        {
+            return;
+        }
+
+        aiOverlay.SetActive(working);
+        if (!working)
+        {
+            return;
+        }
+
+        if (aiFailMark != null)
+        {
+            aiFailMark.SetActive(false);
+        }
+
+        if (aiLabel != null)
+        {
+            aiLabel.text = aiWorkingLabel;
+            aiLabel.color = aiWorkingColor;
+        }
+
+        if (aiGauge != null)
+        {
+            aiGauge.enabled = true;
+            aiGauge.color = aiWorkingColor;
+
+            // 満ちていくほど完了に近い。全体が 0 のときは満タン扱いにして、空のまま止めない。
+            var total = task.AiTotalProcessSec;
+            aiGauge.fillAmount = total <= 0f
+                ? 1f
+                : Mathf.Clamp01(1f - task.AiRemainingProcessSec / total);
+        }
+
+        if (aiGaugeBase != null)
+        {
+            aiGaugeBase.enabled = true;
+        }
+    }
+
+    /// <summary>AI の結果を吹き出しの上に出す。閉じるのはこのあと。</summary>
+    private void ShowAiResult(bool succeeded)
+    {
+        if (aiOverlay == null)
+        {
+            return;
+        }
+
+        aiOverlay.SetActive(true);
+        var color = succeeded ? aiSuccessColor : aiFailureColor;
+
+        if (aiLabel != null)
+        {
+            aiLabel.text = succeeded ? aiSuccessLabel : aiFailureLabel;
+            aiLabel.color = color;
+        }
+
+        // 成功は円が満ちる。失敗は円を消してバツに差し替える。
+        if (aiGauge != null)
+        {
+            aiGauge.enabled = succeeded;
+            aiGauge.color = color;
+            aiGauge.fillAmount = 1f;
+        }
+
+        if (aiFailMark != null)
+        {
+            aiFailMark.SetActive(!succeeded);
+            foreach (var graphic in aiFailMark.GetComponentsInChildren<Graphic>(true))
+            {
+                graphic.color = color;
+            }
+        }
     }
 
     /// <summary>残り寿命が少なくなったら脈動させ、戻ったら止める。状態が変わったときだけ触る。</summary>
@@ -164,12 +295,16 @@ public sealed class TaskBubbleView : MonoBehaviour, IPointerClickHandler
         }
     }
 
-    /// <summary>消滅アニメーションを再生し、終わったら自分を破棄する。</summary>
-    public void PlayExitAndDestroy()
+    /// <summary>決着を見せてから消滅アニメーションを再生し、終わったら自分を破棄する。</summary>
+    /// <returns>
+    /// 閉じ始めるまでに結果を見せる秒数。呼び出し側は、この時間だけ別の決着演出を遅らせて
+    /// 表示が重ならないようにする。見せるものが無ければ 0。
+    /// </returns>
+    public float PlayExitAndDestroy(TaskResolution resolution)
     {
         if (exiting)
         {
-            return;
+            return 0f;
         }
 
         exiting = true;
@@ -179,15 +314,26 @@ public sealed class TaskBubbleView : MonoBehaviour, IPointerClickHandler
         warningTween = null;
         LeaveSlot();
 
-        if (disappearDurationSec <= 0f)
+        // AI の決着だけは、吹き出しの上に結果を出してから閉じる。
+        var isAiResult = resolution == TaskResolution.AiSuccess || resolution == TaskResolution.AiFailure;
+        var holdSec = isAiResult && aiOverlay != null ? aiResultHoldSec : 0f;
+        if (holdSec > 0f)
         {
-            Destroy(gameObject);
-            return;
+            ShowAiResult(resolution == TaskResolution.AiSuccess);
         }
 
-        transform.DOScale(0f, disappearDurationSec)
+        if (disappearDurationSec <= 0f && holdSec <= 0f)
+        {
+            Destroy(gameObject);
+            return 0f;
+        }
+
+        transform.DOScale(0f, Mathf.Max(0.0001f, disappearDurationSec))
+            .SetDelay(holdSec)
             .SetEase(Ease.InBack)
             .OnComplete(() => Destroy(gameObject));
+
+        return holdSec;
     }
 
     /// <summary>消え始めるときに枠から抜ける。見た目の位置はそのまま保つ。</summary>

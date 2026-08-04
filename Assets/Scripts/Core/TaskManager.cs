@@ -130,6 +130,7 @@ public sealed class TaskManager
         if (elapsedSec < nextAiRequestSec || !TryGetAvailableTask(taskId, out var task)) return false;
         task.CapturedTimeRatio = CalculateRemainingRatio(task);
         task.AiRemainingProcessSec = Math.Max(0f, settings.AiProcessDurationSec);
+        task.AiTotalProcessSec = task.AiRemainingProcessSec;
         task.State = TaskState.AiProcessing;
         nextAiRequestSec = elapsedSec + Math.Max(0f, settings.AiCooldownSec);
         return true;

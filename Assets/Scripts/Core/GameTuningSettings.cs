@@ -67,8 +67,10 @@ public class GameTuningSettings : ScriptableObject
         [Tooltip("AIに任せたタスクが成功する確率。1 で必ず成功、0 で必ず失敗。")]
         [Range(0f, 1f)] public float successRate = 0.90f;
 
-        [Tooltip("AIに任せてから結果が出るまでの秒数。短いほどAIが強くなる。")]
-        public float processDurationSec = 0.40f;
+        [Tooltip("AIに任せてから結果が出るまでの秒数。短いほどAIが強くなる。\n" +
+                 "この時間が吹き出しの円ゲージの長さになる。1 秒を下回ると\n" +
+                 "「AIが作業中」の表示が読まれる前に終わってしまう。")]
+        public float processDurationSec = 1.50f;
 
         [Tooltip("次にAIへ依頼できるようになるまでの待ち時間（秒）。\n" +
                  "0 にすると待ち時間なしで、何件でも同時にAIへ任せられる。")]
