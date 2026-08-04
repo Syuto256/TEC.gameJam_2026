@@ -87,7 +87,7 @@ MonoBehaviour:
   m_spriteAsset: {fileID: 0}
   m_tintAllSprites: 0
   m_StyleSheet: {fileID: 0}
-  m_TextStyleHashCode: 0
+  m_TextStyleHashCode: -1183493901
   m_overrideHtmlColors: 0
   m_faceColor:
     serializedVersion: 2
@@ -224,7 +224,7 @@ MonoBehaviour:
   m_spriteAsset: {fileID: 0}
   m_tintAllSprites: 0
   m_StyleSheet: {fileID: 0}
-  m_TextStyleHashCode: 0
+  m_TextStyleHashCode: -1183493901
   m_overrideHtmlColors: 0
   m_faceColor:
     serializedVersion: 2
@@ -436,7 +436,7 @@ MonoBehaviour:
   m_spriteAsset: {fileID: 0}
   m_tintAllSprites: 0
   m_StyleSheet: {fileID: 0}
-  m_TextStyleHashCode: 0
+  m_TextStyleHashCode: -1183493901
   m_overrideHtmlColors: 0
   m_faceColor:
     serializedVersion: 2
@@ -573,7 +573,7 @@ MonoBehaviour:
   m_spriteAsset: {fileID: 0}
   m_tintAllSprites: 0
   m_StyleSheet: {fileID: 0}
-  m_TextStyleHashCode: 0
+  m_TextStyleHashCode: -1183493901
   m_overrideHtmlColors: 0
   m_faceColor:
     serializedVersion: 2
@@ -954,12 +954,12 @@ MonoBehaviour:
   progressText: {fileID: 5820564412072191930}
   statusText: {fileID: 8888328944565606911}
   missText: {fileID: 1414394635338180283}
-  baseRequiredStops: 3
-  stopsPerLevel: 1
+  baseRequiredStops: 1
+  stopsPerLevel: 0
   baseCycleSeconds: 1.6
-  cycleScalePerLevel: 0.82
+  cycleScalePerLevel: 0.84
   baseZoneWidth: 0.24
-  zoneScalePerLevel: 0.8
+  zoneScalePerLevel: 0.9
   allowedMisses: 2
   acceptSpaceKey: 1
   prompt: "\u30AF\u30EA\u30C3\u30AF \u307E\u305F\u306F \u30B9\u30DA\u30FC\u30B9 \u3067\u6B62\u3081\u308B"
@@ -1129,7 +1129,7 @@ MonoBehaviour:
   m_spriteAsset: {fileID: 0}
   m_tintAllSprites: 0
   m_StyleSheet: {fileID: 0}
-  m_TextStyleHashCode: 0
+  m_TextStyleHashCode: -1183493901
   m_overrideHtmlColors: 0
   m_faceColor:
     serializedVersion: 2

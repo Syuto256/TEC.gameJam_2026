@@ -60,7 +60,8 @@
 | クラス | パス | 役割 | 主な依存先 |
 | --- | --- | --- | --- |
 | `TypingMiniGame` | `Assets/Scripts/MiniGameS/Typing/TypingMiniGame.cs` | キーボード入力を受け、進捗を表示し、完了結果を 1 回通知する。 | `MiniGameBase`, Input System, TextMeshPro |
-| `TypingQuestionDatabase` / `TypingQuestion` | `Assets/Scripts/MiniGameS/Typing/TypingQuestionDatabase.cs` | レベル別の日本語表示文字列と許容ローマ字を持つ。 | UnityEngine |
+| `TypingQuestionDatabase` / `TypingQuestion` | `Assets/Scripts/MiniGameS/Typing/TypingQuestionDatabase.cs` | レベル別の日本語表示文字列と読みを持つ。ローマ字は持たない。 | UnityEngine |
+| `RomanizationGenerator` | `Assets/Scripts/MiniGameS/Typing/RomanizationGenerator.cs` | ひらがなの読みから打てるローマ字をすべて作る。訓令式・ヘボン式、促音・撥音・拗音の打ち方の差を吸収する。 | System |
 | `TypingInputEvaluator` | `Assets/Scripts/MiniGameS/Typing/TypingInputEvaluator.cs` | 複数の許容ローマ字に対する入力進捗を Unity 非依存で判定する。 | System |
 | `TracingMiniGame` | `Assets/Scripts/MiniGameS/Tracing/TracingMiniGame.cs` | 経路のなぞりを判定する。ガイド線のみ Prefab 上の複製元から実行時に複製する。 | `MiniGameBase`, Input System, uGUI, TextMeshPro |
 | `TracingPathDatabase` / `TracingPathEntry` | `Assets/Scripts/MiniGameS/Tracing/TracingPathDatabase.cs` | レベル別の正規化経路と許容逸脱量を持つ。 | UnityEngine |

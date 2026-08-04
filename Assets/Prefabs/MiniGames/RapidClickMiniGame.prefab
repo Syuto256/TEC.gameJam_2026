@@ -492,8 +492,8 @@ MonoBehaviour:
   timeFormat: "\u6B8B\u308A\u6642\u9593: {0:F1} \u79D2"
   progressText: {fileID: 8871909594781310471}
   progressFormat: "\u9023\u6253! {0} / {1}"
-  baseClicks: 12
-  clicksPerLevel: 4
+  baseClicks: 8
+  clicksPerLevel: 3
   acceptSpaceKey: 1
 --- !u!114 &6307164032663298642
 MonoBehaviour:

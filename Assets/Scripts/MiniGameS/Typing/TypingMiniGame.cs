@@ -71,7 +71,20 @@ namespace Overwork.MiniGames.Typing
                 return;
             }
 
-            evaluator = new TypingInputEvaluator(question.acceptedRomanizations);
+            // 打てるローマ字は読みから毎回作る。問題データはローマ字を持たない。
+            System.Collections.Generic.IReadOnlyList<string> candidates;
+            string error;
+            if (!RomanizationGenerator.TryGenerate(question.reading, out candidates, out error))
+            {
+                Debug.LogError(
+                    nameof(TypingMiniGame) + " (" + name + "): 「" + question.displayText + "」の読みからローマ字を作れません -> "
+                    + error, this);
+                base.Initialize(difficulty, timeLimit);
+                FinishGame(false, "BAD READING");
+                return;
+            }
+
+            evaluator = new TypingInputEvaluator(candidates);
             base.Initialize(difficulty, timeLimit);
 
             questionText.text = string.Format(questionFormat, question.displayText);
