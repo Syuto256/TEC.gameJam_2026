@@ -393,18 +393,54 @@ public sealed class MainGameController : MonoBehaviour
 
     private void OnTaskResolved(TaskResolutionResult result)
     {
-        session.Apply(result);
+        var addedScore = session.Apply(result); // ここで最新の ComboCount が確定[cite: 10, 11]
         PlayResolutionCue(result.Resolution);
+
+        // ★ 自力ミニゲーム成功時の処理
+        if (result.Resolution == TaskResolution.PlayerSuccess)
+        {
+            if (addedScore > 0)
+            {
+                hudView.ShowScorePopup(addedScore, session.ComboCount);
+            }
+
+            // 節目の判定で鳴らす SE を完全に分離（排他制御）
+            if (IsComboMilestone(session.ComboCount))
+            {
+                AudioManager.PlaySfx(AudioCue.ComboMilestone);  // ★ 節目達成時のみ再生
+            }
+            else
+            {
+                AudioManager.PlaySfx(AudioCue.MiniGameSuccess); // ★ 通常クリア時のみ再生
+            }
+        }
+        // ★ 自力ミニゲーム失敗時の処理（音再生をここへ移動）
+        else if (result.Resolution == TaskResolution.PlayerFailure)
+        {
+            AudioManager.PlaySfx(AudioCue.MiniGameFailure);
+        }
+
         if (activePlayerTaskId == result.Task.Id)
         {
             SetActivePlayerTask(-1);
             miniGameHost.Hide();
         }
+
         if (taskViews.TryGetValue(result.Task.Id, out var view))
         {
             taskViews.Remove(result.Task.Id);
             Destroy(view.gameObject);
         }
+    }
+    /// <summary>★追加: コンボ数が大台に乗ったかどうかを判定する</summary>
+    private static bool IsComboMilestone(int combo)
+    {
+        if (combo <= 0) return false;
+
+        // 例1: 5, 10, 15, 20... と 5 コンボごとに鳴らしたい場合
+        return combo % 5 == 0;
+
+        // 例2: 10コンボ以上の時だけ鳴らしたい場合なら: return combo == 10;
     }
 
     /// <summary>タスクの決着に応じた音を鳴らす。自力の成否は <see cref="CompletePlayerMiniGame"/> が鳴らす。</summary>
@@ -431,7 +467,7 @@ public sealed class MainGameController : MonoBehaviour
             return;
         }
 
-        AudioManager.PlaySfx(success ? AudioCue.MiniGameSuccess : AudioCue.MiniGameFailure);
+       
         taskManager.CompletePlayer(taskId, success);
     }
 

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>鳴らす音の種類。</summary>
@@ -28,8 +29,21 @@ public enum AudioCue
     PauseClose,
     HpLow,
     MiniGameInputHit,
-    MiniGameInputMiss
+    MiniGameInputMiss,
+    ComboMilestone,
+
+    AmbientSound1,
+    AmbientSound2,
+    AmbientSound3,
+    AmbientSound4,
+
+    // ★ 必ず末尾に追加する
+    ClearJingle,
+    ClearJingle2,
+    GameOverJingle
+    
 }
+
 
 [CreateAssetMenu(fileName = "AudioCatalog", menuName = "Game/Audio Catalog")]
 public sealed class AudioCatalog : ScriptableObject
@@ -37,24 +51,41 @@ public sealed class AudioCatalog : ScriptableObject
     [Serializable]
     public sealed class CueEntry
     {
-        [Tooltip("どの場面で鳴る音かを選ぶ。どの種類がいつ鳴るかは Docs/Architecture/audio-manager.md の一覧を参照。")]
         public AudioCue cue;
-
-        [Tooltip("鳴らす音声ファイル。空のままだと、その場面では何も鳴らない（エラーにはならない）。")]
         public AudioClip clip;
-
-        [Tooltip("この音だけの音量。オプション画面の全体音量と掛け合わされる。\n" +
-                 "他の音より大きい・小さいと感じたときにここで揃える。")]
         [Range(0f, 1f)] public float volume = 1f;
     }
 
-    [Tooltip("音の種類ごとのクリップと音量。未登録の種類は鳴らないだけで、エラーにはならない。")]
+    [Header("【通常音源】")]
     [SerializeField] private CueEntry[] entries = Array.Empty<CueEntry>();
 
-    /// <summary>クリップがまだ割り当てられていない種類を列挙する。素材の抜けを確認するために使う。</summary>
+    // ★追加: 環境音の設定項目
+    [Header("【環境音の設定】")]
+    [Tooltip("環境音が発生する最小間隔（秒）")]
+    [SerializeField] private float ambientMinIntervalSec = 5f;
+
+    [Tooltip("環境音が発生する最大間隔（秒）")]
+    [SerializeField] private float ambientMaxIntervalSec = 15f;
+
+    [Tooltip("ランダム再生する環境音のリスト")]
+    [SerializeField] private AudioCue[] ambientCues = Array.Empty<AudioCue>();
+
+    // ★ 2. クリア時の2つ目のSEの遅延時間（秒）を追加
+    [Header("【クリア演出設定】")]
+    [Tooltip("クリア時の2つ目のSEを鳴らすまでの遅延時間（秒）")]
+    [SerializeField] private float clearJingle2DelaySec = 0.8f; 
+
+    public float AmbientMinIntervalSec => ambientMinIntervalSec;
+    public float AmbientMaxIntervalSec => ambientMaxIntervalSec;
+    public IReadOnlyList<AudioCue> AmbientCues => ambientCues;
+
+    // ★ 3. 外部から遅延時間を読み取るプロパティ
+    public float ClearJingle2DelaySec => clearJingle2DelaySec;
+
+   
     public string[] GetMissingCueNames()
     {
-        var missing = new System.Collections.Generic.List<string>();
+        var missing = new List<string>();
         foreach (AudioCue cue in Enum.GetValues(typeof(AudioCue)))
         {
             if (!TryGet(cue, out _, out _))
@@ -62,7 +93,6 @@ public sealed class AudioCatalog : ScriptableObject
                 missing.Add(cue.ToString());
             }
         }
-
         return missing.ToArray();
     }
 
