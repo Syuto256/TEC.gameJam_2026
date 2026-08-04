@@ -59,15 +59,45 @@
 
 **確認結果（2026-08-05）:** コンパイルエラー 0 件、EditMode テスト 48/48 成功、Console エラー 0 件。Play モードでの目視確認は未実施。
 
-### E2: 既存 UI へのトゥイーン適用
+### E2: 既存 UI へのトゥイーン適用（実装完了・2026-08-05 / 目視確認待ち）
 
-- タスク吹き出しの出現・消滅（`TaskBubbleView`）。寿命が尽きる直前の警告表現もここで入れる。
-- HP バーの減少を補間する。現在は `fillAmount` を直接代入しているため、被弾が視認しづらい。
-- 被弾時の画面揺れ。
+調整値はすべて Inspector へ出した。シーンへの新規オブジェクト追加と Prefab の構造変更は無い。
 
-いずれも見た目の値は Prefab / Scene 側に置き、コードには持たせない（[シーン構造](../Architecture/scene-structure.md) の規則）。
+| 対象 | 内容 | 置き場所 |
+| --- | --- | --- |
+| HP バー | 減少を `DOFillAmount` で補間。初回描画だけは即時反映する | `HudView.hpBarDurationSec` |
+| HP バー（赤ゲージ） | 減ったぶんを赤いまま残し、少し待ってから追いつかせる | `HudView.hpDamageBarDelaySec` / `hpDamageBarDurationSec` |
+| 吹き出しの出現 | 縮んだ状態から等倍へ（`OutBack`） | `TaskBubble.prefab` の `TaskBubbleView` |
+| 吹き出しの消滅 | 0 まで縮めてから破棄（`InBack`） | 同上 |
+| 寿命警告 | 残り寿命が一定割合を下回ったら脈動する | 同上 |
+| 被弾時の揺れ | 表示中のデバイス面だけを揺らす | `DeviceWorkspace` 系 Prefab の `DeviceWorkspaceView` |
 
-**確認ゲート:** 自力失敗・AI 失敗・時間切れの 3 経路で、HP の減りが目で追える。
+#### 実装上の制約（変更するときに踏むもの）
+
+- **吹き出しは位置をトゥイーンできない。** `TaskSpawnArea` の Layout Group が `anchoredPosition` を driven property として支配するため。出現・消滅・警告はすべて `localScale` で表現している。`localScale` は Layout Group の管轄外である。
+- **吹き出しの警告に色は使えない。** `TaskBubbleView.Refresh` が毎フレーム `background.color` を状態色で上書きするため、色のトゥイーンは 1 フレームで潰される。
+- `Refresh` は毎フレーム呼ばれるので、警告トゥイーンは**状態が変わったときだけ**作り直す。毎フレーム生成すると脈動が止まって見える。
+- 消滅演出のぶんだけ破棄が遅れ、その間は Layout Group の枠を占有するため、残りの吹き出しの詰め直しが遅れる。`LayoutElement.ignoreLayout` で即座に詰めることもできるが、driven property が解放されて位置が飛ぶ危険があるため採らなかった。
+
+#### HP バーの赤ゲージ
+
+`HpBar` の下に `HpBarDamageFill` を 1 枚追加した。並びは **`HpBarDamageFill` → `HpBarFill` → `HpValue`** で、赤いバーが `HpBarFill` より奥に来る。両方とも左から伸びる Filled Horizontal で、同じスプライトを使い、赤いバーだけ色を変えている。
+
+- 被弾すると `HpBarFill` が先に減り、減ったぶんが赤く見える。
+- `hpDamageBarDelaySec` 待ってから、赤いバーが `hpDamageBarDurationSec` かけて追いつく。
+- 追いつく途中でさらに被弾した場合は、そのときの位置から新しい目標へ引き直す。
+- 回復時と初回描画では赤ゲージを残さない。赤いバーが現在 HP より少ない状態を作らないためである。
+- `hpBarDamageFill` は任意項目である。未設定なら赤ゲージは出ず、従来どおりの見た目に戻る。
+
+赤の色味は `HpBarDamageFill` の `Image.Color` で変える。専用スプライトを作る場合もここを差し替えるだけでよい。
+
+#### 揺らす範囲
+
+**デバイス面（`PcOnly` / `TabletOnly`）だけを揺らし、HUD は固定する。** 残り時間・HP・スコアを読めなくしないためである。揺れは `DeviceWorkspaceView` が自分で行うので、専用クラスもシーンへの配置も要らない。非表示の面は揺らさない。
+
+背景は画面より上下左右 10px 大きく作られているため、**揺れ幅が 10px を超えると画面端に隙間が見えることがある**。既定値は 8px にしてある。
+
+**確認結果（2026-08-05）:** コンパイルエラー 0 件、EditMode テスト 48/48 成功、Console エラー 0 件。**Play モードでの目視確認は未実施。**
 
 ### E3: 新規演出
 

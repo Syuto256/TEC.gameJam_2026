@@ -39,6 +39,11 @@ public sealed class HudView : MonoBehaviour
     [SerializeField] private TextMeshProUGUI hpText;
     [SerializeField] private TextMeshProUGUI difficultyText;
 
+    [Tooltip("減ったHPぶんを遅れて追いかける赤いバー。\n" +
+             "HpBarFill と同じ大きさ・同じ Filled 設定にし、Hierarchy 上で HpBarFill より上（＝奥）に置く。\n" +
+             "未設定なら赤ゲージは出ず、従来どおりの見た目になる。")]
+    [SerializeField] private Image hpBarDamageFill;
+
     [Header("【演出部品】")]
     [SerializeField] private TextMeshProUGUI centerScorePopupText;
     [SerializeField] private TextMeshProUGUI comboPopupText;
@@ -59,6 +64,20 @@ public sealed class HudView : MonoBehaviour
     [Tooltip("浮き上がる動きの緩急。Linear は等速。OutCubic にすると最初が速く、最後がゆっくりになる。")]
     [SerializeField] private Ease popupEase = Ease.Linear;
 
+    [Header("【HPバー】")]
+    [Tooltip("HP が減ったとき、バーが追いつくまでの秒数。\n" +
+             "0 にすると従来どおり一瞬で減る。長くすると被弾が目で追いやすくなる。")]
+    [Min(0f)] [SerializeField] private float hpBarDurationSec = 0.25f;
+
+    [Tooltip("赤いバーが減り始めるまでの待ち時間（秒）。\n" +
+             "この間は減ったぶんが赤いまま残る。長いほど「食らった量」が印象に残る。")]
+    [Min(0f)] [SerializeField] private float hpDamageBarDelaySec = 0.35f;
+
+    [Tooltip("赤いバーが現在HPに追いつくまでの秒数。0 にすると赤ゲージは残らない。")]
+    [Min(0f)] [SerializeField] private float hpDamageBarDurationSec = 0.4f;
+
+    private Tween hpBarTween;
+    private Tween hpDamageBarTween;
     private Sequence scorePopupTween;
     private Color scorePopupBaseColor = Color.white;
     private Color comboPopupBaseColor = Color.white;
@@ -112,8 +131,25 @@ public sealed class HudView : MonoBehaviour
 
         if (snapshot.Hp != lastHp)
         {
+            var isFirstRender = lastHp == int.MinValue;
+            var decreased = !isFirstRender && snapshot.Hp < lastHp;
             lastHp = snapshot.Hp;
-            hpBarFill.fillAmount = snapshot.MaxHp <= 0 ? 0f : Mathf.Clamp01((float)snapshot.Hp / snapshot.MaxHp);
+
+            var targetFill = snapshot.MaxHp <= 0 ? 0f : Mathf.Clamp01((float)snapshot.Hp / snapshot.MaxHp);
+            hpBarTween?.Kill();
+
+            // 開始直後は満タンから減る演出になってしまうため、初回だけ即座に反映する。
+            if (isFirstRender || hpBarDurationSec <= 0f)
+            {
+                hpBarFill.fillAmount = targetFill;
+            }
+            else
+            {
+                hpBarTween = hpBarFill.DOFillAmount(targetFill, hpBarDurationSec).SetEase(Ease.OutQuad);
+            }
+
+            RenderDamageBar(targetFill, isFirstRender, decreased);
+
             if (hpText != null)
             {
                 hpText.text = snapshot.Hp.ToString();
@@ -137,6 +173,33 @@ public sealed class HudView : MonoBehaviour
         {
             difficultyText.text = snapshot.Difficulty.ToString();
         }
+    }
+
+    /// <summary>減ったHPぶんを赤いまま残し、少し待ってから現在HPまで追いつかせる。</summary>
+    /// <remarks>
+    /// 赤いバーは常に現在HPのバー以上の値を保つ。減ったときだけ遅らせ、それ以外は即座に合わせるためである。
+    /// 追いつく途中でさらに被弾した場合は、そのときの位置から新しい目標へ引き直す。
+    /// </remarks>
+    private void RenderDamageBar(float targetFill, bool isFirstRender, bool decreased)
+    {
+        if (hpBarDamageFill == null)
+        {
+            return;
+        }
+
+        hpDamageBarTween?.Kill();
+
+        // 初回と回復時は残さない。赤いバーが現在HPより少ない状態を作らないため。
+        if (isFirstRender || !decreased || hpDamageBarDurationSec <= 0f)
+        {
+            hpBarDamageFill.fillAmount = targetFill;
+            return;
+        }
+
+        hpDamageBarTween = hpBarDamageFill
+            .DOFillAmount(targetFill, hpDamageBarDurationSec)
+            .SetDelay(hpDamageBarDelaySec)
+            .SetEase(Ease.InQuad);
     }
 
     private static string FormatTime(float remainingSec, bool isEndless)
@@ -231,6 +294,10 @@ public sealed class HudView : MonoBehaviour
     {
         scorePopupTween?.Kill();
         scorePopupTween = null;
+        hpBarTween?.Kill();
+        hpBarTween = null;
+        hpDamageBarTween?.Kill();
+        hpDamageBarTween = null;
     }
 
 }

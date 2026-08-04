@@ -398,6 +398,11 @@ public sealed class MainGameController : MonoBehaviour
         var addedScore = session.Apply(result);
         PlayResolutionCue(result.Resolution);
 
+        if (IsDamageResolution(result.Resolution))
+        {
+            PlayDamageShake();
+        }
+
         // 自力成功でスコアが入ったときだけ、獲得点とコンボを見せる。
         if (result.Resolution == TaskResolution.PlayerSuccess && addedScore > 0)
         {
@@ -417,8 +422,29 @@ public sealed class MainGameController : MonoBehaviour
 
         if (taskViews.TryGetValue(result.Task.Id, out var view))
         {
+            // 先に一覧から外すことで、消滅演出の間 Refresh の対象から外れる。破棄は View 自身が行う。
             taskViews.Remove(result.Task.Id);
-            Destroy(view.gameObject);
+            view.PlayExitAndDestroy();
+        }
+    }
+
+    /// <summary>HP が減る決着かどうか。</summary>
+    private static bool IsDamageResolution(TaskResolution resolution)
+    {
+        return resolution == TaskResolution.PlayerFailure
+            || resolution == TaskResolution.AiFailure
+            || resolution == TaskResolution.Expired;
+    }
+
+    /// <summary>被弾を表す揺れを、表示中のデバイス面に出す。HUD は揺らさない。</summary>
+    private void PlayDamageShake()
+    {
+        foreach (var workspace in workspaces)
+        {
+            if (workspace != null)
+            {
+                workspace.PlayDamageShake();
+            }
         }
     }
     /// <summary>コンボ数が節目に達したか。間隔は GameTuningSettings の comboMilestoneInterval で変える。</summary>

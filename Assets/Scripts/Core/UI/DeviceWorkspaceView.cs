@@ -1,3 +1,4 @@
+using DG.Tweening;
 using UnityEngine;
 
 /// <summary>1 つのデバイス面の表示状態と、タスク吹き出しの生成先だけを担当する。</summary>
@@ -18,6 +19,20 @@ public sealed class DeviceWorkspaceView : MonoBehaviour
     [Tooltip("未設定なら同じ GameObject の CanvasGroup を使う。")]
     [SerializeField] private CanvasGroup canvasGroup;
 
+    [Header("【被弾時の揺れ】")]
+    [Tooltip("HPが減ったときにこの面が揺れる幅（ピクセル）。0 にすると揺れない。\n" +
+             "背景は画面より上下左右 10px 大きく作ってあるため、10 を超えると画面端に隙間が見えることがある。")]
+    [Min(0f)] [SerializeField] private float damageShakeStrength = 8f;
+
+    [Tooltip("揺れが収まるまでの秒数。長くすると衝撃が重くなる。")]
+    [Min(0f)] [SerializeField] private float damageShakeDurationSec = 0.25f;
+
+    [Tooltip("揺れの細かさ。大きいほど細かく震える。")]
+    [Min(1)] [SerializeField] private int damageShakeVibrato = 20;
+
+    private RectTransform rectTransform;
+    private Vector2 shakeOrigin;
+    private Tween shakeTween;
     private bool initialized;
 
     public TaskSurface Surface => surface;
@@ -47,8 +62,44 @@ public sealed class DeviceWorkspaceView : MonoBehaviour
             return false;
         }
 
+        rectTransform = transform as RectTransform;
+        if (rectTransform != null)
+        {
+            shakeOrigin = rectTransform.anchoredPosition;
+        }
+
         initialized = true;
         return true;
+    }
+
+    /// <summary>被弾を表す短い揺れを再生する。表示されていない面は揺らさない。</summary>
+    /// <remarks>
+    /// 揺らすのはこの面だけで、HUD は動かさない。残り時間や HP の数値を読めなくしないためである。
+    /// 揺れ幅・時間・細かさは Prefab Variant ごとに Inspector で調整する。
+    /// </remarks>
+    public void PlayDamageShake()
+    {
+        if (!initialized || rectTransform == null || damageShakeStrength <= 0f || damageShakeDurationSec <= 0f)
+        {
+            return;
+        }
+
+        if (canvasGroup == null || canvasGroup.alpha <= 0f)
+        {
+            return;
+        }
+
+        // 揺れが重なると原点がずれるため、前の揺れは終端まで進めてから始める。
+        shakeTween?.Complete();
+        shakeTween = rectTransform
+            .DOShakeAnchorPos(damageShakeDurationSec, damageShakeStrength, damageShakeVibrato)
+            .OnKill(() => rectTransform.anchoredPosition = shakeOrigin);
+    }
+
+    private void OnDestroy()
+    {
+        shakeTween?.Kill();
+        shakeTween = null;
     }
 
     /// <summary>表示・非表示を切り替える。非表示側もタスクの寿命と演出は進み続ける。</summary>

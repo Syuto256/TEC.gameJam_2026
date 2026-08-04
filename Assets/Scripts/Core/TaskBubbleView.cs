@@ -1,3 +1,4 @@
+using DG.Tweening;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -34,9 +35,32 @@ public sealed class TaskBubbleView : MonoBehaviour, IPointerClickHandler
     [SerializeField] private string aiProcessingLabel = "AI PROCESSING";
     [SerializeField] private string resolvedLabel = "RESOLVED";
 
+    [Header("【出現・消滅の演出】")]
+    [Tooltip("出現するとき、この倍率から等倍まで拡大する。1 にすると拡大せずそのまま出る。")]
+    [Min(0f)] [SerializeField] private float appearFromScale = 0.7f;
+
+    [Tooltip("出現アニメーションの秒数。0 にすると即座に出る。")]
+    [Min(0f)] [SerializeField] private float appearDurationSec = 0.18f;
+
+    [Tooltip("消滅アニメーションの秒数。この時間だけ吹き出しの消滅が遅れる。0 にすると即座に消える。")]
+    [Min(0f)] [SerializeField] private float disappearDurationSec = 0.15f;
+
+    [Header("【寿命警告】")]
+    [Tooltip("残り寿命がこの割合を下回ったら、吹き出しが脈打って知らせる。0 にすると警告しない。")]
+    [Range(0f, 1f)] [SerializeField] private float warningLifetimeRatio = 0.3f;
+
+    [Tooltip("警告中にふくらむ倍率。大きいほど目立つ。")]
+    [Min(1f)] [SerializeField] private float warningPulseScale = 1.08f;
+
+    [Tooltip("脈動 1 往復にかかる秒数。短いほど焦らせる。")]
+    [Min(0.05f)] [SerializeField] private float warningPulseCycleSec = 0.5f;
+
     private MainGameController controller;
     private TaskInstance task;
     private string kindLabel;
+    private Tween appearTween;
+    private Tween warningTween;
+    private bool exiting;
 
     public int TaskId => task?.Id ?? -1;
 
@@ -60,7 +84,25 @@ public sealed class TaskBubbleView : MonoBehaviour, IPointerClickHandler
             kindIcon.enabled = icon != null;
         }
 
+        PlayAppear();
         Refresh();
+    }
+
+    /// <summary>出現時にふくらませる。位置は動かさない。</summary>
+    /// <remarks>
+    /// 吹き出しの位置は <c>TaskSpawnArea</c> の Layout Group が driven property として支配しているため、
+    /// 座標のトゥイーンは効かない。拡大縮小は Layout Group の管轄外なので、こちらで演出する。
+    /// </remarks>
+    private void PlayAppear()
+    {
+        if (appearDurationSec <= 0f || Mathf.Approximately(appearFromScale, 1f))
+        {
+            transform.localScale = Vector3.one;
+            return;
+        }
+
+        transform.localScale = Vector3.one * appearFromScale;
+        appearTween = transform.DOScale(1f, appearDurationSec).SetEase(Ease.OutBack);
     }
 
     public void Refresh()
@@ -91,12 +133,16 @@ public sealed class TaskBubbleView : MonoBehaviour, IPointerClickHandler
             timeText.text = task.RemainingLifetimeSec.ToString("0.0");
         }
 
+        var lifetimeRatio = task.InitialLifetimeSec <= 0f
+            ? 0f
+            : Mathf.Clamp01(task.RemainingLifetimeSec / task.InitialLifetimeSec);
+
         if (lifetimeGauge != null)
         {
-            lifetimeGauge.fillAmount = task.InitialLifetimeSec <= 0f
-                ? 0f
-                : Mathf.Clamp01(task.RemainingLifetimeSec / task.InitialLifetimeSec);
+            lifetimeGauge.fillAmount = lifetimeRatio;
         }
+
+        UpdateWarning(lifetimeRatio);
 
         if (background != null)
         {
@@ -108,6 +154,73 @@ public sealed class TaskBubbleView : MonoBehaviour, IPointerClickHandler
                 _ => resolvedColor
             };
         }
+    }
+
+    /// <summary>残り寿命が少なくなったら脈動させ、戻ったら止める。状態が変わったときだけ触る。</summary>
+    /// <remarks>
+    /// <see cref="Refresh"/> は毎フレーム呼ばれるため、ここで毎回トゥイーンを作り直さないこと。
+    /// また <see cref="background"/> の色は毎フレーム状態色で上書きされるので、警告に色は使えない。
+    /// </remarks>
+    private void UpdateWarning(float lifetimeRatio)
+    {
+        if (exiting)
+        {
+            return;
+        }
+
+        var shouldWarn = warningLifetimeRatio > 0f
+            && task.State == TaskState.Available
+            && lifetimeRatio <= warningLifetimeRatio;
+
+        if (shouldWarn == (warningTween != null))
+        {
+            return;
+        }
+
+        if (shouldWarn)
+        {
+            appearTween?.Kill();
+            appearTween = null;
+            transform.localScale = Vector3.one;
+            warningTween = transform.DOScale(warningPulseScale, warningPulseCycleSec * 0.5f)
+                .SetLoops(-1, LoopType.Yoyo)
+                .SetEase(Ease.InOutSine);
+        }
+        else
+        {
+            warningTween.Kill();
+            warningTween = null;
+            transform.localScale = Vector3.one;
+        }
+    }
+
+    /// <summary>消滅アニメーションを再生し、終わったら自分を破棄する。</summary>
+    /// <remarks>
+    /// 破棄が <see cref="disappearDurationSec"/> だけ遅れるため、その間は Layout Group の枠を占有し、
+    /// 残りの吹き出しは詰め直されない。詰め直しを早めたい場合はこの秒数を短くする。
+    /// </remarks>
+    public void PlayExitAndDestroy()
+    {
+        if (exiting)
+        {
+            return;
+        }
+
+        exiting = true;
+        appearTween?.Kill();
+        appearTween = null;
+        warningTween?.Kill();
+        warningTween = null;
+
+        if (disappearDurationSec <= 0f)
+        {
+            Destroy(gameObject);
+            return;
+        }
+
+        transform.DOScale(0f, disappearDurationSec)
+            .SetEase(Ease.InBack)
+            .OnComplete(() => Destroy(gameObject));
     }
 
     public void OnPointerClick(PointerEventData eventData)
@@ -125,5 +238,12 @@ public sealed class TaskBubbleView : MonoBehaviour, IPointerClickHandler
         {
             controller.TryAssignAi(task.Id);
         }
+    }
+
+    private void OnDestroy()
+    {
+        appearTween?.Kill();
+        warningTween?.Kill();
+        transform.DOKill();
     }
 }
