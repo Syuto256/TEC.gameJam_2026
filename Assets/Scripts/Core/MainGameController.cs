@@ -403,6 +403,7 @@ public sealed class MainGameController : MonoBehaviour
 
     private void OnTaskResolved(TaskResolutionResult result)
     {
+        // ここで最新の ComboCount が確定する。
         var addedScore = session.Apply(result);
         PlayResolutionCue(result.Resolution);
 
@@ -411,15 +412,28 @@ public sealed class MainGameController : MonoBehaviour
             PlayDamageShake();
         }
 
-        // 自力成功でスコアが入ったときだけ、獲得点とコンボを見せる。
-        if (result.Resolution == TaskResolution.PlayerSuccess && addedScore > 0)
+        // 自力成功。獲得点を見せ、節目とそれ以外で鳴らす音を切り替える。
+        if (result.Resolution == TaskResolution.PlayerSuccess)
         {
-            hudView.ShowScorePopup(addedScore, session.ComboCount);
+            if (addedScore > 0)
+            {
+                hudView.ShowScorePopup(addedScore, session.ComboCount);
+            }
 
+            // 節目の音と通常の成功音は排他にする。同時に鳴らさない。
             if (IsComboMilestone(session.ComboCount))
             {
-                AudioManager.PlaySfx(AudioCue.ComboMilestone);
+                AudioManager.PlaySfx(AudioCue.ComboMilestone);  // ★ 節目達成時のみ再生
             }
+            else
+            {
+                AudioManager.PlaySfx(AudioCue.MiniGameSuccess); // ★ 通常クリア時のみ再生
+            }
+        }
+        // ★ 自力ミニゲーム失敗時の処理（音再生をここへ移動）
+        else if (result.Resolution == TaskResolution.PlayerFailure)
+        {
+            AudioManager.PlaySfx(AudioCue.MiniGameFailure);
         }
 
         if (activePlayerTaskId == result.Task.Id)
@@ -461,6 +475,7 @@ public sealed class MainGameController : MonoBehaviour
             }
         }
     }
+
     /// <summary>コンボ数が節目に達したか。間隔は GameTuningSettings の comboMilestoneInterval で変える。</summary>
     private bool IsComboMilestone(int combo)
     {
@@ -492,7 +507,7 @@ public sealed class MainGameController : MonoBehaviour
             return;
         }
 
-        AudioManager.PlaySfx(success ? AudioCue.MiniGameSuccess : AudioCue.MiniGameFailure);
+       
         taskManager.CompletePlayer(taskId, success);
     }
 

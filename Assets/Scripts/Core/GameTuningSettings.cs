@@ -100,9 +100,10 @@ public class GameTuningSettings : ScriptableObject
                  "1 にするとコンボによるスコア上昇が実質的に無くなる。")]
         [Min(1f)] public float maxComboMultiplier = 2.00f;
 
-        [Tooltip("何コンボごとに専用の効果音を鳴らすか。10 なら 10・20・30 コンボで鳴る。\n" +
-                 "0 にすると鳴らさない。")]
-        [Min(0)] public int comboMilestoneInterval = 10;
+        [Tooltip("何コンボごとに専用の効果音を鳴らすか。5 なら 5・10・15 コンボで鳴る。\n" +
+                 "節目では通常の成功音のかわりにこの音が鳴る（同時には鳴らさない）。\n" +
+                 "0 にすると鳴らさず、常に通常の成功音になる。")]
+        [Min(0)] public int comboMilestoneInterval = 5;
     }
 
     [Serializable]
