@@ -5,12 +5,16 @@ using UnityEngine.UI;
 /// <remarks>文字・配色・配置は <c>Title.unity</c> の Hierarchy と Inspector で調整する。</remarks>
 public sealed class TitleManager : MonoBehaviour
 {
-    [Header("Required")]
+    [Header("【必須】")]
     [SerializeField] private Button startButton;
     [SerializeField] private Button creditsButton;
     [SerializeField] private CanvasGroup creditsModal;
     [SerializeField] private Button creditsBackdropButton;
     [SerializeField] private Button closeCreditsButton;
+    [SerializeField] private Button openOflLicenseButton;
+    [SerializeField] private CanvasGroup oflLicenseModal;
+    [SerializeField] private Button oflLicenseBackdropButton;
+    [SerializeField] private Button backToCreditsButton;
 
     private void Start()
     {
@@ -21,7 +25,11 @@ public sealed class TitleManager : MonoBehaviour
                 (nameof(creditsButton), creditsButton),
                 (nameof(creditsModal), creditsModal),
                 (nameof(creditsBackdropButton), creditsBackdropButton),
-                (nameof(closeCreditsButton), closeCreditsButton)))
+                (nameof(closeCreditsButton), closeCreditsButton),
+                (nameof(openOflLicenseButton), openOflLicenseButton),
+                (nameof(oflLicenseModal), oflLicenseModal),
+                (nameof(oflLicenseBackdropButton), oflLicenseBackdropButton),
+                (nameof(backToCreditsButton), backToCreditsButton)))
         {
             return;
         }
@@ -30,7 +38,11 @@ public sealed class TitleManager : MonoBehaviour
         creditsButton.onClick.AddListener(ShowCredits);
         creditsBackdropButton.onClick.AddListener(HideCredits);
         closeCreditsButton.onClick.AddListener(HideCredits);
+        openOflLicenseButton.onClick.AddListener(ShowOflLicense);
+        oflLicenseBackdropButton.onClick.AddListener(ReturnToCredits);
+        backToCreditsButton.onClick.AddListener(ReturnToCredits);
         SetCreditsVisible(false);
+        SetOflLicenseVisible(false);
     }
 
     private void HandleStart()
@@ -43,18 +55,44 @@ public sealed class TitleManager : MonoBehaviour
     {
         AppServices.PlayConfirm();
         SetCreditsVisible(true);
+        SetOflLicenseVisible(false);
     }
 
     private void HideCredits()
     {
         AppServices.PlayConfirm();
         SetCreditsVisible(false);
+        SetOflLicenseVisible(false);
+    }
+
+    private void ShowOflLicense()
+    {
+        AppServices.PlayConfirm();
+        SetCreditsVisible(false);
+        SetOflLicenseVisible(true);
+    }
+
+    private void ReturnToCredits()
+    {
+        AppServices.PlayConfirm();
+        SetOflLicenseVisible(false);
+        SetCreditsVisible(true);
     }
 
     private void SetCreditsVisible(bool visible)
     {
-        creditsModal.alpha = visible ? 1f : 0f;
-        creditsModal.interactable = visible;
-        creditsModal.blocksRaycasts = visible;
+        SetModalVisible(creditsModal, visible);
+    }
+
+    private void SetOflLicenseVisible(bool visible)
+    {
+        SetModalVisible(oflLicenseModal, visible);
+    }
+
+    private static void SetModalVisible(CanvasGroup modal, bool visible)
+    {
+        modal.alpha = visible ? 1f : 0f;
+        modal.interactable = visible;
+        modal.blocksRaycasts = visible;
     }
 }

@@ -12,6 +12,7 @@
 - `Title` シーンの `MainCanvas/ScreenRoot` 配下に `CreditsButton` と `CreditsModal` を置く。
 - モーダルは `CanvasGroup` で非表示開始とし、クレジットボタンで開き、閉じるボタンと背景クリックで閉じる。
 - `TitleManager` はこれらの Scene 上の参照を配線するだけとし、UI を実行時に生成しない。
+- `CreditsModal` の `OFL 1.1` ボタンから、全文を縦スクロールで読める `OflLicenseModal` へ切り替える。背景クリックまたは `BACK TO CREDITS` でクレジットモーダルへ戻る。
 
 ## 表記内容
 
@@ -20,6 +21,8 @@
 `Assets/Sprites/ge-jamu2.png` はチーム制作素材のため、借用アセットのクレジット対象には含めない。`Assets/Fonts/HackGen-Bold.ttf` はテスト用途のため、削除予定とする。
 
 借用アセットの出典 URL、作者名、ライセンス名、必要な表記文言は、確定後にこの本文へ入力する。
+
+OFL 1.1 の本文は `Assets/TextMesh Pro/Fonts/LiberationSans - OFL.txt` の全文を `OflLicenseModal/Panel/ScrollArea/Viewport/Content/LicenseText` に転記する。
 
 ## TODO
 
