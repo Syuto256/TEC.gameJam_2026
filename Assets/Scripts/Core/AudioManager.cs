@@ -1,12 +1,9 @@
+using System.Collections; 
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
 /// <summary>BGM と SE の再生を一手に引き受ける常駐サービス。</summary>
-/// <remarks>
-/// 鳴らす側は <see cref="PlaySfx"/> に種類を渡すだけでよい。実際のクリップと音量は
-/// <c>Assets/Resources/AudioCatalog.asset</c> が持つ。未登録の種類は無音になるだけで、
-/// エラーにも例外にもならないため、音源が揃う前でも安全に呼び出せる。
-/// </remarks>
 public sealed class AudioManager : MonoBehaviour
 {
     private const string CatalogResourcePath = "AudioCatalog";
@@ -23,7 +20,8 @@ public sealed class AudioManager : MonoBehaviour
     private AudioSource sfxSource;
     private float currentBgmClipVolume = 1f;
 
-    /// <summary>BGM の音量（0〜1）。オプション画面から操作する。設定は保存される。</summary>
+    private Coroutine ambientCoroutine;
+
     public static float BgmVolume
     {
         get
@@ -43,7 +41,6 @@ public sealed class AudioManager : MonoBehaviour
         }
     }
 
-    /// <summary>SE の音量（0〜1）。次に鳴らす音から反映される。設定は保存される。</summary>
     public static float SfxVolume
     {
         get
@@ -115,6 +112,9 @@ public sealed class AudioManager : MonoBehaviour
 
     private void PlaySceneBgm(string sceneName)
     {
+        StopAmbient();
+        PlaySceneJingle(sceneName);
+
         var cue = sceneName switch
         {
             GameFlowController.TitleSceneName => AudioCue.TitleBgm,
@@ -125,13 +125,22 @@ public sealed class AudioManager : MonoBehaviour
             _ => AudioCue.TitleBgm
         };
 
-        // クリップが未登録の間は、直前の BGM を鳴らし続ける。
-        // 素材が順に届く途中で、シーンを移るたびに無音になるのを避けるためである。
+        if (sceneName == GameFlowController.GameSceneName)
+        {
+            StartAmbient();
+        }
+
         if (catalog == null || !catalog.TryGet(cue, out var clip, out var volume))
         {
+            if (sceneName == GameFlowController.GameSceneName)
+            {
+                StopBgm();
+            }
             return;
         }
 
+        // TitleBgm と DifficultySelectBgm に同じ AudioClip がセットされている場合、
+        // 以下の処理により曲が最初からリセットされず、シームレスに流れる仕様となっています
         if (bgmSource.clip == clip && bgmSource.isPlaying)
         {
             currentBgmClipVolume = volume;
@@ -143,6 +152,83 @@ public sealed class AudioManager : MonoBehaviour
         currentBgmClipVolume = volume;
         ApplyBgmVolume();
         bgmSource.Play();
+    }
+
+    public void StopBgm()
+    {
+        if (bgmSource != null && bgmSource.isPlaying)
+        {
+            bgmSource.Stop();
+            bgmSource.clip = null;
+        }
+    }
+
+    private void StartAmbient()
+    {
+        if (catalog == null || catalog.AmbientCues == null || catalog.AmbientCues.Count == 0)
+        {
+            return;
+        }
+
+        ambientCoroutine = StartCoroutine(PlayAmbientRoutine());
+    }
+
+    private void StopAmbient()
+    {
+        if (ambientCoroutine != null)
+        {
+            StopCoroutine(ambientCoroutine);
+            ambientCoroutine = null;
+        }
+    }
+
+    private IEnumerator PlayAmbientRoutine()
+    {
+        while (true)
+        {
+            var minSec = catalog.AmbientMinIntervalSec;
+            var maxSec = Mathf.Max(minSec, catalog.AmbientMaxIntervalSec);
+            var waitTime = Random.Range(minSec, maxSec);
+
+            yield return new WaitForSeconds(waitTime);
+
+            var cues = catalog.AmbientCues;
+            if (cues != null && cues.Count > 0)
+            {
+                var selectedCue = cues[Random.Range(0, cues.Count)];
+                PlayOneShot(selectedCue);
+            }
+        }
+    }
+
+    private void PlaySceneJingle(string sceneName)
+    {
+        AudioListener.pause = false;
+
+        if (sceneName == GameFlowController.ClearSceneName)
+        {
+            PlayOneShot(AudioCue.ClearJingle);
+
+            if (catalog != null)
+            {
+                StartCoroutine(PlayDelayedSfx(AudioCue.ClearJingle2, catalog.ClearJingle2DelaySec));
+            }
+        }
+        else if (sceneName == GameFlowController.GameOverSceneName)
+        {
+            PlayOneShot(AudioCue.GameOverJingle);
+        }
+    }
+
+    /// <summary>指定した秒数（delaySec）だけ遅れて SE を再生する（ポーズ中も動く）</summary>
+    private IEnumerator PlayDelayedSfx(AudioCue cue, float delaySec)
+    {
+        if (delaySec > 0f)
+        {
+            yield return new WaitForSecondsRealtime(delaySec);
+        }
+
+        PlayOneShot(cue);
     }
 
     private void ApplyBgmVolume()

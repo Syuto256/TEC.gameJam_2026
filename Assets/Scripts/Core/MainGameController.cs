@@ -393,18 +393,31 @@ public sealed class MainGameController : MonoBehaviour
 
     private void OnTaskResolved(TaskResolutionResult result)
     {
-        var addedScore = session.Apply(result); // 加算スコアを取得
+        var addedScore = session.Apply(result); // ここで最新の ComboCount が確定[cite: 10, 11]
         PlayResolutionCue(result.Resolution);
 
-        // 自力ミニゲーム成功時かつスコアが得られた場合のみポップアップを出す
-        if (result.Resolution == TaskResolution.PlayerSuccess && addedScore > 0)
+        // ★ 自力ミニゲーム成功時の処理
+        if (result.Resolution == TaskResolution.PlayerSuccess)
         {
-            hudView.ShowScorePopup(addedScore, session.ComboCount);
-            
+            if (addedScore > 0)
+            {
+                hudView.ShowScorePopup(addedScore, session.ComboCount);
+            }
+
+            // 節目の判定で鳴らす SE を完全に分離（排他制御）
             if (IsComboMilestone(session.ComboCount))
             {
-                AudioManager.PlaySfx(AudioCue.ComboMilestone);
+                AudioManager.PlaySfx(AudioCue.ComboMilestone);  // ★ 節目達成時のみ再生
             }
+            else
+            {
+                AudioManager.PlaySfx(AudioCue.MiniGameSuccess); // ★ 通常クリア時のみ再生
+            }
+        }
+        // ★ 自力ミニゲーム失敗時の処理（音再生をここへ移動）
+        else if (result.Resolution == TaskResolution.PlayerFailure)
+        {
+            AudioManager.PlaySfx(AudioCue.MiniGameFailure);
         }
 
         if (activePlayerTaskId == result.Task.Id)
@@ -425,7 +438,7 @@ public sealed class MainGameController : MonoBehaviour
         if (combo <= 0) return false;
 
         // 例1: 5, 10, 15, 20... と 5 コンボごとに鳴らしたい場合
-        return combo % 10 == 0;
+        return combo % 5 == 0;
 
         // 例2: 10コンボ以上の時だけ鳴らしたい場合なら: return combo == 10;
     }
@@ -454,7 +467,7 @@ public sealed class MainGameController : MonoBehaviour
             return;
         }
 
-        AudioManager.PlaySfx(success ? AudioCue.MiniGameSuccess : AudioCue.MiniGameFailure);
+       
         taskManager.CompletePlayer(taskId, success);
     }
 
