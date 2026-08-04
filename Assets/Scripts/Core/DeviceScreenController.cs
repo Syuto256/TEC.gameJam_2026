@@ -24,6 +24,9 @@ public sealed class DeviceScreenController : MonoBehaviour
              "面の継ぎ目に隙間が空き、背後が覗いてしまう。")]
     [Min(1f)] [SerializeField] private float slidePeakScale = 1.03f;
 
+    [Tooltip("スライドに重ねるモーション線の層。未設定なら線なしで切り替わる。")]
+    [SerializeField] private SlideMotionLinesView motionLines;
+
     private DeviceWorkspaceView[] workspaces = Array.Empty<DeviceWorkspaceView>();
     private DeviceTabsView tabs;
     private bool switchEnabled = true;
@@ -48,6 +51,12 @@ public sealed class DeviceScreenController : MonoBehaviour
         if (tabs != null)
         {
             tabs.SurfaceRequested += Show;
+        }
+
+        // 線は演出の飾りであり、無くても切替は成立する。用意できなければ切り離す。
+        if (motionLines != null && !motionLines.Initialize())
+        {
+            motionLines = null;
         }
 
         // 開始時は演出しない。
@@ -127,6 +136,11 @@ public sealed class DeviceScreenController : MonoBehaviour
         {
             tabs.SetSelected(surface);
             tabs.SetInteractable(false);
+        }
+
+        if (motionLines != null)
+        {
+            motionLines.Play(direction, slideDurationSec);
         }
 
         var half = slideDurationSec * 0.5f;
