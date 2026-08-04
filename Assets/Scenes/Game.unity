@@ -1121,6 +1121,51 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 246387611}
   m_CullTransparentMesh: 1
+--- !u!1 &333093394
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 333093396}
+  - component: {fileID: 333093395}
+  m_Layer: 0
+  m_Name: AudioManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &333093395
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 333093394}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1b176c4226710ca49a42bd8357087300, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Overwork.Core::AudioManager
+  catalog: {fileID: 0}
+--- !u!4 &333093396
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 333093394}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &380596155
 GameObject:
   m_ObjectHideFlags: 0
@@ -3016,6 +3061,22 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 2726331405039818903, guid: 8e44b03bfcc3c8d41a22060ce592f4f9, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 1221.4395
+      objectReference: {fileID: 0}
+    - target: {fileID: 2726331405039818903, guid: 8e44b03bfcc3c8d41a22060ce592f4f9, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 758.13
+      objectReference: {fileID: 0}
+    - target: {fileID: 2726331405039818903, guid: 8e44b03bfcc3c8d41a22060ce592f4f9, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: -4.4
+      objectReference: {fileID: 0}
+    - target: {fileID: 2726331405039818903, guid: 8e44b03bfcc3c8d41a22060ce592f4f9, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -30.501003
+      objectReference: {fileID: 0}
     - target: {fileID: 6302845879449049695, guid: 8e44b03bfcc3c8d41a22060ce592f4f9, type: 3}
       propertyPath: m_Sprite
       value: 
@@ -3110,10 +3171,10 @@ RectTransform:
   - {fileID: 483302049}
   m_Father: {fileID: 150308431}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.18755206, y: 0.13288888}
-  m_AnchorMax: {x: 0.8124479, y: 0.8212963}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: -4.4, y: -30.501003}
+  m_SizeDelta: {x: 1141.4395, y: 678.13}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1579076576
 MonoBehaviour:
@@ -4786,3 +4847,4 @@ SceneRoots:
   - {fileID: 1481473233}
   - {fileID: 1884999033}
   - {fileID: 186874934}
+  - {fileID: 333093396}
