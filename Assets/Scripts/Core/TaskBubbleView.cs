@@ -177,6 +177,7 @@ public sealed class TaskBubbleView : MonoBehaviour, IPointerClickHandler
         appearTween = null;
         warningTween?.Kill();
         warningTween = null;
+        LeaveSlot();
 
         if (disappearDurationSec <= 0f)
         {
@@ -187,6 +188,20 @@ public sealed class TaskBubbleView : MonoBehaviour, IPointerClickHandler
         transform.DOScale(0f, disappearDurationSec)
             .SetEase(Ease.InBack)
             .OnComplete(() => Destroy(gameObject));
+    }
+
+    /// <summary>消え始めるときに枠から抜ける。見た目の位置はそのまま保つ。</summary>
+    /// <remarks>
+    /// 枠は「子がいなければ空き」で判定しているため、消えるあいだ居座ると、待機列から
+    /// 繰り上がってきたタスクの置き場所が無くなる。枠の親へ移し、その場で消える。
+    /// </remarks>
+    private void LeaveSlot()
+    {
+        var slot = transform.parent;
+        if (slot != null && slot.parent != null)
+        {
+            transform.SetParent(slot.parent, true);
+        }
     }
 
     public void OnPointerClick(PointerEventData eventData)

@@ -127,6 +127,7 @@ public sealed class MainGameController : MonoBehaviour
 
         var flow = GameFlowController.EnsureInstance();
         difficultyProfile = tuningSettings.GetDifficultyProfile(flow.SelectedDifficulty);
+        WarnIfSlotsAreFewerThanVisibleLimit();
         taskManager = new TaskManager(new TaskManagerSettings
         {
             AiSuccessRate = tuningSettings.ai.successRate,
@@ -386,13 +387,33 @@ public sealed class MainGameController : MonoBehaviour
         return false;
     }
 
+    /// <summary>枠が足りない面を報告する。足りないと、表示されるはずのタスクが画面に出ない。</summary>
+    /// <remarks>
+    /// 吹き出しの大きさと画面の空きから、1 面に置けるのは 4 つまで。
+    /// 難易度設定の値だけ上げても枠は増えないため、ここで気づけるようにしている。
+    /// </remarks>
+    private void WarnIfSlotsAreFewerThanVisibleLimit()
+    {
+        var limit = Mathf.Max(1, difficultyProfile.maxTasksPerSurface);
+        foreach (var workspace in workspaces)
+        {
+            if (workspace != null && workspace.SlotCount < limit)
+            {
+                Debug.LogError(
+                    "MainGameController: " + workspace.Surface + " の枠が " + workspace.SlotCount
+                    + " 個しかありませんが、同時に表示できる数は " + limit + " です。"
+                    + "枠を増やすか、難易度設定の maxTasksPerSurface を下げてください。", workspace);
+            }
+        }
+    }
+
     private RectTransform ResolveSpawnArea(TaskSurface surface)
     {
         foreach (var workspace in workspaces)
         {
-            if (workspace != null && workspace.Surface == surface)
+            if (workspace != null && workspace.Surface == surface && workspace.TryPickFreeSlot(out var slot))
             {
-                return workspace.PickSpawnArea();
+                return slot;
             }
         }
 

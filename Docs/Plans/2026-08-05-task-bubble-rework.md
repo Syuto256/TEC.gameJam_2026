@@ -138,11 +138,34 @@ TaskBubble   RectTransform 290 × 358
 **AI 作業中は暗幕だけ先に入れてある。** B-8 の 1 段目にあたるので捨て仕事にはならない。
 文字と円ゲージは B-8 で `Dimmer` の上に載せる。
 
-### B-7b: 固定スロット化（未着手）
+### B-7b: 固定スロット化（完了・2026-08-05）
 
-B-5 の判断どおり、`VerticalLayoutGroup` をやめて固定スロットにする。抽選はしない。
-4 箇所（PC / タブレット × 左 / 右）の出現先と、`MainGameController` の
-`ResolveSpawnArea` / `DeviceWorkspaceView.PickSpawnArea` が対象。
+`TaskSpawnArea`（`VerticalLayoutGroup`）を廃止し、固定枠 4 つに置き換えた。抽選はしない。
+
+```
+TaskAreas
+├─ LeftTaskArea    幅 301
+│   ├─ Slot1   290 × 358 / y = +186
+│   └─ Slot2   290 × 358 / y = -186
+└─ RightTaskArea   同じ
+```
+
+`DeviceWorkspaceView` の `leftSpawnArea` / `rightSpawnArea` は `slots`（`RectTransform[]`）になった。
+
+**Inspector に並べた順番が、そのまま埋まる順番になる。** 左上・右上・左下・右下 の順に入れてあるので、
+左右交互に埋まり、従来の「少ないほうの列を選ぶ」挙動と同じ見え方になる。バランスを取るコードは要らない。
+
+**空き判定は「枠に子がいないこと」。** ただし消滅演出中の吹き出しが枠に居座ると、待機列から
+繰り上がってきたタスクの置き場所が無くなる（繰り上げは決着の次のフレームに起きるため、必ずぶつかる）。
+そのため **`PlayExitAndDestroy` の先頭で枠の親へ移し、その場で消える**ようにした。
+
+`MainGameController` は起動時に**枠の数が難易度設定の同時表示数を下回っていないか**を検査し、
+足りなければエラーを出す。設定値だけ上げても枠は増えないため、そこで気づけるようにしている。
+
+**注意: この変更は Scene 側のプレハブオーバーライドとして入っている。**
+`DeviceWorkspace_Pc` / `_Tablet` プレハブにはまだ古い `TaskSpawnArea` が残っている。
+これらのインスタンスにはタブレットの配色など作業中の変更も乗っており、
+`revert` すると巻き添えで消えるため、今回は触っていない。プレハブ側へ移すなら別作業とする。
 
 ### B-8: AI 処理中の演出
 
