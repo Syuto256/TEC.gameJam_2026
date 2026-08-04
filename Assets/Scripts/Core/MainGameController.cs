@@ -400,6 +400,11 @@ public sealed class MainGameController : MonoBehaviour
         if (result.Resolution == TaskResolution.PlayerSuccess && addedScore > 0)
         {
             hudView.ShowScorePopup(addedScore, session.ComboCount);
+            
+            if (IsComboMilestone(session.ComboCount))
+            {
+                AudioManager.PlaySfx(AudioCue.ComboMilestone);
+            }
         }
 
         if (activePlayerTaskId == result.Task.Id)
@@ -413,6 +418,16 @@ public sealed class MainGameController : MonoBehaviour
             taskViews.Remove(result.Task.Id);
             Destroy(view.gameObject);
         }
+    }
+    /// <summary>★追加: コンボ数が大台に乗ったかどうかを判定する</summary>
+    private static bool IsComboMilestone(int combo)
+    {
+        if (combo <= 0) return false;
+
+        // 例1: 5, 10, 15, 20... と 5 コンボごとに鳴らしたい場合
+        return combo % 10 == 0;
+
+        // 例2: 10コンボ以上の時だけ鳴らしたい場合なら: return combo == 10;
     }
 
     /// <summary>タスクの決着に応じた音を鳴らす。自力の成否は <see cref="CompletePlayerMiniGame"/> が鳴らす。</summary>

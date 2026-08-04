@@ -28,7 +28,8 @@ public enum AudioCue
     PauseClose,
     HpLow,
     MiniGameInputHit,
-    MiniGameInputMiss
+    MiniGameInputMiss,
+    ComboMilestone
 }
 
 [CreateAssetMenu(fileName = "AudioCatalog", menuName = "Game/Audio Catalog")]
