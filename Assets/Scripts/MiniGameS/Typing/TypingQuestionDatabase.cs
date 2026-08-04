@@ -13,19 +13,19 @@ namespace Overwork.MiniGames.Typing
         [Tooltip("画面に表示するお題。漢字のままでよい。")]
         public string displayText;
 
-        [Tooltip("正解として受け付けるローマ字。複数書くと、どれで打っても正解になる。\n" +
-                 "例:「新聞」なら shinbun と sinbun の両方。\n" +
-                 "1つ目が画面に表示される目標として使われる。")]
-        public List<string> acceptedRomanizations = new List<string>();
+        [Tooltip("お題の読み。ひらがなで書く（カタカナも可）。\n" +
+                 "打てるローマ字は、ここから実行時にすべて自動で作られる。\n" +
+                 "ローマ字を手で書く必要はない。shinbun でも sinbun でも shinnbun でも通る。")]
+        public string reading;
 
-        public TypingQuestion(int level, string displayText, params string[] acceptedRomanizations)
+        public TypingQuestion(int level, string displayText, string reading)
         {
             this.level = level;
             this.displayText = displayText;
-            this.acceptedRomanizations = new List<string>(acceptedRomanizations);
+            this.reading = reading;
         }
 
-        public bool IsValid => !string.IsNullOrWhiteSpace(displayText) && acceptedRomanizations.Exists(value => !string.IsNullOrWhiteSpace(value));
+        public bool IsValid => !string.IsNullOrWhiteSpace(displayText) && !string.IsNullOrWhiteSpace(reading);
     }
 
     [CreateAssetMenu(fileName = "TypingQuestionDatabase", menuName = "Overwork/Mini Games/Typing Question Database")]
@@ -36,38 +36,38 @@ namespace Overwork.MiniGames.Typing
                  "各レベルに最低1件は入れること。0件のレベルがあると、そのレベルでは失敗扱いになる。")]
         [SerializeField] private List<TypingQuestion> questions = new List<TypingQuestion>
         {
-            new TypingQuestion(1, "\u65B0\u805E", "shinbun", "sinbun"),
-            new TypingQuestion(1, "\u5B66\u6821", "gakkou", "gakko"),
-            new TypingQuestion(1, "\u96FB\u8A71", "denwa"),
-            new TypingQuestion(1, "\u4F1A\u793E", "kaisha"),
-            new TypingQuestion(1, "\u97F3\u697D", "ongaku"),
-            new TypingQuestion(1, "\u6642\u9593", "jikan"),
-            new TypingQuestion(1, "\u4ED5\u4E8B", "shigoto"),
-            new TypingQuestion(1, "\u673A", "tsukue"),
-            new TypingQuestion(2, "\u4F1A\u8B70", "kaigi"),
-            new TypingQuestion(2, "\u7DE0\u5207", "shimekiri"),
-            new TypingQuestion(2, "\u4F11\u61A9", "kyuukei", "kyukei"),
-            new TypingQuestion(2, "\u8CC7\u6599", "shiryou", "siryou"),
-            new TypingQuestion(2, "\u4E88\u5B9A", "yotei"),
-            new TypingQuestion(2, "\u4F5C\u696D", "sagyou", "sagyo"),
-            new TypingQuestion(2, "\u554F\u984C", "mondai"),
-            new TypingQuestion(2, "\u78BA\u8A8D", "kakunin"),
-            new TypingQuestion(3, "\u52E4\u6020\u7BA1\u7406", "kintaikanri"),
-            new TypingQuestion(3, "\u696D\u52D9\u5831\u544A", "gyoumuhoukoku", "gyomuhokoku"),
-            new TypingQuestion(3, "\u9032\u6357\u78BA\u8A8D", "shinchokukakunin"),
-            new TypingQuestion(3, "\u6700\u7D42\u78BA\u8A8D", "saishuukakunin", "saishukakunin"),
-            new TypingQuestion(3, "\u60C5\u5831\u5171\u6709", "jouhoukyouyuu", "johokyouyuu"),
-            new TypingQuestion(3, "\u4F5C\u696D\u624B\u9806", "sagyoutejun", "sagyotejun"),
-            new TypingQuestion(3, "\u7DCA\u6025\u9023\u7D61", "kinkyuurennraku", "kinkyurenraku"),
-            new TypingQuestion(3, "\u512A\u5148\u9806\u4F4D", "yuusenjuni"),
-            new TypingQuestion(4, "\u4ED5\u69D8\u66F8\u78BA\u8A8D", "shiyoushokakunin", "shiyoshokakunin"),
-            new TypingQuestion(4, "\u696D\u52D9\u9023\u7D61", "gyoumurenraku", "gyomurenraku"),
-            new TypingQuestion(4, "\u4F5C\u696D\u52B9\u7387\u5316", "sagyoukouritsuka", "sagyokouritsuka"),
-            new TypingQuestion(4, "\u9032\u884C\u7BA1\u7406", "shinkoukanri", "sinkoukanri"),
-            new TypingQuestion(4, "\u512A\u5148\u5EA6\u8ABF\u6574", "yuusendochousei", "yusendochosei"),
-            new TypingQuestion(4, "\u554F\u984C\u89E3\u6C7A", "mondaikaiketsu"),
-            new TypingQuestion(4, "\u7DE0\u5207\u53B3\u5B88", "shimekirigenshu"),
-            new TypingQuestion(4, "\u60C5\u5831\u6574\u7406", "jouhouseiri", "johouseiri")
+            new TypingQuestion(1, "新聞", "しんぶん"),
+            new TypingQuestion(1, "学校", "がっこう"),
+            new TypingQuestion(1, "電話", "でんわ"),
+            new TypingQuestion(1, "会社", "かいしゃ"),
+            new TypingQuestion(1, "音楽", "おんがく"),
+            new TypingQuestion(1, "時間", "じかん"),
+            new TypingQuestion(1, "仕事", "しごと"),
+            new TypingQuestion(1, "机", "つくえ"),
+            new TypingQuestion(2, "会議", "かいぎ"),
+            new TypingQuestion(2, "締切", "しめきり"),
+            new TypingQuestion(2, "休憩", "きゅうけい"),
+            new TypingQuestion(2, "資料", "しりょう"),
+            new TypingQuestion(2, "予定", "よてい"),
+            new TypingQuestion(2, "作業", "さぎょう"),
+            new TypingQuestion(2, "問題", "もんだい"),
+            new TypingQuestion(2, "確認", "かくにん"),
+            new TypingQuestion(3, "勤怠管理", "きんたいかんり"),
+            new TypingQuestion(3, "業務報告", "ぎょうむほうこく"),
+            new TypingQuestion(3, "進捗確認", "しんちょくかくにん"),
+            new TypingQuestion(3, "最終確認", "さいしゅうかくにん"),
+            new TypingQuestion(3, "情報共有", "じょうほうきょうゆう"),
+            new TypingQuestion(3, "作業手順", "さぎょうてじゅん"),
+            new TypingQuestion(3, "緊急連絡", "きんきゅうれんらく"),
+            new TypingQuestion(3, "優先順位", "ゆうせんじゅんい"),
+            new TypingQuestion(4, "仕様書確認", "しようしょかくにん"),
+            new TypingQuestion(4, "業務連絡", "ぎょうむれんらく"),
+            new TypingQuestion(4, "作業効率化", "さぎょうこうりつか"),
+            new TypingQuestion(4, "進行管理", "しんこうかんり"),
+            new TypingQuestion(4, "優先度調整", "ゆうせんどちょうせい"),
+            new TypingQuestion(4, "問題解決", "もんだいかいけつ"),
+            new TypingQuestion(4, "締切厳守", "しめきりげんしゅ"),
+            new TypingQuestion(4, "情報整理", "じょうほうせいり")
         };
 
         public bool TryGetRandomQuestion(int level, out TypingQuestion question)
@@ -86,6 +86,32 @@ namespace Overwork.MiniGames.Typing
         public int GetQuestionCount(int level)
         {
             return questions.FindAll(candidate => candidate != null && candidate.IsValid && candidate.level == Mathf.Clamp(level, 1, 4)).Count;
+        }
+
+        /// <summary>読みからローマ字を作れない問題を列挙する。</summary>
+        /// <remarks>
+        /// 打てない文字（漢字の書き忘れなど）が読みに混ざっていると、その問題は遊べない。
+        /// 出題されて初めて気づくと原因が分かりにくいため、まとめて調べられるようにしている。
+        /// </remarks>
+        public IReadOnlyList<string> FindUnplayableQuestions()
+        {
+            var problems = new List<string>();
+            foreach (var question in questions)
+            {
+                if (question == null || !question.IsValid)
+                {
+                    problems.Add((question == null ? "(空の行)" : question.displayText) + ": お題か読みが空です。");
+                    continue;
+                }
+
+                string error;
+                if (!RomanizationGenerator.IsSupported(question.reading, out error))
+                {
+                    problems.Add(question.displayText + " (" + question.reading + "): " + error);
+                }
+            }
+
+            return problems;
         }
     }
 }

@@ -1,0 +1,14 @@
+{
+  "name": "Overwork.MiniGames.TimingStop",
+  "rootNamespace": "Overwork.MiniGames.TimingStop",
+  "references": ["Overwork.Core", "Unity.InputSystem", "Unity.TextMeshPro"],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

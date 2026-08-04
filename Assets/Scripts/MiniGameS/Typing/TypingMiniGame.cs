@@ -43,13 +43,27 @@ namespace Overwork.MiniGames.Typing
         [Tooltip("何回打ち間違えたら失敗にするか。")]
         [Min(1)] [SerializeField] private int allowedMisses = 2;
 
+        [Tooltip("打ち間違えた直後、この秒数だけ入力を受け付けない。\n" +
+                 "速く打つと 1 回のつまずきで何回もミスが増えてしまうため、間を置く。\n" +
+                 "0 にすると無効になり、打った分だけミスが増える。")]
+        [Min(0f)] [SerializeField] private float missLockoutSeconds = 0.2f;
+
+        [Tooltip("入力を受け付けない間、これから打つ部分をこの色にする。\n" +
+                 "何も変わらないと、キーが効かなくなったように見えるためである。")]
+        [SerializeField] private Color lockedOutColor = new Color(1f, 0.55f, 0.62f, 1f);
+
         private TypingQuestion question;
         private TypingInputEvaluator evaluator;
         private int missCount;
         private bool subscribed;
         private Keyboard subscribedKeyboard;
+        private float lockoutRemaining;
+        private Color remainingInputColor;
 
         public string CurrentQuestionText => question == null ? string.Empty : question.displayText;
+
+        /// <summary>打ち間違えた直後で、入力を受け付けない状態か。</summary>
+        public bool IsInputLocked => lockoutRemaining > 0f;
 
         public override void Initialize(int difficulty, float timeLimit)
         {
@@ -71,8 +85,25 @@ namespace Overwork.MiniGames.Typing
                 return;
             }
 
-            evaluator = new TypingInputEvaluator(question.acceptedRomanizations);
+            // 打てるローマ字は読みから毎回作る。問題データはローマ字を持たない。
+            System.Collections.Generic.IReadOnlyList<string> candidates;
+            string error;
+            if (!RomanizationGenerator.TryGenerate(question.reading, out candidates, out error))
+            {
+                Debug.LogError(
+                    nameof(TypingMiniGame) + " (" + name + "): 「" + question.displayText + "」の読みからローマ字を作れません -> "
+                    + error, this);
+                base.Initialize(difficulty, timeLimit);
+                FinishGame(false, "BAD READING");
+                return;
+            }
+
+            evaluator = new TypingInputEvaluator(candidates);
             base.Initialize(difficulty, timeLimit);
+
+            missCount = 0;
+            lockoutRemaining = 0f;
+            remainingInputColor = remainingInputText.color;
 
             questionText.text = string.Format(questionFormat, question.displayText);
             if (targetRomanizationText != null)
@@ -92,6 +123,14 @@ namespace Overwork.MiniGames.Typing
                 return false;
             }
 
+            // 打ち間違えた直後の入力は、ミスにも進捗にも数えず完全に捨てる。
+            // 速く打つ人ほど 1 回のつまずきで指が数文字ぶん先に進んでしまい、
+            // 間を置かないと 1 度の打ち間違いで即 2 ミス失敗になるためである。
+            if (IsInputLocked)
+            {
+                return false;
+            }
+
             if (evaluator.TryInput(input))
             {
                 PlayInputFeedback(true);
@@ -106,6 +145,7 @@ namespace Overwork.MiniGames.Typing
 
             PlayInputFeedback(false);
             missCount++;
+            lockoutRemaining = missLockoutSeconds;
             RefreshUi();
             if (missCount >= allowedMisses)
             {
@@ -117,6 +157,25 @@ namespace Overwork.MiniGames.Typing
 
         protected override void OnUpdate(float deltaTime)
         {
+            if (lockoutRemaining <= 0f)
+            {
+                return;
+            }
+
+            lockoutRemaining -= deltaTime;
+            if (lockoutRemaining <= 0f)
+            {
+                lockoutRemaining = 0f;
+                ApplyLockoutColor();
+            }
+        }
+
+        private void ApplyLockoutColor()
+        {
+            if (remainingInputText != null)
+            {
+                remainingInputText.color = IsInputLocked ? lockedOutColor : remainingInputColor;
+            }
         }
 
         protected override void OnDestroy()
@@ -178,6 +237,7 @@ namespace Overwork.MiniGames.Typing
 
             acceptedInputText.text = string.Format(acceptedInputFormat, evaluator.AcceptedInput);
             remainingInputText.text = string.Format(remainingInputFormat, evaluator.RemainingInput);
+            ApplyLockoutColor();
 
             if (missText != null)
             {

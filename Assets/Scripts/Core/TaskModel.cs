@@ -1,7 +1,23 @@
 using System;
 
 public enum GameDifficulty { Easy, Normal, Hard, VeryHard, Endless }
-public enum TaskKind { Typing, Tracing, RapidClick, DragDrop }
+
+/// <summary>タスクの種別。カタログと出現表がこの値で行を引く。</summary>
+/// <remarks>
+/// アセットは選択肢を整数で保存する。**並びを変えたり途中に挿入したりしないこと。**
+/// 追加するときは必ず末尾に足す。途中に挿入すると、既存の登録が黙って別の種別を指すようになる。
+/// </remarks>
+public enum TaskKind
+{
+    Typing,
+    Tracing,
+    RapidClick,
+    DragDrop,
+
+    // ここから 2026-08-04 追加
+    Qte,
+    TimingStop
+}
 public enum TaskSurface { Pc, Pad }
 public enum TaskState { Available, PlayerPlaying, AiProcessing, Resolved }
 public enum TaskResolution { PlayerSuccess, PlayerFailure, AiSuccess, AiFailure, Expired }

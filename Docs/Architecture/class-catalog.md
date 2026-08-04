@@ -60,7 +60,8 @@
 | クラス | パス | 役割 | 主な依存先 |
 | --- | --- | --- | --- |
 | `TypingMiniGame` | `Assets/Scripts/MiniGameS/Typing/TypingMiniGame.cs` | キーボード入力を受け、進捗を表示し、完了結果を 1 回通知する。 | `MiniGameBase`, Input System, TextMeshPro |
-| `TypingQuestionDatabase` / `TypingQuestion` | `Assets/Scripts/MiniGameS/Typing/TypingQuestionDatabase.cs` | レベル別の日本語表示文字列と許容ローマ字を持つ。 | UnityEngine |
+| `TypingQuestionDatabase` / `TypingQuestion` | `Assets/Scripts/MiniGameS/Typing/TypingQuestionDatabase.cs` | レベル別の日本語表示文字列と読みを持つ。ローマ字は持たない。 | UnityEngine |
+| `RomanizationGenerator` | `Assets/Scripts/MiniGameS/Typing/RomanizationGenerator.cs` | ひらがなの読みから打てるローマ字をすべて作る。訓令式・ヘボン式、促音・撥音・拗音の打ち方の差を吸収する。 | System |
 | `TypingInputEvaluator` | `Assets/Scripts/MiniGameS/Typing/TypingInputEvaluator.cs` | 複数の許容ローマ字に対する入力進捗を Unity 非依存で判定する。 | System |
 | `TracingMiniGame` | `Assets/Scripts/MiniGameS/Tracing/TracingMiniGame.cs` | 経路のなぞりを判定する。ガイド線のみ Prefab 上の複製元から実行時に複製する。 | `MiniGameBase`, Input System, uGUI, TextMeshPro |
 | `TracingPathDatabase` / `TracingPathEntry` | `Assets/Scripts/MiniGameS/Tracing/TracingPathDatabase.cs` | レベル別の正規化経路と許容逸脱量を持つ。 | UnityEngine |
@@ -69,8 +70,13 @@
 | `SortingMiniGame` | `Assets/Scripts/MiniGameS/DragDrop/SortingMiniGame.cs` | カードの仕分けを判定する。箱とカードは Prefab 上の実体を配列で受け取る。 | `MiniGameBase`, TextMeshPro |
 | `SortingDraggable` | `Assets/Scripts/MiniGameS/DragDrop/SortingDraggable.cs` | カード 1 枚のドラッグ。Canvas の拡大率で移動量を補正する。 | uGUI, EventSystem |
 | `SortingDropBox` | `Assets/Scripts/MiniGameS/DragDrop/SortingDropBox.cs` | 受け皿 1 つ。落とされたカードの `categoryId` の一致を判定する。 | uGUI, EventSystem |
+| `QteMiniGame` | `Assets/Scripts/MiniGameS/Qte/QteMiniGame.cs` | 並びどおりのキー入力を判定する。キーの枠のみ Prefab 上の複製元から実行時に複製する。 | `MiniGameBase`, Input System, TextMeshPro |
+| `QteSequence` / `QtePressResult` | `Assets/Scripts/MiniGameS/Qte/QteSequence.cs` | 押す順番と進捗だけを持ち、1 回の押下の正誤を Unity 非依存で判定する。 | System |
+| `QteKeyCell` / `QteCellState` | `Assets/Scripts/MiniGameS/Qte/QteKeyCell.cs` | キー 1 つ分の枠。状態ごとの色と拡大率を持つ。判定には関わらない。 | uGUI, TextMeshPro |
+| `TimingStopMiniGame` | `Assets/Scripts/MiniGameS/TimingStop/TimingStopMiniGame.cs` | 往復するマーカーを止めた位置を判定する。位置はアンカーで指定するためバー幅に依存しない。 | `MiniGameBase`, Input System, EventSystem, TextMeshPro |
+| `TimingStopMath` | `Assets/Scripts/MiniGameS/TimingStop/TimingStopMath.cs` | 往復位置・当たり判定・ゾーンのはみ出し補正を 0〜1 の割合だけで求める。 | UnityEngine |
 
-詳細は [タイピング](typing-mini-game.md) / [なぞり](tracing-mini-game.md) / [連打](rapid-click-mini-game.md) / [仕分け](drag-drop-mini-game.md)。
+詳細は [タイピング](typing-mini-game.md) / [なぞり](tracing-mini-game.md) / [連打](rapid-click-mini-game.md) / [仕分け](drag-drop-mini-game.md)。QTE と目押しは [ミニゲームの追加・改造手順](mini-game-catalog.md) の表を参照する。
 
 ## 音声
 
