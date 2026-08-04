@@ -3,11 +3,11 @@ using UnityEngine;
 /// <summary>共通ミニゲーム表示領域の表示状態と、Prefab の生成先だけを担当する。</summary>
 public sealed class MiniGameHostView : MonoBehaviour
 {
-    [Header("Required")]
+    [Header("【必須】")]
     [Tooltip("ミニゲーム Prefab の生成先。この下の子だけを差し替える。")]
     [SerializeField] private RectTransform contentArea;
 
-    [Header("Optional")]
+    [Header("【任意】")]
     [Tooltip("表示・非表示を切り替える枝。未設定ならこの GameObject 自身を使う。")]
     [SerializeField] private GameObject root;
 

@@ -16,7 +16,7 @@ public sealed class DifficultySelectManager : MonoBehaviour
         public Button button;
     }
 
-    [Header("Required")]
+    [Header("【必須】")]
     [Tooltip("表示する難易度とボタンの対応。並び順は Scene 側の配置で決める。")]
     [SerializeField] private Choice[] choices = Array.Empty<Choice>();
 

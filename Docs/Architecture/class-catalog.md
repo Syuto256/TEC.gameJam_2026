@@ -76,10 +76,25 @@
 
 | クラス | パス | 役割 | 主な依存先 |
 | --- | --- | --- | --- |
-| `AudioCatalog` / `AudioCue` | `Assets/Scripts/Core/AudioCatalog.cs` | 名前付きの BGM / SE を任意のクリップと音量へ対応づける。 | UnityEngine |
-| `AudioManager` | `Assets/Scripts/Core/AudioManager.cs` | 常駐の BGM / SE ソース、シーン別 BGM 選択、安全な再生を持つ。 | Unity audio, SceneManager, `GameFlowController` |
+| `AudioCatalog` / `AudioCue` | `Assets/Scripts/Core/AudioCatalog.cs` | 名前付きの BGM / SE を任意のクリップと音量へ対応づける。未登録の種類の洗い出しも持つ。 | UnityEngine |
+| `AudioManager` | `Assets/Scripts/Core/AudioManager.cs` | 常駐の BGM / SE ソース、シーン別 BGM 選択、BGM / SE の全体音量、安全な再生を持つ。 | Unity audio, SceneManager, `GameFlowController` |
 
 詳細は [AudioManager](audio-manager.md)。
+
+## Inspector の説明文について
+
+プランナーが設定アセットを扱えるよう、**Inspector に出る全 58 項目に日本語の説明を付けている。** 項目名にマウスを重ねると出る。
+
+新しく設定項目を足すときは、次の 2 つを日本語で書くこと。
+
+| 属性 | 役割 | 例 |
+| --- | --- | --- |
+| `[Header("【〇〇】")]` | 項目のまとまりの見出し | `[Header("【ダメージ設定】")]` |
+| `[Tooltip("〇〇")]` | 項目ごとの説明 | `[Tooltip("自力でミニゲームに失敗したときに減るHP。")]` |
+
+説明には「その値を上げ下げすると何がどう変わるか」を書く。単位（秒・割合・個数）と、他の設定との優先関係があればそれも書く。
+
+**項目名そのもの（Inspector の左側のラベル）は Unity がフィールド名から自動生成するため英語のままである。** 日本語にするには別途エディタ拡張が必要で、現在は入れていない。
 
 ## 調整場所の索引
 
@@ -155,9 +170,9 @@
 - プレイヤー・AI・時間切れのダメージ
 - AI の成功率、処理時間、クールダウン、倍率
 - タスクレベル別のスコアと時間ボーナス
-- 難易度プロファイル（生成間隔、タスク寿命、面あたり最大数、タスクレベルの上下限と上昇間隔）
+- 難易度プロファイル（出現間隔の時刻表、タスク寿命、面あたり最大数、タスクレベルの時刻表）
 
-**注意:** 現在 `difficultyProfiles` には Easy の 1 行しか無く、その値もフォールバックと同じである。そのため全難易度が同じ設定で動き、タスクレベルは 1 に固定される。難易度差を付けるにはこのリストへ行を足し、各項目を埋める。
+**注意:** 現在 `difficultyProfiles` には Easy の 1 行だけがあり、0 / 60 / 120 / 150 秒で Lv.1〜4 を出す時刻表を持つ。ほかの難易度はフォールバックにより Lv.1 固定である。難易度差を付けるにはこのリストへ行を足し、各項目と時刻表を埋める。
 
 **Inspector でリストに行を足すときの注意:** Unity は追加した行の全項目を 0 にする（C# の初期値は使われない）。`maxHp = 0` のまま再生すると開始と同時にゲームオーバーになる。`GetDifficultyProfile` は 0 の項目を既定値で埋めてから返すため止まりはしないが、**意図した値を入れたつもりで既定値のまま遊んでいる**状態になりうるので、行を足したら必ず全項目を確認する。
 

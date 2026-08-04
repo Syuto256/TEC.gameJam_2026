@@ -13,14 +13,16 @@ public sealed class TaskSpawnTable : ScriptableObject
     [Serializable]
     public sealed class SurfaceEntry
     {
-        [Tooltip("対象のデバイス面。表の中で重複させない。")]
+        [Tooltip("どのデバイスの画面かを選ぶ。Pc がPC、Pad がタブレット。同じ画面を2行に書かないこと。")]
         public TaskSurface surface;
 
-        [Tooltip("この面に出るタスク種別。上から順に繰り返し出る。空にするとこの面にはタスクが出ない。")]
+        [Tooltip("この画面に出るタスクの種別。上から順に繰り返し出る。\n" +
+                 "並べ替えると出る順番が変わる。空にすると、この画面にはタスクが出なくなる。")]
         public TaskKind[] kinds = Array.Empty<TaskKind>();
     }
 
-    [Tooltip("デバイス面ごとの出現タスク。")]
+    [Tooltip("デバイスの画面ごとに、そこへ出るタスクの種別を設定する。\n" +
+             "ここに書いた種別は、ミニゲーム登録簿（MiniGameCatalog）にも登録されている必要がある。")]
     [SerializeField] private SurfaceEntry[] surfaces = Array.Empty<SurfaceEntry>();
 
     /// <summary>指定した面に出る種別を返す。1 件も無い面では false を返す。</summary>

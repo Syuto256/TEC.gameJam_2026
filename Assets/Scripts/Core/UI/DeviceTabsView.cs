@@ -5,11 +5,11 @@ using UnityEngine.UI;
 /// <summary>PC / Tablet タブの外観と入力だけを担当する。どちらを表示するかは決めない。</summary>
 public sealed class DeviceTabsView : MonoBehaviour
 {
-    [Header("Required")]
+    [Header("【必須】")]
     [SerializeField] private Button pcTab;
     [SerializeField] private Button tabletTab;
 
-    [Header("Optional")]
+    [Header("【任意】")]
     [Tooltip("選択中のタブに重ねる強調表示。未設定なら interactable の切替だけで表す。")]
     [SerializeField] private GameObject pcSelectedMark;
     [SerializeField] private GameObject tabletSelectedMark;

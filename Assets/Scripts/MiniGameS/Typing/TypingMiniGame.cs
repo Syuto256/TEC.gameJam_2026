@@ -12,11 +12,11 @@ namespace Overwork.MiniGames.Typing
     /// </remarks>
     public sealed class TypingMiniGame : MiniGameBase
     {
-        [Header("Data")]
+        [Header("【使用データ】")]
         [Tooltip("出題に使う問題集。この Prefab が自分で持つ。")]
         [SerializeField] private TypingQuestionDatabase database;
 
-        [Header("View")]
+        [Header("【表示先】")]
         [Tooltip("お題（漢字表記）。")]
         [SerializeField] private TMP_Text questionText;
 
@@ -32,14 +32,14 @@ namespace Overwork.MiniGames.Typing
         [Tooltip("ミス数。任意。")]
         [SerializeField] private TMP_Text missText;
 
-        [Header("Text format")]
+        [Header("【文言の書式】")]
         [SerializeField] private string questionFormat = "お題: {0}";
         [SerializeField] private string targetRomanizationFormat = "ローマ字: {0}";
         [SerializeField] private string acceptedInputFormat = "入力済み: {0}";
         [SerializeField] private string remainingInputFormat = "残り: {0}";
         [SerializeField] private string missFormat = "ミス: {0} / {1}";
 
-        [Header("Tuning")]
+        [Header("【難度の調整】")]
         [Tooltip("何回打ち間違えたら失敗にするか。")]
         [Min(1)] [SerializeField] private int allowedMisses = 2;
 

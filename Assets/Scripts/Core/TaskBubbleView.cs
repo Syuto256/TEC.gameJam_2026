@@ -10,25 +10,25 @@ using UnityEngine.UI;
 /// </remarks>
 public sealed class TaskBubbleView : MonoBehaviour, IPointerClickHandler
 {
-    [Header("Required")]
+    [Header("【必須】")]
     [SerializeField] private Image background;
     [SerializeField] private TextMeshProUGUI kindText;
     [SerializeField] private TextMeshProUGUI stateText;
 
-    [Header("Optional")]
+    [Header("【任意】")]
     [SerializeField] private TextMeshProUGUI timeText;
     [Tooltip("残り寿命を表すバー。Sprite を割り当て、Image Type を Filled にする。")]
     [SerializeField] private Image lifetimeGauge;
     [Tooltip("種別アイコン。MiniGameCatalog の icon が空なら非表示にする。")]
     [SerializeField] private Image kindIcon;
 
-    [Header("State colors")]
+    [Header("【状態ごとの色】")]
     [SerializeField] private Color availableColor = new Color(0.16f, 0.42f, 0.66f, 1f);
     [SerializeField] private Color playerPlayingColor = new Color(0.56f, 0.24f, 0.59f, 1f);
     [SerializeField] private Color aiProcessingColor = new Color(0.70f, 0.46f, 0.10f, 1f);
     [SerializeField] private Color resolvedColor = new Color(0.24f, 0.24f, 0.24f, 1f);
 
-    [Header("State labels")]
+    [Header("【状態ごとの表示文字】")]
     [SerializeField] private string availableLabel = "L: SELF / R: AI";
     [SerializeField] private string playerPlayingLabel = "SELF PLAYING";
     [SerializeField] private string aiProcessingLabel = "AI PROCESSING";

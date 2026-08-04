@@ -7,8 +7,15 @@ namespace Overwork.MiniGames.Typing
     [Serializable]
     public sealed class TypingQuestion
     {
+        [Tooltip("この問題を出す問題レベル（1〜4）。数字が大きいほど後半に出る。")]
         [Range(1, 4)] public int level;
+
+        [Tooltip("画面に表示するお題。漢字のままでよい。")]
         public string displayText;
+
+        [Tooltip("正解として受け付けるローマ字。複数書くと、どれで打っても正解になる。\n" +
+                 "例:「新聞」なら shinbun と sinbun の両方。\n" +
+                 "1つ目が画面に表示される目標として使われる。")]
         public List<string> acceptedRomanizations = new List<string>();
 
         public TypingQuestion(int level, string displayText, params string[] acceptedRomanizations)
@@ -24,6 +31,9 @@ namespace Overwork.MiniGames.Typing
     [CreateAssetMenu(fileName = "TypingQuestionDatabase", menuName = "Overwork/Mini Games/Typing Question Database")]
     public sealed class TypingQuestionDatabase : ScriptableObject
     {
+        [Tooltip("タイピングミニゲームの問題一覧。\n" +
+                 "出題は、そのときの問題レベルに一致する行からランダムに1件選ばれる。\n" +
+                 "各レベルに最低1件は入れること。0件のレベルがあると、そのレベルでは失敗扱いになる。")]
         [SerializeField] private List<TypingQuestion> questions = new List<TypingQuestion>
         {
             new TypingQuestion(1, "\u65B0\u805E", "shinbun", "sinbun"),

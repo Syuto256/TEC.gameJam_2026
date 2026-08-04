@@ -12,11 +12,11 @@ namespace Overwork.MiniGames.Tracing
     /// </remarks>
     public sealed class TracingMiniGame : MiniGameBase
     {
-        [Header("Data")]
+        [Header("【使用データ】")]
         [Tooltip("なぞる経路の一覧。この Prefab が自分で持つ。")]
         [SerializeField] private TracingPathDatabase database;
 
-        [Header("View")]
+        [Header("【表示先】")]
         [Tooltip("経路を描く領域。マーカーとガイド線はこの子になる。")]
         [SerializeField] private RectTransform board;
 
@@ -33,14 +33,14 @@ namespace Overwork.MiniGames.Tracing
         [Tooltip("ガイド線 1 本分の複製元。board の子に置き、非アクティブにしておく。")]
         [SerializeField] private RectTransform guideSegmentTemplate;
 
-        [Header("Tuning")]
+        [Header("【難度の調整】")]
         [Tooltip("始点・終点に触れたと判定する距離（盤面の短辺に対する割合）。")]
         [Range(0.01f, 0.3f)] [SerializeField] private float markerHitRadius = 0.07f;
 
         [Tooltip("何回経路から外れたら失敗にするか。")]
         [Min(1)] [SerializeField] private int allowedMisses = 2;
 
-        [Header("Text")]
+        [Header("【表示する文言】")]
         [SerializeField] private string startPrompt = "始点から左ドラッグでなぞる";
         [SerializeField] private string tracingPrompt = "なぞり中";
         [SerializeField] private string releasedPrompt = "始点からやり直し";

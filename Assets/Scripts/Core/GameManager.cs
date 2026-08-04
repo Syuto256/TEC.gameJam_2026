@@ -8,20 +8,20 @@ using UnityEngine;
 /// </remarks>
 public sealed class GameManager : MonoBehaviour
 {
-    [Header("Settings")]
+    [Header("【設定アセット】")]
     [SerializeField] private GameTuningSettings tuningSettings;
 
-    [Header("Views")]
+    [Header("【表示部品】")]
     [SerializeField] private HudView hudView;
     [SerializeField] private DeviceTabsView deviceTabsView;
     [SerializeField] private MiniGameHostView miniGameHostView;
     [SerializeField] private PauseMenuView pauseMenuView;
 
-    [Header("Device workspaces")]
+    [Header("【デバイス面】")]
     [Tooltip("デバイス面を並べる。Surface が重複しないこと。3 つ目の面を足す場合もここへ追加する。")]
     [SerializeField] private DeviceWorkspaceView[] workspaces = Array.Empty<DeviceWorkspaceView>();
 
-    [Header("Controllers")]
+    [Header("【進行制御】")]
     [SerializeField] private MainGameController mainGameController;
     [SerializeField] private DeviceScreenController deviceScreenController;
 

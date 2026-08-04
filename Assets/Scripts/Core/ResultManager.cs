@@ -9,16 +9,16 @@ using UnityEngine.UI;
 /// </remarks>
 public sealed class ResultManager : MonoBehaviour
 {
-    [Header("Required")]
+    [Header("【必須】")]
     [Tooltip("直前のセッション結果を書き込む先。")]
     [SerializeField] private TextMeshProUGUI summaryText;
     [SerializeField] private Button backToDifficultyButton;
 
-    [Header("Optional")]
+    [Header("【任意】")]
     [Tooltip("GameOver シーンにだけ置く。Clear シーンでは未設定でよい。")]
     [SerializeField] private Button retryButton;
 
-    [Header("Text")]
+    [Header("【表示する文言】")]
     [Tooltip("結果がまだ無いとき（このシーンから直接再生したとき）の表示。")]
     [SerializeField] private string emptyResultText = "Result will be shown after a session.";
 

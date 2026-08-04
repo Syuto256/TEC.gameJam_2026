@@ -8,13 +8,13 @@ using UnityEngine;
 [RequireComponent(typeof(CanvasGroup))]
 public sealed class DeviceWorkspaceView : MonoBehaviour
 {
-    [Header("Required")]
+    [Header("【必須】")]
     [Tooltip("この面が受け持つタスクの所属。各面で重複しないこと。")]
     [SerializeField] private TaskSurface surface;
     [SerializeField] private RectTransform leftSpawnArea;
     [SerializeField] private RectTransform rightSpawnArea;
 
-    [Header("Optional")]
+    [Header("【任意】")]
     [Tooltip("未設定なら同じ GameObject の CanvasGroup を使う。")]
     [SerializeField] private CanvasGroup canvasGroup;
 

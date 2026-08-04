@@ -27,14 +27,14 @@ public readonly struct HudSnapshot
 /// <summary>HP・残り時間・スコア・難易度の表示と、ポーズ要求だけを担当する。</summary>
 public sealed class HudView : MonoBehaviour
 {
-    [Header("Required")]
+    [Header("【必須】")]
     [Tooltip("Image Type を Filled にしたバー。fillAmount で HP 比率を表示する。")]
     [SerializeField] private Image hpBarFill;
     [SerializeField] private TextMeshProUGUI timeText;
     [SerializeField] private TextMeshProUGUI scoreText;
     [SerializeField] private Button pauseButton;
 
-    [Header("Optional")]
+    [Header("【任意】")]
     [SerializeField] private TextMeshProUGUI hpText;
     [SerializeField] private TextMeshProUGUI difficultyText;
 

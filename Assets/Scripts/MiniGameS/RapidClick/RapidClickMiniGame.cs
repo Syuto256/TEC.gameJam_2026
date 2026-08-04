@@ -14,14 +14,14 @@ namespace Overwork.MiniGames.RapidClick
     /// </remarks>
     public sealed class RapidClickMiniGame : MiniGameBase, IPointerClickHandler
     {
-        [Header("View")]
+        [Header("【表示先】")]
         [Tooltip("連打の進捗。")]
         [SerializeField] private TMP_Text progressText;
 
         [Tooltip("進捗の書式。{0} が現在の回数、{1} が必要回数。")]
         [SerializeField] private string progressFormat = "連打! {0} / {1}";
 
-        [Header("Tuning")]
+        [Header("【難度の調整】")]
         [Tooltip("レベル 1 での必要クリック数。")]
         [Min(1)] [SerializeField] private int baseClicks = 12;
 

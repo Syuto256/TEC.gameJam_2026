@@ -14,19 +14,21 @@ public sealed class MiniGameCatalog : ScriptableObject
     [Serializable]
     public sealed class Entry
     {
-        [Tooltip("担当するタスク種別。カタログ内で重複させない。")]
+        [Tooltip("このミニゲームが担当するタスクの種別。同じ種別を2行に書かないこと。")]
         public TaskKind kind;
 
-        [Tooltip("タスク吹き出しに出す名前。空ならタスク種別名をそのまま使う。")]
+        [Tooltip("タスクの吹き出しに出す名前。空にすると種別名がそのまま出る。")]
         public string displayName;
 
-        [Tooltip("タスク吹き出しに出すアイコン。任意。")]
+        [Tooltip("タスクの吹き出しに出すアイコン。無くてもよい。")]
         public Sprite icon;
 
-        [Tooltip("MiniGameHost へ生成する Prefab。ルートに MiniGameBase 派生と RectTransform が必要。")]
+        [Tooltip("この種別のタスクを選んだときに開くミニゲームのPrefab。\n" +
+                 "Assets/Prefabs/MiniGames/ の中から選ぶ。")]
         public MiniGameBase prefab;
 
-        [Tooltip("タスクレベル 1〜4 の制限時間（秒）。要素が足りない分は最後の値を使う。")]
+        [Tooltip("問題レベル1〜4それぞれの制限時間（秒）。左から順にレベル1・2・3・4。\n" +
+                 "短くすると難しくなる。要素が4つ未満のときは、足りない分に最後の値が使われる。")]
         [Min(0f)] public float[] timeLimitsByLevel = { 7f, 7f, 7f, 7f };
 
         public float GetTimeLimit(int level)
@@ -40,6 +42,8 @@ public sealed class MiniGameCatalog : ScriptableObject
         }
     }
 
+    [Tooltip("ミニゲームの一覧。1種別につき1行。\n" +
+             "ミニゲームを1本増やすときは、ここに1行足してからタスク出現表にも足す。")]
     [SerializeField] private List<Entry> entries = new List<Entry>();
 
     public bool TryGetEntry(TaskKind kind, out Entry entry)
