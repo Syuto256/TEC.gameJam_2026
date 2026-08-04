@@ -977,6 +977,8 @@ MonoBehaviour:
   remainingInputFormat: "\u6B8B\u308A: {0}"
   missFormat: "\u30DF\u30B9: {0} / {1}"
   allowedMisses: 2
+  missLockoutSeconds: 0.2
+  lockedOutColor: {r: 1, g: 0.55, b: 0.62, a: 1}
 --- !u!114 &163765739444945780
 MonoBehaviour:
   m_ObjectHideFlags: 0
