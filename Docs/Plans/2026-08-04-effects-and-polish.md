@@ -28,13 +28,36 @@
 
 **確認ゲート:** コンパイルエラー 0 件、EditMode テスト全件成功。（達成。48/48）
 
-### E1: DOTween の導入と既存演出の置き換え
+### E1: DOTween の導入と既存演出の置き換え（完了・2026-08-05）
 
-1. **DOTween 無料版**を導入する（有料版は所持しているが、今回は無料版を使う）。
-2. **asmdef 越しに参照できることを `HudView` 1 箇所で確認してから広げる。** 本プロジェクトは asmdef を 8 つに分割しているため、ここが最初の関門になる。
-3. `HudView.AnimateScorePopup` の手書きコルーチンを DOTween へ置き換える。見た目を変えず、実装だけを差し替える。
+**DOTween 無料版**を `Assets/Plugins/Demigiant/DOTween/` へ導入した。ライセンスの詳細は [方式の決定](../Decisions/2026-08-04-combo-and-effect-approach.md) を参照。
 
-**確認ゲート:** タスクを 1 件自力成功させ、スコアポップアップが従来どおり出る。Console エラー 0 件。
+#### asmdef の落とし穴（重要）
+
+`Setup DOTween` の既定では **`DOTween.Modules.asmdef` が作られない**（`DOTweenSettings.asset` の `createASMDEF` が 0）。この状態だと `Modules/` 配下は既定アセンブリ `Assembly-CSharp` に入る。**asmdef で分けたアセンブリは既定アセンブリを参照できない**ため、次の差が出る。
+
+| 対象 | asmdef 側から使えるか |
+| --- | --- |
+| `DOTween.dll`（`DOTween.To`、`Sequence`、`Transform` のショートカット） | 使える（自動参照される） |
+| `Modules/DOTweenModuleUI.cs`（`DOAnchorPos`、`DOFade`、`DOColor`） | **使えない** |
+
+対処として次を行った。**新しいアセンブリから DOTween の UI 拡張を使う場合は、同じ手順が必要になる。**
+
+1. `Assets/Plugins/Demigiant/DOTween/Modules/DOTween.Modules.asmdef` を作成した。
+2. `Overwork.Core.asmdef` の `references` に `DOTween.Modules` を追加した。
+3. `DOTweenSettings.asset` の `createASMDEF` を 1 にした。再度 `Setup DOTween` を実行しても asmdef が消えないようにするため。
+
+ミニゲーム側の 6 つの asmdef にはまだ追加していない。E2 以降で必要になった時点で、そのアセンブリの `references` に足す。
+
+**TMP モジュールは無効のまま**（`textMeshProEnabled: 0`）。`TextMeshProUGUI` は `Graphic` を継承しているため `DOFade` / `DOColor` は UI モジュールだけで動く。`DOText` のような TMP 専用機能が要るときに有効化する。
+
+#### 置き換えた内容
+
+`HudView` のスコアポップアップを、手書きコルーチンから `Sequence` へ置き換えた。表示時間と緩急を Inspector へ出し（`popupDurationSec` / `popupEase`）、既定は従来と同じ 0.8 秒・等速にしてある。
+
+**併せて直した不具合:** 演出中に次のポップアップが割り込むと、`StopCoroutine` が後始末を飛ばすため、褪せた色を「元の色」として拾い直し、ポップアップが呼ばれるたびに薄くなっていく状態だった。連続でタスクを成功させると必ず起きる。元の色を `Initialize` で控える方式に変更して解消した。
+
+**確認結果（2026-08-05）:** コンパイルエラー 0 件、EditMode テスト 48/48 成功、Console エラー 0 件。Play モードでの目視確認は未実施。
 
 ### E2: 既存 UI へのトゥイーン適用
 
