@@ -17,6 +17,9 @@ public sealed class MainGameController : MonoBehaviour
     [Tooltip("タスクの決着を吹き出しの位置に知らせる層。未設定でも進行には影響しない（演出が出ないだけ）。")]
     [SerializeField] private ResultEffectLayerView resultEffectLayer;
 
+    [Tooltip("画面に出しきれず待機しているタスクの件数表示。未設定でも進行には影響しない（件数が出ないだけ）。")]
+    [SerializeField] private TaskBacklogView taskBacklogView;
+
     [Header("【音】")]
     [Tooltip("HP がこの割合を下回ったら警告音を一度だけ鳴らす。")]
     [Range(0f, 1f)] [SerializeField] private float hpLowRatio = 0.3f;
@@ -126,6 +129,11 @@ public sealed class MainGameController : MonoBehaviour
             return;
         }
 
+        if (taskBacklogView != null && !taskBacklogView.Initialize())
+        {
+            return;
+        }
+
         var flow = GameFlowController.EnsureInstance();
         difficultyProfile = tuningSettings.GetDifficultyProfile(flow.SelectedDifficulty);
         WarnIfSlotsAreFewerThanVisibleLimit();
@@ -161,6 +169,7 @@ public sealed class MainGameController : MonoBehaviour
 
         initialized = true;
         RefreshHud();
+        RefreshBacklog();
     }
 
     private void Update()
@@ -190,6 +199,7 @@ public sealed class MainGameController : MonoBehaviour
         UpdateHpLowCue();
         RefreshTaskViews();
         RefreshHud();
+        RefreshBacklog();
     }
 
     /// <summary>HP が危険域へ入った瞬間に一度だけ警告音を鳴らす。</summary>
@@ -592,6 +602,21 @@ public sealed class MainGameController : MonoBehaviour
             session.RemainingTimeSec,
             session.IsEndless,
             session.Difficulty));
+    }
+
+    /// <summary>待機中のタスク件数を表示へ渡す。</summary>
+    /// <remarks>
+    /// 面ごとの内訳ではなく合計を渡す。どの面に溜まっているかは、その面へ切り替えれば
+    /// 吹き出しの数で分かるためである。
+    /// </remarks>
+    private void RefreshBacklog()
+    {
+        if (taskBacklogView == null || taskManager == null)
+        {
+            return;
+        }
+
+        taskBacklogView.Render(taskManager.QueuedCount);
     }
 
     private void FinishSession()
