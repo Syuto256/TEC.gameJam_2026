@@ -1,0 +1,18 @@
+{
+  "name": "Overwork.MiniGames.Typing",
+  "rootNamespace": "Overwork.MiniGames.Typing",
+  "references": [
+    "Overwork.Core",
+    "Unity.InputSystem",
+    "Unity.TextMeshPro"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

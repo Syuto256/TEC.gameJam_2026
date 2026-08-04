@@ -1,3 +1,147 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:1c896048eef4742ecf62c59891bc244dc0c6a98a9461c2be262d14597fc0ef53
-size 924
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d19d4a3c548c0a34e8dbf59829085bf3, type: 3}
+  m_Name: GameTuningSettings
+  m_EditorClassIdentifier: Assembly-CSharp::GameTuningSettings
+  gameDurationSec: 180
+  maxHP: 100
+  damage:
+    playerFail: 5
+    aiFail: 5
+    expired: 8
+  ai:
+    successRate: 0.9
+    processDurationSec: 0.4
+    cooldownSec: 0
+    scoreMultiplier: 0.6
+  score:
+    baseScoreDiff1: 100
+    baseScoreDiff2: 150
+    baseScoreDiff3: 220
+    baseScoreDiff4: 300
+    craftPointsDiff1: 10
+    craftPointsDiff2: 15
+    craftPointsDiff3: 25
+    maxTimeBonusAdd: 0.5
+  difficultyProfiles:
+  - difficulty: 0
+    durationSec: 180
+    maxHp: 100
+    spawnIntervalSec: 5
+    taskLifetimeSec: 20
+    maxTasksPerSurface: 2
+    startingTaskLevel: 1
+    maxTaskLevel: 4
+    taskLevelIncreaseIntervalSec: 45
+    taskLevelMilestones:
+    - elapsedSec: 0
+      level: 1
+    - elapsedSec: 60
+      level: 2
+    - elapsedSec: 120
+      level: 3
+    - elapsedSec: 150
+      level: 4
+    spawnIntervalMilestones:
+    - elapsedSec: 0
+      intervalSec: 5
+    - elapsedSec: 60
+      intervalSec: 4.5
+    - elapsedSec: 120
+      intervalSec: 4
+    - elapsedSec: 150
+      intervalSec: 3
+    isEndless: 0
+  - difficulty: 1
+    durationSec: 180
+    maxHp: 100
+    spawnIntervalSec: 5
+    taskLifetimeSec: 20
+    maxTasksPerSurface: 2
+    startingTaskLevel: 1
+    maxTaskLevel: 4
+    taskLevelIncreaseIntervalSec: 45
+    taskLevelMilestones:
+    - elapsedSec: 0
+      level: 1
+    - elapsedSec: 60
+      level: 2
+    - elapsedSec: 120
+      level: 3
+    - elapsedSec: 150
+      level: 4
+    spawnIntervalMilestones:
+    - elapsedSec: 0
+      intervalSec: 5
+    - elapsedSec: 60
+      intervalSec: 4.5
+    - elapsedSec: 120
+      intervalSec: 4
+    - elapsedSec: 150
+      intervalSec: 3
+    isEndless: 0
+  - difficulty: 2
+    durationSec: 180
+    maxHp: 50
+    spawnIntervalSec: 5
+    taskLifetimeSec: 20
+    maxTasksPerSurface: 2
+    startingTaskLevel: 1
+    maxTaskLevel: 4
+    taskLevelIncreaseIntervalSec: 45
+    taskLevelMilestones:
+    - elapsedSec: 0
+      level: 1
+    - elapsedSec: 60
+      level: 2
+    - elapsedSec: 120
+      level: 3
+    - elapsedSec: 150
+      level: 4
+    spawnIntervalMilestones:
+    - elapsedSec: 0
+      intervalSec: 5
+    - elapsedSec: 60
+      intervalSec: 4.5
+    - elapsedSec: 120
+      intervalSec: 4
+    - elapsedSec: 150
+      intervalSec: 3
+    isEndless: 0
+  - difficulty: 4
+    durationSec: 180
+    maxHp: 50
+    spawnIntervalSec: 5
+    taskLifetimeSec: 20
+    maxTasksPerSurface: 2
+    startingTaskLevel: 1
+    maxTaskLevel: 4
+    taskLevelIncreaseIntervalSec: 45
+    taskLevelMilestones:
+    - elapsedSec: 0
+      level: 1
+    - elapsedSec: 60
+      level: 2
+    - elapsedSec: 120
+      level: 3
+    - elapsedSec: 150
+      level: 4
+    spawnIntervalMilestones:
+    - elapsedSec: 0
+      intervalSec: 5
+    - elapsedSec: 60
+      intervalSec: 4.5
+    - elapsedSec: 120
+      intervalSec: 4
+    - elapsedSec: 150
+      intervalSec: 3
+    isEndless: 1
