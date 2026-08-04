@@ -140,15 +140,35 @@ Shared
 
 **確認結果（2026-08-05）:** コンパイルエラー 0 件、EditMode テスト 48/48 成功、Console エラー 0 件。**Play モードでの目視確認は未実施。**
 
-#### E3-b: シーン間フェード（未着手）
+#### E3-b: シーン間フェード（実装完了・2026-08-05 / 目視確認待ち）
 
-`GameFlowController` が 5 シーンすべての遷移を `SceneManager.LoadScene` で直接行っている。フェードにはシーンをまたいで生き残る暗幕が要るため、次の形を想定する。
+暗幕は `Assets/Resources/FadeOverlay.prefab` に置き、`AppServices.Ensure()` が読み込んで常駐させる。`AudioCatalog` と同じ持ち方である。
 
-- 暗幕は `Assets/Resources/` に Prefab として置き、`AppServices.Ensure()` が読み込む。`AudioCatalog` と同じ持ち方にする。
-- 見た目を Prefab に置くことで、「実行時に UI をコードで組み立てない」規則を守る。
-- `GameFlowController` の遷移メソッドを、暗転 → `LoadScene` → 明転の順に変える。
+**シーンに実体を置かないのは、暗幕がどのシーンにも属さないためである。** 5 シーンすべてに同じものを置く方式では、遷移の瞬間に暗幕自体が一度消えてしまう。Prefab から読み込むことで、見た目は Inspector で調整でき、「実行時に UI をコードで組み立てない」規則も守れる。
 
-**確認ゲート:** Title から GameOver までの一巡で、すべての遷移が暗転をはさむ。どのシーンから再生を始めても暗幕が残らない。
+```text
+Assets/Resources/FadeOverlay.prefab
+FadeOverlay          Canvas（Overlay・Sorting Order 1000）/ CanvasScaler / GraphicRaycaster
+                     CanvasGroup / FadeOverlayView
+└─ Fade              Image（黒・全画面・Raycast Target 有効）
+```
+
+`GameFlowController` の 4 つの遷移メソッドは、すべて `Transition(sceneName)` を通る。暗転 → `LoadScene` → 明転の順である。
+
+| 項目 | 既定値 |
+| --- | ---: |
+| 暗くなるまで | 0.25 秒 |
+| 真っ暗なまま待つ | 0.05 秒 |
+| 明るくなるまで | 0.30 秒 |
+
+##### 実装上の判断
+
+- **フェードは実時間（`SetUpdate(true)`）で動かす。** ポーズ中（`timeScale = 0`）に難易度選択へ戻る経路があるため、スケール時間だと暗転が進まず操作不能になる。
+- **遷移中は暗幕が入力を遮る**（`blocksRaycasts`）。さらに `TryRun` が遷移中の再要求を弾くため、暗転中にボタンを連打しても二重にシーンを読み込まない。**受け付けなかった場合に直接 `LoadScene` へ落とさないこと。** それをすると二重遷移の防止が意味を失う。
+- 暗幕の Prefab が見つからない場合はエラーを 1 回だけ出し、フェードなしで従来どおり遷移する。進行が止まることはない。
+- 起動直後は `alpha = 0` で、入力も遮らない。どのシーンから再生を始めても暗幕は残らない。
+
+**確認結果（2026-08-05）:** コンパイルエラー 0 件、EditMode テスト 48/48 成功、Console エラー 0 件。**Play モードでの目視確認は未実施。**
 
 ### E4: デバイス切替トランジション
 
