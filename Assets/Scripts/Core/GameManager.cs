@@ -70,6 +70,15 @@ public sealed class GameManager : MonoBehaviour
     private void OnPlayerMiniGameActiveChanged(bool active)
     {
         deviceScreenController.SetSwitchEnabled(!active);
+
+            // 追加：ミニゲーム中は全 Workspace 内のタスク操作を無効化する
+        foreach (var workspace in workspaces)
+        {
+            if (workspace != null)
+            {
+                workspace.SetInteractionEnabled(!active);
+            }
+        }
     }
 
     private bool HasValidWorkspaces()

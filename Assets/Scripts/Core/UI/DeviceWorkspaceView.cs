@@ -64,6 +64,23 @@ public sealed class DeviceWorkspaceView : MonoBehaviour
         canvasGroup.blocksRaycasts = value;
     }
 
+    /// <summary>表示（alpha）はそのまま維持し、タスクへの操作（クリック等）の可否だけを切り替える。</summary>
+    public void SetInteractionEnabled(bool enabled)
+    {
+        if (canvasGroup == null)
+        {
+            return;
+        }
+    
+        // 表示中（alpha > 0）の面だけ操作権限を変更する
+        // （非表示の面が誤ってクリック可能になるのを防ぐため）
+        if (canvasGroup.alpha > 0f)
+        {
+            canvasGroup.interactable = enabled;
+            canvasGroup.blocksRaycasts = enabled;
+        }
+    }
+
     /// <summary>吹き出しの少ない側の生成先を返す。同数なら左を使う。</summary>
     public RectTransform PickSpawnArea()
     {
