@@ -38,6 +38,23 @@ public sealed class HudView : MonoBehaviour
     [SerializeField] private TextMeshProUGUI hpText;
     [SerializeField] private TextMeshProUGUI difficultyText;
 
+    [Header("【演出部品】")]
+    [SerializeField] private TextMeshProUGUI centerScorePopupText;
+    [SerializeField] private TextMeshProUGUI comboPopupText;
+
+    [Header("【演出設定】")]
+    [Tooltip("ポップアップの初期出現位置（画面中央からのオフセット）")]
+    [SerializeField] private Vector2 popupOffset = new Vector2(0f, 100f); // 例: 中央より少し上
+
+    [Tooltip("コンボポップアップの初期出現位置（画面中央からのオフセット）")]
+    [SerializeField] private Vector2 comboPopupOffset = new Vector2(0f, 160f); // ★追加: スコアより少し上に配置
+
+    [Tooltip("浮き上がる距離")]
+    [SerializeField] private float popupMoveDistance = 50f;
+
+    
+    private Coroutine scorePopupCoroutine;
+ 
     private int lastHp = int.MinValue;
     private int lastScore = int.MinValue;
     private string lastTimeText;
@@ -85,7 +102,7 @@ public sealed class HudView : MonoBehaviour
         if (snapshot.Score != lastScore)
         {
             lastScore = snapshot.Score;
-            scoreText.text = snapshot.Score.ToString();
+            scoreText.text = $"スコア: {snapshot.Score:N0}".ToString();
         }
 
         var time = FormatTime(snapshot.RemainingTimeSec, snapshot.IsEndless);
@@ -108,7 +125,80 @@ public sealed class HudView : MonoBehaviour
             return "--:--";
         }
 
-        var totalSeconds = Mathf.CeilToInt(Mathf.Max(0f, remainingSec));
+    var totalSeconds = Mathf.CeilToInt(Mathf.Max(0f, remainingSec));
         return (totalSeconds / 60).ToString("00") + ":" + (totalSeconds % 60).ToString("00");
+    }
+    /// <summary>画面中央に獲得スコアとコンボ数のポップアップ演出を表示する</summary>
+    public void ShowScorePopup(int addedScore, int comboCount)
+    {
+        if (centerScorePopupText == null) return;
+
+        if (scorePopupCoroutine != null)
+        {
+            StopCoroutine(scorePopupCoroutine);
+        }
+
+        scorePopupCoroutine = StartCoroutine(AnimateScorePopup(addedScore, comboCount));
+    }
+
+    private System.Collections.IEnumerator AnimateScorePopup(int addedScore, int comboCount)
+    {
+        // 1. スコアテキストの準備
+        centerScorePopupText.text = $"+{addedScore}";
+        centerScorePopupText.gameObject.SetActive(true);
+    
+        // 2. コンボテキストの準備（2コンボ以上かつ参照がある場合のみ表示）
+        var showCombo = comboCount >= 2 && comboPopupText != null;
+        if (showCombo)
+        {
+            comboPopupText.text = $"{comboCount} COMBO!";
+            comboPopupText.gameObject.SetActive(true);
+        }
+    
+        var scoreRect = centerScorePopupText.rectTransform;
+        var comboRect = showCombo ? comboPopupText.rectTransform : null;
+    
+        var scoreStartPos = popupOffset;
+        var comboStartPos = comboPopupOffset;
+    
+        var duration = 0.8f;
+        var elapsed = 0f;
+    
+        var scoreInitialColor = centerScorePopupText.color;
+        var comboInitialColor = showCombo ? comboPopupText.color : Color.white;
+    
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            var t = elapsed / duration;
+    
+            // スコアの移動・フェードアウト
+            scoreRect.anchoredPosition = scoreStartPos + new Vector2(0f, Mathf.Lerp(0f, popupMoveDistance, t));
+            centerScorePopupText.color = new Color(scoreInitialColor.r, scoreInitialColor.g, scoreInitialColor.b, Mathf.Lerp(1f, 0f, t));
+    
+            // コンボの移動・フェードアウト
+            if (showCombo)
+            {
+                comboRect.anchoredPosition = comboStartPos + new Vector2(0f, Mathf.Lerp(0f, popupMoveDistance, t));
+                comboPopupText.color = new Color(comboInitialColor.r, comboInitialColor.g, comboInitialColor.b, Mathf.Lerp(1f, 0f, t));
+            }
+    
+            yield return null;
+        }
+    
+        // 後始末（スコア）
+        centerScorePopupText.gameObject.SetActive(false);
+        centerScorePopupText.color = scoreInitialColor;
+        scoreRect.anchoredPosition = scoreStartPos;
+    
+        // 後始末（コンボ）
+        if (showCombo)
+        {
+            comboPopupText.gameObject.SetActive(false);
+            comboPopupText.color = comboInitialColor;
+            comboRect.anchoredPosition = comboStartPos;
+        }
+    
+        scorePopupCoroutine = null;
     }
 }
