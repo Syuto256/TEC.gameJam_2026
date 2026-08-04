@@ -102,7 +102,7 @@ public sealed class HudView : MonoBehaviour
         if (snapshot.Score != lastScore)
         {
             lastScore = snapshot.Score;
-            scoreText.text = $"スコア: {snapshot.Score:N0}".ToString();
+            scoreText.text = $"スコア: {snapshot.Score:N0}";
         }
 
         var time = FormatTime(snapshot.RemainingTimeSec, snapshot.IsEndless);

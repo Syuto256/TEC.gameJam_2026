@@ -140,7 +140,9 @@ public sealed class MainGameController : MonoBehaviour
             BaseScoreLevel2 = tuningSettings.score.baseScoreDiff2,
             BaseScoreLevel3 = tuningSettings.score.baseScoreDiff3,
             BaseScoreLevel4 = tuningSettings.score.baseScoreDiff4,
-            MaxTimeBonusAdd = tuningSettings.score.maxTimeBonusAdd
+            MaxTimeBonusAdd = tuningSettings.score.maxTimeBonusAdd,
+            ComboScoreAddPerCombo = tuningSettings.score.comboScoreAddPerCombo,
+            MaxComboMultiplier = tuningSettings.score.maxComboMultiplier
         });
 
         initialized = true;
@@ -393,14 +395,14 @@ public sealed class MainGameController : MonoBehaviour
 
     private void OnTaskResolved(TaskResolutionResult result)
     {
-        var addedScore = session.Apply(result); // 加算スコアを取得
+        var addedScore = session.Apply(result);
         PlayResolutionCue(result.Resolution);
 
-        // 自力ミニゲーム成功時かつスコアが得られた場合のみポップアップを出す
+        // 自力成功でスコアが入ったときだけ、獲得点とコンボを見せる。
         if (result.Resolution == TaskResolution.PlayerSuccess && addedScore > 0)
         {
             hudView.ShowScorePopup(addedScore, session.ComboCount);
-            
+
             if (IsComboMilestone(session.ComboCount))
             {
                 AudioManager.PlaySfx(AudioCue.ComboMilestone);
@@ -419,15 +421,11 @@ public sealed class MainGameController : MonoBehaviour
             Destroy(view.gameObject);
         }
     }
-    /// <summary>★追加: コンボ数が大台に乗ったかどうかを判定する</summary>
-    private static bool IsComboMilestone(int combo)
+    /// <summary>コンボ数が節目に達したか。間隔は GameTuningSettings の comboMilestoneInterval で変える。</summary>
+    private bool IsComboMilestone(int combo)
     {
-        if (combo <= 0) return false;
-
-        // 例1: 5, 10, 15, 20... と 5 コンボごとに鳴らしたい場合
-        return combo % 10 == 0;
-
-        // 例2: 10コンボ以上の時だけ鳴らしたい場合なら: return combo == 10;
+        var interval = tuningSettings.score.comboMilestoneInterval;
+        return combo > 0 && interval > 0 && combo % interval == 0;
     }
 
     /// <summary>タスクの決着に応じた音を鳴らす。自力の成否は <see cref="CompletePlayerMiniGame"/> が鳴らす。</summary>

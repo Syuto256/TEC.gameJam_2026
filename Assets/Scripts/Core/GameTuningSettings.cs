@@ -89,6 +89,20 @@ public class GameTuningSettings : ScriptableObject
                  "タスクの残り寿命が多いうちに着手するほどスコアが伸びる。\n" +
                  "0.5 なら、出現直後に着手した場合が最大で 1.5 倍。0 にするとボーナス無し。")]
         public float maxTimeBonusAdd = 0.50f;
+
+        [Header("【コンボ】")]
+        [Tooltip("コンボが1段増えるごとに上乗せされるスコア倍率。\n" +
+                 "0.1 なら 1 コンボごとに +10%（2コンボ目が1.1倍、3コンボ目が1.2倍）。\n" +
+                 "0 にするとコンボでスコアが変わらなくなる。")]
+        [Min(0f)] public float comboScoreAddPerCombo = 0.10f;
+
+        [Tooltip("コンボ倍率の上限。2 なら何コンボ繋いでも最大2倍で頭打ちになる。\n" +
+                 "1 にするとコンボによるスコア上昇が実質的に無くなる。")]
+        [Min(1f)] public float maxComboMultiplier = 2.00f;
+
+        [Tooltip("何コンボごとに専用の効果音を鳴らすか。10 なら 10・20・30 コンボで鳴る。\n" +
+                 "0 にすると鳴らさない。")]
+        [Min(0)] public int comboMilestoneInterval = 10;
     }
 
     [Serializable]

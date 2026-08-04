@@ -17,10 +17,10 @@ public sealed class GameSessionSettings
     public int BaseScoreLevel4 { get; set; } = 300;
     public float MaxTimeBonusAdd { get; set; } = 0.5f;
 
-    /// <summary>1コンボあたりのスコア上昇倍率（例: 0.1f = +10%）</summary>
-    public float ComboScoreMultiplier { get; set; } = 0.1f;
-    
-    /// <summary>コンボ倍率の上限値（例: 2.0f = 最大2倍まで）</summary>
+    /// <summary>コンボ 1 段につき増えるスコア倍率。0.1 なら 1 コンボごとに +10%。</summary>
+    public float ComboScoreAddPerCombo { get; set; } = 0.1f;
+
+    /// <summary>コンボ倍率の上限。2.0 なら何コンボ繋いでも最大 2 倍で頭打ちになる。</summary>
     public float MaxComboMultiplier { get; set; } = 2.0f;
 }
 
@@ -48,9 +48,9 @@ public sealed class GameSession
     public int AiUsedCount { get; private set; }
     public IReadOnlyDictionary<TaskResolution, int> ResolutionCounts => resolutionCounts;
 
-    // ★追加: 現在のコンボ数
+    /// <summary>自力成功が途切れずに続いている件数。失敗と時間切れで 0 に戻る。</summary>
     public int ComboCount { get; private set; }
-    public event Action<int> ScoreChanged;
+
     public void Tick(float deltaTime)
     {
         if (EndState != GameEndState.Playing || deltaTime <= 0f || settings.IsEndless) return;
@@ -58,51 +58,55 @@ public sealed class GameSession
         if (RemainingTimeSec <= 0f) EndState = GameEndState.Clear;
     }
 
+    /// <summary>解決結果を反映し、このとき加算されたスコアを返す。演出はこの戻り値を使う。</summary>
     public int Apply(TaskResolutionResult result)
     {
         if (EndState != GameEndState.Playing) return 0;
-    
+
         resolutionCounts[result.Resolution] = GetResolutionCount(result.Resolution) + 1;
         var addedScore = 0;
-    
+
         switch (result.Resolution)
         {
             case TaskResolution.PlayerSuccess:
-                ComboCount++; // ★コンボ加算
+                ComboCount++;
                 addedScore = CalculateScore(result.Task.Level, result.CapturedTimeRatio, 1f, ComboCount);
                 Score += addedScore;
                 break;
-    
+
+            // TODO(2026-08-04): AI 成功は現在コンボを伸ばさないが、コンボ倍率は受け取る。
+            // 自力と AI の評価差（仕様書 22.5）が決まったら、どちらに寄せるか確定する。
             case TaskResolution.AiSuccess:
                 AiUsedCount++;
-                addedScore = CalculateScore(result.Task.Level, result.CapturedTimeRatio, settings.AiScoreMultiplier, ComboCount);
+                addedScore = CalculateScore(
+                    result.Task.Level, result.CapturedTimeRatio, settings.AiScoreMultiplier, ComboCount);
                 Score += addedScore;
                 break;
-    
+
             case TaskResolution.PlayerFailure:
             case TaskResolution.AiFailure:
             case TaskResolution.Expired:
-                ComboCount = 0; // ★失敗・期限切れでコンボリセット
+                ComboCount = 0;
                 ApplyDamage(result.Resolution == TaskResolution.PlayerFailure ? settings.PlayerFailureDamage :
                             result.Resolution == TaskResolution.AiFailure ? settings.AiFailureDamage : settings.ExpiredDamage);
                 break;
         }
-    
-        return addedScore; // 加算されたスコアを返す
+
+        return addedScore;
     }
-    // ★コンボ数を引数に追加してスコアを計算する[cite: 5]
+
     private int CalculateScore(int level, float timeRatio, float multiplier, int combo)
     {
         var baseScore = level == 1 ? settings.BaseScoreLevel1 : level == 2 ? settings.BaseScoreLevel2
             : level == 3 ? settings.BaseScoreLevel3 : settings.BaseScoreLevel4;
-        
         var ratio = Math.Max(0f, Math.Min(1f, timeRatio));
 
-        // コンボボーナス倍率の計算（例: 1 + 0.1 * (combo - 1) を最大2.0倍でクランプ）
-        var comboBonus = 1f + Math.Max(0, combo - 1) * settings.ComboScoreMultiplier;
-        comboBonus = Math.Min(comboBonus, settings.MaxComboMultiplier);
+        // 1 コンボ目は等倍。2 コンボ目から 1 段ずつ増え、上限で頭打ちにする。
+        var comboBonus = 1f + Math.Max(0, combo - 1) * settings.ComboScoreAddPerCombo;
+        comboBonus = Math.Min(comboBonus, Math.Max(1f, settings.MaxComboMultiplier));
 
-        return Math.Max(0, (int)Math.Round(baseScore * (1f + settings.MaxTimeBonusAdd * ratio) * Math.Max(0f, multiplier) * comboBonus));
+        return Math.Max(0, (int)Math.Round(
+            baseScore * (1f + settings.MaxTimeBonusAdd * ratio) * Math.Max(0f, multiplier) * comboBonus));
     }
 
     public GameSessionResult CreateResult()
@@ -113,14 +117,6 @@ public sealed class GameSession
     private int GetResolutionCount(TaskResolution resolution)
     {
         return resolutionCounts.TryGetValue(resolution, out var count) ? count : 0;
-    }
-
-    private int CalculateScore(int level, float timeRatio, float multiplier)
-    {
-        var baseScore = level == 1 ? settings.BaseScoreLevel1 : level == 2 ? settings.BaseScoreLevel2
-            : level == 3 ? settings.BaseScoreLevel3 : settings.BaseScoreLevel4;
-        var ratio = Math.Max(0f, Math.Min(1f, timeRatio));
-        return Math.Max(0, (int)Math.Round(baseScore * (1f + settings.MaxTimeBonusAdd * ratio) * Math.Max(0f, multiplier)));
     }
 
     private void ApplyDamage(int amount)
