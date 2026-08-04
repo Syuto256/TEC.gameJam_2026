@@ -213,6 +213,28 @@ public class GameTuningSettings : ScriptableObject
         }
     }
 
+    /// <summary>行が用意されていない難易度を列挙する。</summary>
+    /// <remarks>
+    /// 行が無い難易度は <see cref="GetDifficultyProfile"/> の既定値で動く。既定値は
+    /// <c>maxTaskLevel = 1</c> なので、**最後までレベル 1 のまま = いちばん簡単**になる。
+    /// 難易度選択にボタンを足したのに行を足し忘れると、その難易度だけ静かに簡単になるため、
+    /// まとめて調べられるようにしている。
+    /// </remarks>
+    public IReadOnlyList<GameDifficulty> FindMissingDifficultyProfiles()
+    {
+        var missing = new List<GameDifficulty>();
+        foreach (GameDifficulty difficulty in Enum.GetValues(typeof(GameDifficulty)))
+        {
+            if (difficultyProfiles == null
+                || !difficultyProfiles.Exists(candidate => candidate != null && candidate.difficulty == difficulty))
+            {
+                missing.Add(difficulty);
+            }
+        }
+
+        return missing;
+    }
+
     public DifficultyProfile GetDifficultyProfile(GameDifficulty difficulty)
     {
         var fallback = new DifficultyProfile
