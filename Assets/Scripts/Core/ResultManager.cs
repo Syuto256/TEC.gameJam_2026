@@ -2,7 +2,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-/// <summary>Clear / GameOver シーンの入口。直前の結果の書き込みとボタン接続だけを担当する。</summary>
+/// <summary>Clear / GameOver シーンの入口。直前の結果の書き込み、ハイスコア保存とボタン接続を担当する。</summary>
 /// <remarks>
 /// 両シーンで同じクラスを使い、違いは Inspector の参照だけで表す。
 /// Clear シーンでは <see cref="retryButton"/> を未設定にする。
@@ -33,7 +33,13 @@ public sealed class ResultManager : MonoBehaviour
         }
 
         var flow = GameFlowController.EnsureInstance();
-        summaryText.text = Format(flow.LastSessionResult);
+        var result = flow.LastSessionResult;
+
+        // ★ ハイスコアのチェックと保存（新記録なら true が返る）
+        bool isNewRecord = TrySaveHighScore(result);
+
+        // ★ テキストの整形・表示（新記録表示含む）
+        summaryText.text = Format(result, isNewRecord);
 
         backToDifficultyButton.onClick.AddListener(() =>
         {
@@ -51,15 +57,40 @@ public sealed class ResultManager : MonoBehaviour
         }
     }
 
-    private string Format(GameSessionResult result)
+    /// <summary>★追加: ハイスコアをチェックし、更新していれば PlayerPrefs に保存する</summary>
+    private bool TrySaveHighScore(GameSessionResult result)
+    {
+        if (result == null) return false;
+
+        string key = "HighScore_" + result.Difficulty.ToString();
+        int currentHighScore = PlayerPrefs.GetInt(key, 0);
+
+        if (result.FinalScore > currentHighScore)
+        {
+            PlayerPrefs.SetInt(key, result.FinalScore);
+            PlayerPrefs.Save();
+            return true; // 新記録達成
+        }
+
+        return false;
+    }
+
+    private string Format(GameSessionResult result, bool isNewRecord)
     {
         if (result == null)
         {
             return emptyResultText;
         }
 
-        return "Difficulty: " + result.Difficulty
-            + "\nScore: " + result.FinalScore
+        // 保存されているハイスコアを取得（更新後の最新スコア）
+        string key = "HighScore_" + result.Difficulty.ToString();
+        int highScore = PlayerPrefs.GetInt(key, 0);
+
+        string newRecordHeader = isNewRecord ? "★ NEW RECORD! ★\n\n" : "";
+
+        return newRecordHeader
+            + "Difficulty: " + result.Difficulty
+            + "\nScore: " + result.FinalScore + $" (Best: {highScore})"
             + "\nHP: " + result.FinalHp;
     }
 }
