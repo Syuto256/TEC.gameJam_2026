@@ -393,13 +393,21 @@ public sealed class MainGameController : MonoBehaviour
 
     private void OnTaskResolved(TaskResolutionResult result)
     {
-        session.Apply(result);
+        var addedScore = session.Apply(result); // 加算スコアを取得
         PlayResolutionCue(result.Resolution);
+
+        // 自力ミニゲーム成功時かつスコアが得られた場合のみポップアップを出す
+        if (result.Resolution == TaskResolution.PlayerSuccess && addedScore > 0)
+        {
+            hudView.ShowScorePopup(addedScore, session.ComboCount);
+        }
+
         if (activePlayerTaskId == result.Task.Id)
         {
             SetActivePlayerTask(-1);
             miniGameHost.Hide();
         }
+
         if (taskViews.TryGetValue(result.Task.Id, out var view))
         {
             taskViews.Remove(result.Task.Id);
