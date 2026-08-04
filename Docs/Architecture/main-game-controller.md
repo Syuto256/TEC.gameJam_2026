@@ -26,7 +26,7 @@ Scene 上の View との配線は `GameManager` が行う。このクラスは V
 1. taskManager.Tick   寿命を減らす / AI 処理を進める
 2. session.Tick       残り時間を減らす
    └ 終了なら FinishSession して以降を中断
-3. 生成間隔を超えていれば TrySpawnTask
+3. 経過時間に対応する出現間隔を超えていれば TrySpawnTask
 4. RefreshTaskViews   全吹き出しの表示更新
 5. RefreshHud         HudSnapshot を作って HudView へ
 ```
@@ -72,9 +72,13 @@ OnTaskResolved（成功・失敗・AI・寿命切れのすべてを通る）
 
 ## タスクレベル
 
-`CalculateTaskLevel()` は難易度プロファイルの `startingTaskLevel` から始まり、`taskLevelIncreaseIntervalSec` ごとに `maxTaskLevel` まで上がる。
+`CalculateTaskLevel()` は難易度プロファイルの `taskLevelMilestones` を優先して読み、到達済みの最新時刻のレベルを返す。時刻表が空の既存プロファイルでは、従来どおり `startingTaskLevel` から `taskLevelIncreaseIntervalSec` ごとに `maxTaskLevel` まで上がる。
 
-**現状の注意:** `GameTuningSettings.difficultyProfiles` が空のため、フォールバック値（`startingTaskLevel = 1` / `maxTaskLevel = 1`）が使われ、レベルは常に 1 になる。難易度差を付けるにはプロファイルを追加する。
+**現状の注意:** `GameTuningSettings.difficultyProfiles` には Easy のみがあり、0 / 60 / 120 / 150 秒で Lv.1〜4 を出す時刻表を設定している。ほかの難易度はプロファイル未設定のためフォールバック値（Lv.1 固定）を使う。難易度差を付けるには各プロファイルを追加する。
+
+## タスク出現間隔
+
+`DifficultyProfile.spawnIntervalMilestones` に時刻表を設定すると、到達済みの最新時刻の `intervalSec` をタスク生成間隔として使う。時刻表が空なら `spawnIntervalSec` を使う。Easy の時刻表はまだ空で、プレイテスト後に値を決める。
 
 ## 検証
 

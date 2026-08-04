@@ -13,8 +13,8 @@ public sealed class MainGameController : MonoBehaviour
     [Tooltip("デバイス面ごとの出現タスク。どの面に何が出るかはこのアセットで決める。")]
     [SerializeField] private TaskSpawnTable taskSpawnTable;
 
-    [Header("???")]
-    [Tooltip("HP ???????????????????????")]
+    [Header("【音】")]
+    [Tooltip("HP がこの割合を下回ったら警告音を一度だけ鳴らす。")]
     [Range(0f, 1f)] [SerializeField] private float hpLowRatio = 0.3f;
 
     private readonly Dictionary<int, TaskBubbleView> taskViews = new Dictionary<int, TaskBubbleView>();
@@ -164,19 +164,19 @@ public sealed class MainGameController : MonoBehaviour
         }
 
         spawnElapsedSec += deltaTime;
-        var spawnInterval = Mathf.Max(0.1f, difficultyProfile.spawnIntervalSec);
+        var spawnInterval = difficultyProfile.GetSpawnInterval(taskManager.ElapsedSec);
         if (spawnElapsedSec >= spawnInterval)
         {
             spawnElapsedSec -= spawnInterval;
             TrySpawnTask();
         }
 
+        UpdateHpLowCue();
         RefreshTaskViews();
         RefreshHud();
     }
 
-    public bool TryAssignPlayer(int taskId)
-    /// <summary>HP ???????????????????????</summary>
+    /// <summary>HP が危険域へ入った瞬間に一度だけ警告音を鳴らす。</summary>
     private void UpdateHpLowCue()
     {
         if (session.MaxHp <= 0)
@@ -196,6 +196,7 @@ public sealed class MainGameController : MonoBehaviour
         }
     }
 
+    public bool TryAssignPlayer(int taskId)
     {
         if (!initialized || ending || paused || !taskManager.TryGetTask(taskId, out var task) || task.State != TaskState.Available)
         {
@@ -248,8 +249,8 @@ public sealed class MainGameController : MonoBehaviour
             view.Refresh();
         }
 
-        return true;
         AudioManager.PlaySfx(AudioCue.AiRequested);
+        return true;
     }
 
     public void TogglePause()
@@ -289,8 +290,8 @@ public sealed class MainGameController : MonoBehaviour
         miniGameCatalog.TryGetEntry(kind, out var entry);
         bubble.Bind(this, task, entry?.displayName, entry?.icon);
         taskViews.Add(task.Id, bubble);
-    }
         AudioManager.PlaySfx(AudioCue.TaskSpawned);
+    }
 
     /// <summary>
     /// タスクを出す面を選ぶ。出現タスクが設定されていない面と、上限に達している面は対象外にする。
@@ -387,27 +388,26 @@ public sealed class MainGameController : MonoBehaviour
 
     private int CalculateTaskLevel()
     {
-        var level = Mathf.Clamp(difficultyProfile.startingTaskLevel, 1, 4);
-        var maximum = Mathf.Clamp(difficultyProfile.maxTaskLevel, level, 4);
-        if (difficultyProfile.taskLevelIncreaseIntervalSec <= 0f)
-        {
-            return maximum;
-        }
-
-        var increases = Mathf.FloorToInt(taskManager.ElapsedSec / difficultyProfile.taskLevelIncreaseIntervalSec);
-        return Mathf.Clamp(level + increases, level, maximum);
+        return difficultyProfile.GetTaskLevel(taskManager.ElapsedSec);
     }
 
     private void OnTaskResolved(TaskResolutionResult result)
     {
         session.Apply(result);
+        PlayResolutionCue(result.Resolution);
         if (activePlayerTaskId == result.Task.Id)
         {
             SetActivePlayerTask(-1);
             miniGameHost.Hide();
         }
         if (taskViews.TryGetValue(result.Task.Id, out var view))
-    /// <summary>?????????????????????? <see cref="CompletePlayerMiniGame"/> ?????</summary>
+        {
+            taskViews.Remove(result.Task.Id);
+            Destroy(view.gameObject);
+        }
+    }
+
+    /// <summary>タスクの決着に応じた音を鳴らす。自力の成否は <see cref="CompletePlayerMiniGame"/> が鳴らす。</summary>
     private static void PlayResolutionCue(TaskResolution resolution)
     {
         switch (resolution)
@@ -421,12 +421,6 @@ public sealed class MainGameController : MonoBehaviour
             case TaskResolution.AiFailure:
                 AudioManager.PlaySfx(AudioCue.AiFailed);
                 break;
-        }
-    }
-
-        {
-            taskViews.Remove(result.Task.Id);
-            Destroy(view.gameObject);
         }
     }
 
@@ -476,13 +470,13 @@ public sealed class MainGameController : MonoBehaviour
     {
         if (!initialized || ending || paused == value)
         {
-        AudioManager.PlaySfx(paused ? AudioCue.PauseOpen : AudioCue.PauseClose);
             return;
         }
 
         paused = value;
         Time.timeScale = paused ? 0f : 1f;
         pauseMenu.SetVisible(paused);
+        AudioManager.PlaySfx(paused ? AudioCue.PauseOpen : AudioCue.PauseClose);
     }
 
     private void OnDestroy()
