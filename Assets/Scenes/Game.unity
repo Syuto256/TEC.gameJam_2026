@@ -3412,9 +3412,17 @@ PrefabInstance:
       propertyPath: m_Color.r
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 4562281964391723785, guid: 8e44b03bfcc3c8d41a22060ce592f4f9, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: -160
+      objectReference: {fileID: 0}
     - target: {fileID: 4654788835042917074, guid: 8e44b03bfcc3c8d41a22060ce592f4f9, type: 3}
       propertyPath: m_IsActive
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5519177392437813841, guid: 8e44b03bfcc3c8d41a22060ce592f4f9, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: -160
       objectReference: {fileID: 0}
     - target: {fileID: 6302845879449049695, guid: 8e44b03bfcc3c8d41a22060ce592f4f9, type: 3}
       propertyPath: m_Sprite
@@ -3659,6 +3667,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 2957127156499609359, guid: bbfac399f1308204d8dce4d2d623d695, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: -160
+      objectReference: {fileID: 0}
     - target: {fileID: 5609531389719142945, guid: bbfac399f1308204d8dce4d2d623d695, type: 3}
       propertyPath: m_LocalRotation.w
       value: 0.9999961
@@ -3682,6 +3694,10 @@ PrefabInstance:
     - target: {fileID: 5868927698972184281, guid: bbfac399f1308204d8dce4d2d623d695, type: 3}
       propertyPath: m_BlocksRaycasts
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6539691364789249623, guid: bbfac399f1308204d8dce4d2d623d695, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: -160
       objectReference: {fileID: 0}
     - target: {fileID: 9164233095804787763, guid: bbfac399f1308204d8dce4d2d623d695, type: 3}
       propertyPath: m_Name

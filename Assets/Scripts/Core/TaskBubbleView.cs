@@ -1,39 +1,38 @@
 using DG.Tweening;
-using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 /// <summary>一件の TaskInstance を表す吹き出し。左クリックは自力、右クリックは AI を依頼する。</summary>
 /// <remarks>
-/// 大きさ・配色・文字・配置は Prefab と `TaskSpawnArea` の Layout Group で調整する。
-/// このクラスはタスクの状態を割り当てられた表示先へ書き込むだけで、座標もサイズも持たない。
+/// 種別名・アイコン・難易度の星・配色は絵そのものに描き込まれているため、このクラスは
+/// <c>MiniGameCatalog</c> から渡された絵を貼るだけで、文字は一切書かない。
+/// 大きさと配置は Prefab と出現先が決める。
+///
+/// 残り時間は「吹き出し自体をゲージにする」方式で表す。無彩色の同じ絵を背面に敷き、
+/// 手前の色つきを <c>Filled</c> で削ることで、色が残っている量が残り時間になる。
+/// 吹き出しの横に別のゲージを置く方式は採らなかった。同時に 4 つ以上出るため、
+/// 1 個あたりの追加要素がそのまま画面の混雑になるからである。
 /// </remarks>
 public sealed class TaskBubbleView : MonoBehaviour, IPointerClickHandler
 {
     [Header("【必須】")]
-    [SerializeField] private Image background;
-    [SerializeField] private TextMeshProUGUI kindText;
-    [SerializeField] private TextMeshProUGUI stateText;
+    [Tooltip("残り時間で削られる、色つきの絵。\n" +
+             "Image Type を Filled、Fill Method を Vertical、Fill Origin を Bottom にすること。")]
+    [SerializeField] private Image colorFill;
+
+    [Tooltip("背面に敷く同じ絵。削られた部分がここに見える。\n" +
+             "Assets/Materials/UIGrayscale.mat を割り当てること。\n" +
+             "Image の色に灰色を入れても無彩色にはならない（乗算のため色相が残る）。")]
+    [SerializeField] private Image grayBase;
 
     [Header("【任意】")]
-    [SerializeField] private TextMeshProUGUI timeText;
-    [Tooltip("残り寿命を表すバー。Sprite を割り当て、Image Type を Filled にする。")]
-    [SerializeField] private Image lifetimeGauge;
-    [Tooltip("種別アイコン。MiniGameCatalog の icon が空なら非表示にする。")]
-    [SerializeField] private Image kindIcon;
+    [Tooltip("AI が作業しているあいだ重ねる暗幕。未設定なら暗くならない。\n" +
+             "作業中の文字や円ゲージは、この上に別途載せる。")]
+    [SerializeField] private Image workingDimmer;
 
-    [Header("【状態ごとの色】")]
-    [SerializeField] private Color availableColor = new Color(0.16f, 0.42f, 0.66f, 1f);
-    [SerializeField] private Color playerPlayingColor = new Color(0.56f, 0.24f, 0.59f, 1f);
-    [SerializeField] private Color aiProcessingColor = new Color(0.70f, 0.46f, 0.10f, 1f);
-    [SerializeField] private Color resolvedColor = new Color(0.24f, 0.24f, 0.24f, 1f);
-
-    [Header("【状態ごとの表示文字】")]
-    [SerializeField] private string availableLabel = "L: SELF / R: AI";
-    [SerializeField] private string playerPlayingLabel = "SELF PLAYING";
-    [SerializeField] private string aiProcessingLabel = "AI PROCESSING";
-    [SerializeField] private string resolvedLabel = "RESOLVED";
+    [Tooltip("AI が作業しているあいだの暗幕の濃さ。")]
+    [Range(0f, 1f)] [SerializeField] private float workingDimAlpha = 0.55f;
 
     [Header("【出現・消滅の演出】")]
     [Tooltip("出現するとき、この倍率から等倍まで拡大する。1 にすると拡大せずそのまま出る。")]
@@ -57,7 +56,6 @@ public sealed class TaskBubbleView : MonoBehaviour, IPointerClickHandler
 
     private MainGameController controller;
     private TaskInstance task;
-    private string kindLabel;
     private Tween appearTween;
     private Tween warningTween;
     private bool exiting;
@@ -67,32 +65,29 @@ public sealed class TaskBubbleView : MonoBehaviour, IPointerClickHandler
     /// <summary>Prefab の必須参照を検証する。生成前に一度だけ呼ぶ。</summary>
     public bool ValidateReferences()
     {
-        return SceneUiValidation.Require(this,
-            (nameof(background), background), (nameof(kindText), kindText), (nameof(stateText), stateText));
+        return SceneUiValidation.Require(this, (nameof(colorFill), colorFill), (nameof(grayBase), grayBase));
     }
 
-    /// <summary>表示するタスクと通知先を割り当てる。表示名とアイコンは MiniGameCatalog の登録内容を渡す。</summary>
-    public void Bind(MainGameController owner, TaskInstance instance, string displayName, Sprite icon)
+    /// <summary>表示するタスクと通知先を割り当てる。絵は MiniGameCatalog が種別とレベルから選んだものを渡す。</summary>
+    public void Bind(MainGameController owner, TaskInstance instance, Sprite bubbleSprite)
     {
         controller = owner;
         task = instance;
-        kindLabel = displayName;
 
-        if (kindIcon != null)
+        // 手前と背面は必ず同じ絵にする。ずれるとゲージの境目で別の絵が出てしまう。
+        colorFill.sprite = bubbleSprite;
+        grayBase.sprite = bubbleSprite;
+
+        if (workingDimmer != null)
         {
-            kindIcon.sprite = icon;
-            kindIcon.enabled = icon != null;
+            workingDimmer.enabled = false;
         }
 
         PlayAppear();
         Refresh();
     }
 
-    /// <summary>出現時にふくらませる。位置は動かさない。</summary>
-    /// <remarks>
-    /// 吹き出しの位置は <c>TaskSpawnArea</c> の Layout Group が driven property として支配しているため、
-    /// 座標のトゥイーンは効かない。拡大縮小は Layout Group の管轄外なので、こちらで演出する。
-    /// </remarks>
+    /// <summary>出現時にふくらませる。</summary>
     private void PlayAppear()
     {
         if (appearDurationSec <= 0f || Mathf.Approximately(appearFromScale, 1f))
@@ -112,55 +107,30 @@ public sealed class TaskBubbleView : MonoBehaviour, IPointerClickHandler
             return;
         }
 
-        if (kindText != null)
-        {
-            kindText.text = (string.IsNullOrWhiteSpace(kindLabel) ? task.Kind.ToString() : kindLabel) + "  Lv." + task.Level;
-        }
-
-        if (stateText != null)
-        {
-            stateText.text = task.State switch
-            {
-                TaskState.Available => availableLabel,
-                TaskState.PlayerPlaying => playerPlayingLabel,
-                TaskState.AiProcessing => aiProcessingLabel,
-                _ => resolvedLabel
-            };
-        }
-
-        if (timeText != null)
-        {
-            timeText.text = task.RemainingLifetimeSec.ToString("0.0");
-        }
-
         var lifetimeRatio = task.InitialLifetimeSec <= 0f
             ? 0f
             : Mathf.Clamp01(task.RemainingLifetimeSec / task.InitialLifetimeSec);
 
-        if (lifetimeGauge != null)
+        // 色が残っている量がそのまま残り時間になる。
+        colorFill.fillAmount = lifetimeRatio;
+
+        if (workingDimmer != null)
         {
-            lifetimeGauge.fillAmount = lifetimeRatio;
+            var working = task.State == TaskState.AiProcessing;
+            workingDimmer.enabled = working;
+            if (working)
+            {
+                var color = workingDimmer.color;
+                color.a = workingDimAlpha;
+                workingDimmer.color = color;
+            }
         }
 
         UpdateWarning(lifetimeRatio);
-
-        if (background != null)
-        {
-            background.color = task.State switch
-            {
-                TaskState.Available => availableColor,
-                TaskState.PlayerPlaying => playerPlayingColor,
-                TaskState.AiProcessing => aiProcessingColor,
-                _ => resolvedColor
-            };
-        }
     }
 
     /// <summary>残り寿命が少なくなったら脈動させ、戻ったら止める。状態が変わったときだけ触る。</summary>
-    /// <remarks>
-    /// <see cref="Refresh"/> は毎フレーム呼ばれるため、ここで毎回トゥイーンを作り直さないこと。
-    /// また <see cref="background"/> の色は毎フレーム状態色で上書きされるので、警告に色は使えない。
-    /// </remarks>
+    /// <remarks><see cref="Refresh"/> は毎フレーム呼ばれるため、ここで毎回トゥイーンを作り直さないこと。</remarks>
     private void UpdateWarning(float lifetimeRatio)
     {
         if (exiting)
@@ -195,10 +165,6 @@ public sealed class TaskBubbleView : MonoBehaviour, IPointerClickHandler
     }
 
     /// <summary>消滅アニメーションを再生し、終わったら自分を破棄する。</summary>
-    /// <remarks>
-    /// 破棄が <see cref="disappearDurationSec"/> だけ遅れるため、その間は Layout Group の枠を占有し、
-    /// 残りの吹き出しは詰め直されない。詰め直しを早めたい場合はこの秒数を短くする。
-    /// </remarks>
     public void PlayExitAndDestroy()
     {
         if (exiting)

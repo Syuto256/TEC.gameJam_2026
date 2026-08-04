@@ -315,7 +315,7 @@ public sealed class MainGameController : MonoBehaviour
         var bubble = Instantiate(taskBubblePrefab, parent, false);
         bubble.name = "TaskBubble_" + task.Id;
         miniGameCatalog.TryGetEntry(task.Kind, out var entry);
-        bubble.Bind(this, task, entry?.displayName, entry?.icon);
+        bubble.Bind(this, task, entry?.GetBubbleSprite(task.Level));
         taskViews.Add(task.Id, bubble);
         AudioManager.PlaySfx(AudioCue.TaskSpawned);
     }

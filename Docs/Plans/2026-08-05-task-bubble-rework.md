@@ -110,14 +110,39 @@ Prefab を触るときに合わせて直すこと。
 
 ## 未着手
 
-### B-7: `TaskBubbleView` と `TaskBubble.prefab` の作り替え
+### B-7: `TaskBubbleView` と `TaskBubble.prefab` の作り替え（絵とゲージは完了・2026-08-05）
 
-**まとめて 1 回で行う。** 絵 1 枚化・ゲージ 2 枚重ね・状態表示の行き先が絡むため、
-途中状態を作ると壊れる。
+Prefab の構成はこうなった。**ルートの Image が背面（無彩色）を兼ね、クリック判定も受ける。**
+子は親より手前に描かれるため、背面をルートに置くと重なり順が自然に決まる。
 
-- 手前 = 色つき（`Filled` / `Vertical` / `Origin = Bottom`）、背面 = 同じ絵に `UIGrayscale.mat`
-- `kindText` / `kindIcon` / `timeText` を廃止
-- 固定スロット化（B-5）
+```
+TaskBubble   RectTransform 290 × 358
+             Image  … 背面。UIGrayscale.mat / Raycast Target ON
+             TaskBubbleView
+├─ ColorFill Image … 手前の色つき。Filled / Vertical / Origin Bottom / Raycast OFF
+└─ Dimmer    Image … AI 作業中の暗幕。黒 α0.55・既定で無効 / Raycast OFF
+```
+
+`kindText` / `stateText` / `kindIcon` / `timeText` と状態ごとの色は廃止した。文字は一切書かない。
+
+**大きさを 300 × 318 から 290 × 358 に変更した。** 絵が 18 枚とも 352 × 435（縦横比 0.809）で、
+元の枠（0.943）のままでは横に潰れるため。この寸法は次の 2 つを同時に満たす最大級の値である。
+
+- 縦: 358 × 2 + 間隔 14 = 730 ≤ 745（1 列に 2 個）
+- 横: 290 ≤ 337（タブレット側の空き帯。PC 側は 345 でより余裕がある）
+
+**あわせて 4 つの `TaskSpawnArea` の親（`LeftTaskArea` / `RightTaskArea`）の幅を 261 → 301 に広げた**
+（`m_SizeDelta.x` を -200 → -160）。従来は 261 の列に 300 の吹き出しが入っており、左右に
+はみ出していた。広げた後も PC の画面には 17〜23px の余裕がある。
+
+**AI 作業中は暗幕だけ先に入れてある。** B-8 の 1 段目にあたるので捨て仕事にはならない。
+文字と円ゲージは B-8 で `Dimmer` の上に載せる。
+
+### B-7b: 固定スロット化（未着手）
+
+B-5 の判断どおり、`VerticalLayoutGroup` をやめて固定スロットにする。抽選はしない。
+4 箇所（PC / タブレット × 左 / 右）の出現先と、`MainGameController` の
+`ResolveSpawnArea` / `DeviceWorkspaceView.PickSpawnArea` が対象。
 
 ### B-8: AI 処理中の演出
 
