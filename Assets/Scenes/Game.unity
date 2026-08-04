@@ -3237,6 +3237,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ffce83a49d908e54ea4f4ace300f0a28, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Overwork.Core::DeviceScreenController
+  slideDurationSec: 0.28
+  slideEase: 15
+  slidePeakScale: 1.03
 --- !u!114 &1481473241
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3393,6 +3396,10 @@ PrefabInstance:
     - target: {fileID: 7598783473788000309, guid: 8e44b03bfcc3c8d41a22060ce592f4f9, type: 3}
       propertyPath: m_Name
       value: PcOnly
+      objectReference: {fileID: 0}
+    - target: {fileID: 7598783473788000309, guid: 8e44b03bfcc3c8d41a22060ce592f4f9, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

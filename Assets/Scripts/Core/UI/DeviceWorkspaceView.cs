@@ -33,9 +33,14 @@ public sealed class DeviceWorkspaceView : MonoBehaviour
     private RectTransform rectTransform;
     private Vector2 shakeOrigin;
     private Tween shakeTween;
+    private bool sliding;
     private bool initialized;
 
     public TaskSurface Surface => surface;
+
+    /// <summary>この面の横幅。切替演出でどれだけ動かせばよいかを決めるのに使う。</summary>
+    /// <remarks>レイアウトが確定する前は 0 を返すことがあるため、演出を始める直前に読むこと。</remarks>
+    public float Width => rectTransform != null ? rectTransform.rect.width : 0f;
 
     /// <summary>参照を検証する。</summary>
     public bool Initialize()
@@ -84,6 +89,13 @@ public sealed class DeviceWorkspaceView : MonoBehaviour
             return;
         }
 
+        // 切替演出中は座標を演出側が握っている。ここで揺らすと、終了時に基準位置へ戻す処理が働き、
+        // 画面外を移動中の面が中央へ飛んでしまう。
+        if (sliding)
+        {
+            return;
+        }
+
         if (canvasGroup == null || canvasGroup.alpha <= 0f)
         {
             return;
@@ -94,6 +106,38 @@ public sealed class DeviceWorkspaceView : MonoBehaviour
         shakeTween = rectTransform
             .DOShakeAnchorPos(damageShakeDurationSec, damageShakeStrength, damageShakeVibrato)
             .OnKill(() => rectTransform.anchoredPosition = shakeOrigin);
+    }
+
+    /// <summary>切替演出のために、この面を基準位置から横へずらし、拡大する。</summary>
+    /// <remarks>
+    /// 動かすのは演出の 1 コマぶんだけで、時間の管理は <see cref="DeviceScreenController"/> が持つ。
+    /// 呼ばれているあいだは移動中とみなし、被弾の揺れを見送る。
+    /// <paramref name="scale"/> に 1 未満を渡さないこと。面は画面と同じ大きさなので、
+    /// 縮めると画面の端と面の継ぎ目に隙間が空き、背後が覗く。
+    /// </remarks>
+    public void ApplySlide(float offsetX, float scale)
+    {
+        if (rectTransform == null)
+        {
+            return;
+        }
+
+        sliding = true;
+        rectTransform.anchoredPosition = shakeOrigin + new Vector2(offsetX, 0f);
+        rectTransform.localScale = new Vector3(scale, scale, 1f);
+    }
+
+    /// <summary>切替演出を終え、基準位置と等倍に戻す。</summary>
+    public void EndSlide()
+    {
+        sliding = false;
+        if (rectTransform == null)
+        {
+            return;
+        }
+
+        rectTransform.anchoredPosition = shakeOrigin;
+        rectTransform.localScale = Vector3.one;
     }
 
     private void OnDestroy()
