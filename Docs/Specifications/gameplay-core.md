@@ -88,7 +88,23 @@ HP が 0 以下になったフレームでは、全体時間の残りにかか�
 | 問題レベル | 1 | 1–2 | 2–3 | 3–4 | 1–4 |
 | 初期 HP | 100 | 100 | 100 | 100 | 100 |
 
-Easy の問題レベルは、ゲーム開始時を Lv.1、60 秒を Lv.2、120 秒を Lv.3、150 秒を Lv.4 とする。時刻表は `GameTuningSettings.DifficultyProfile.taskLevelMilestones` に置く。タスク出現間隔は `spawnIntervalMilestones` に任意の時刻と秒数の組として設定でき、空の場合は `spawnIntervalSec` を使う。ほかの難易度の生成間隔、タスク寿命、同時表示上限、レベル上昇時刻、レベル 4 の基礎点はプレイテストで確定する。
+### レベルの上げ方（2026-08-04 実装）
+
+上表の問題レベルは `GameTuningSettings.DifficultyProfile.taskLevelMilestones` に時刻表として置く。実際の値は次のとおりである。
+
+| 難易度 | レベルの推移 |
+| --- | --- |
+| Easy | 1 固定（時刻表を置かず、`startingTaskLevel` と `maxTaskLevel` をどちらも 1 にする） |
+| Normal | 0 秒で Lv.1、90 秒で Lv.2 |
+| Hard | 0 秒で Lv.2、90 秒で Lv.3 |
+| Very Hard | 0 秒で Lv.3、90 秒で Lv.4 |
+| Endless | 0 秒で Lv.1、60 秒で Lv.2、120 秒で Lv.3、150 秒で Lv.4 |
+
+**難易度を増やす場合は、難易度選択にボタンを足す前に必ずこのリストへ行を足す。** 行が無い難易度は既定値で動き、既定値は `maxTaskLevel = 1` のため、**その難易度だけ最後までレベル 1 のまま＝いちばん簡単になる。** 警告もエラーも出ない。`DifficultyProfileAssetTests` がこの取りこぼしを検出する。
+
+タスク出現間隔は `spawnIntervalMilestones` に任意の時刻と秒数の組として設定でき、空の場合は `spawnIntervalSec` を使う。生成間隔・タスク寿命・同時表示上限は現在 5 難易度とも同じ値であり、差は問題レベルだけで付けている。これとレベル 4 の基礎点はプレイテストで確定する。
+
+`isEndless` が有効な難易度では `durationSec` は使われない。時間切れによるクリアが起きないためである。
 
 ## 8. 入力・UI 共通要件
 
