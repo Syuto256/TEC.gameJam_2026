@@ -110,7 +110,7 @@ spellingText.text = "<color=#" + acceptedHex + ">" + evaluator.AcceptedInput + "
 - [ ] 打つほど、打てた分の色が左から増えていくのが 1 行の中で分かる
 - [ ] 打ち間違えた直後、これから打つ部分の色が変わる
 - [ ] 英単語のお題（読みが空）で、読みの行が出ない
-- [ ] `unity command run_tests --mode EditMode` が全件通る（**67 件**）
+- [ ] `unity command run_tests --mode EditMode` が全件通る（**73 件**）
 - [ ] コンソールにエラー・例外が 0 件
 
 ## 目視で見てほしいところ

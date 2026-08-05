@@ -145,7 +145,7 @@ fillRect.anchorMax = new Vector2(ratio, 1f);
 - [ ] `Assets/Sprites/MiniGameUI/`（旧パス）が消えている
 - [ ] 制限時間バーの**左右の端がはっきりした縦線**になっている
 - [ ] **バーが実際に減る。** 時間切れまで放置して 0 まで減りきることを確かめる
-- [ ] `unity command run_tests --mode EditMode` が全件通る（**67 件**）
+- [ ] `unity command run_tests --mode EditMode` が全件通る（**73 件**）
 - [ ] コンソールにエラー・例外が 0 件
 
 ## 目視で見てほしいところ（重要）

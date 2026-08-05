@@ -136,7 +136,7 @@
 - [ ] 残り回数が大きく出て、1 回ごとに減る。**0 になる前にクリアする**
 - [ ] `StatusBar/ProgressText` の `連打! n / m` が今までどおり出ている
 - [ ] スペースキーでも同じように進む
-- [ ] `unity command run_tests --mode EditMode` が全件通る（**67 件**）
+- [ ] `unity command run_tests --mode EditMode` が全件通る（**73 件**）
 - [ ] コンソールにエラー・例外が 0 件
 
 ## 目視で見てほしいところ
