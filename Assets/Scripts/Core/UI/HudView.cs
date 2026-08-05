@@ -7,7 +7,7 @@ using UnityEngine.UI;
 /// <summary>HUD へ渡す 1 フレーム分の表示値。</summary>
 public readonly struct HudSnapshot
 {
-    public HudSnapshot(int hp, int maxHp, int score, float remainingTimeSec, bool isEndless, GameDifficulty difficulty)
+    public HudSnapshot(int hp, int maxHp, int score, float remainingTimeSec, bool isEndless, GameDifficulty difficulty,int comboCount)
     {
         Hp = hp;
         MaxHp = maxHp;
@@ -15,6 +15,7 @@ public readonly struct HudSnapshot
         RemainingTimeSec = remainingTimeSec;
         IsEndless = isEndless;
         Difficulty = difficulty;
+        ComboCount = comboCount;
     }
 
     public int Hp { get; }
@@ -23,6 +24,7 @@ public readonly struct HudSnapshot
     public float RemainingTimeSec { get; }
     public bool IsEndless { get; }
     public GameDifficulty Difficulty { get; }
+    public int ComboCount { get; }
 }
 
 /// <summary>HP・残り時間・スコア・難易度の表示と、ポーズ要求だけを担当する。</summary>
@@ -44,6 +46,7 @@ public sealed class HudView : MonoBehaviour
              "未設定なら赤ゲージは出ず、従来どおりの見た目になる。")]
     [SerializeField] private Image hpBarDamageFill;
 
+    [SerializeField] private TextMeshProUGUI currentTaskNameText;
     [Header("【演出部品】")]
     [SerializeField] private TextMeshProUGUI centerScorePopupText;
     [SerializeField] private TextMeshProUGUI comboPopupText;
@@ -75,6 +78,46 @@ public sealed class HudView : MonoBehaviour
 
     [Tooltip("赤いバーが現在HPに追いつくまでの秒数。0 にすると赤ゲージは残らない。")]
     [Min(0f)] [SerializeField] private float hpDamageBarDurationSec = 0.4f;
+
+    [Header("【常時コンボ表示】")]
+    [Tooltip("画面右上に常時表示するコンボテキスト")]
+    [SerializeField] private TextMeshProUGUI persistentComboText;
+
+    [Tooltip("コンボが増えたときの拡大・弾み具合")]
+    [SerializeField] private Vector3 comboPunchScale = new Vector3(0.3f, 0.3f, 0f);
+
+    [Tooltip("弾む時間（秒）")]
+    [SerializeField] private float comboPunchDuration = 0.2f;
+
+
+    [Header("【タイマー警告演出】")]
+    [Tooltip("残り時間がこの秒数以下になったら点滅を開始する")]
+    [SerializeField] private float timeWarningThresholdSec = 30f;
+
+    [Tooltip("警告時のテキストカラー（通常色とこの色の間を点滅）")]
+    [SerializeField] private Color timeWarningColor = Color.red;
+
+    [Header("【被弾フラッシュ演出】")]
+    [Tooltip("画面全体を覆う赤色の Image")]
+    [SerializeField] private Image damageOverlay;
+
+    [Tooltip("フラッシュが消えるまでの秒数")]
+    [SerializeField] private float flashDurationSec = 0.3f;
+
+    [Tooltip("フラッシュの最大不透明度（0〜1）")]
+    [Range(0f, 1f)] [SerializeField] private float maxFlashAlpha = 0.5f;
+
+    private Tween damageFlashTween;
+    
+    [Tooltip("点滅の1往復にかかる秒数")]
+    [SerializeField] private float timeWarningBlinkDuration = 0.5f;
+
+    private Tween timeWarningTween;
+    private Color originalTimeTextColor = Color.white;
+    private bool isTimeWarningActive;
+
+    private int lastCombo = int.MinValue;
+    private Tween comboPunchTween;
 
     private Tween hpBarTween;
     private Tween hpDamageBarTween;
@@ -116,6 +159,16 @@ public sealed class HudView : MonoBehaviour
         if (comboPopupText != null)
         {
             comboPopupBaseColor = comboPopupText.color;
+        }
+
+        if (currentTaskNameText != null)
+        {
+            currentTaskNameText.gameObject.SetActive(false);
+        }
+
+        if (timeText != null)
+        {
+            originalTimeTextColor = timeText.color;
         }
 
         initialized = true;
@@ -169,12 +222,59 @@ public sealed class HudView : MonoBehaviour
             timeText.text = time;
         }
 
+        var isWarningTime = !snapshot.IsEndless && snapshot.RemainingTimeSec <= timeWarningThresholdSec && snapshot.RemainingTimeSec > 0f;
+        if (isWarningTime && !isTimeWarningActive)
+        {
+            // 30秒以下になったら点滅開始
+            isTimeWarningActive = true;
+            timeWarningTween?.Kill();
+            timeWarningTween = timeText
+                .DOColor(timeWarningColor, timeWarningBlinkDuration)
+                .SetLoops(-1, LoopType.Yoyo) // 往復無限ループ
+                .SetEase(Ease.InOutSine);
+        }
+        else if (!isWarningTime && isTimeWarningActive)
+        {
+            // 30秒より多くなった（または0秒になった）ら点滅停止
+            StopWarningBlink();
+        }
+
         if (difficultyText != null)
         {
             difficultyText.text = snapshot.Difficulty.ToString();
         }
+
+        if (snapshot.ComboCount != lastCombo)
+        {
+            var isFirstRender = lastCombo == int.MinValue;
+            var increased = !isFirstRender && snapshot.ComboCount > lastCombo;
+            lastCombo = snapshot.ComboCount;
+            if (persistentComboText != null)
+            {
+                // 1コンボ以上なら表示、0コンボなら非表示
+                if (snapshot.ComboCount > 0)
+                {
+                    persistentComboText.gameObject.SetActive(true);
+                    persistentComboText.text = $"{snapshot.ComboCount} COMBO";
+                    // コンボが増えた瞬間だけ拡大＆振動演出（DOPunchScale）
+                    if (increased)
+                    {
+                        comboPunchTween?.Kill(true);
+                        persistentComboText.transform.localScale = Vector3.one;
+                        comboPunchTween = persistentComboText.transform
+                            .DOPunchScale(comboPunchScale, comboPunchDuration, 10, 1f);
+                    }
+                }
+                else
+                {
+                    persistentComboText.gameObject.SetActive(false);
+                }
+            }
+        }
     }
 
+
+    
     /// <summary>減ったHPぶんを赤いまま残し、少し待ってから現在HPまで追いつかせる。</summary>
     /// <remarks>
     /// 赤いバーは常に現在HPのバー以上の値を保つ。減ったときだけ遅らせ、それ以外は即座に合わせるためである。
@@ -289,7 +389,17 @@ public sealed class HudView : MonoBehaviour
             comboPopupText.color = comboPopupBaseColor;
         }
     }
+    private void StopWarningBlink()
+    {
+        isTimeWarningActive = false;
+        timeWarningTween?.Kill();
+        timeWarningTween = null;
 
+        if (timeText != null)
+        {
+            timeText.color = originalTimeTextColor;
+        }
+    }
     private void OnDestroy()
     {
         scorePopupTween?.Kill();
@@ -298,6 +408,44 @@ public sealed class HudView : MonoBehaviour
         hpBarTween = null;
         hpDamageBarTween?.Kill();
         hpDamageBarTween = null;
+        comboPunchTween?.Kill();
+        comboPunchTween = null;
+        StopWarningBlink();
+        damageFlashTween?.Kill();
+    }
+
+    /// <summary>★追加: 現在プレイ中のタスク名を表示する</summary>
+    public void ShowCurrentTaskName(string taskName)
+    {
+        if (currentTaskNameText != null)
+        {
+            currentTaskNameText.text = taskName;
+            currentTaskNameText.gameObject.SetActive(true);
+        }
+    }
+
+    /// <summary>★追加: タスク名の表示を消す</summary>
+    public void HideCurrentTaskName()
+    {
+        if (currentTaskNameText != null)
+        {
+            currentTaskNameText.gameObject.SetActive(false);
+        }
+    }
+
+    /// <summary>被弾時に画面を一瞬赤くフラッシュさせる</summary>
+    public void PlayDamageFlash()
+    {
+        if (damageOverlay == null) return;
+
+        damageFlashTween?.Kill(true);
+
+        // 一瞬で指定のAlpha値まで上げてから、透明(0)へフェードアウトさせる
+        var color = damageOverlay.color;
+        color.a = maxFlashAlpha;
+        damageOverlay.color = color;
+
+        damageFlashTween = damageOverlay.DOFade(0f, flashDurationSec).SetEase(Ease.OutQuad);
     }
 
 }

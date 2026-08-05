@@ -299,6 +299,7 @@ GameObject:
   - component: {fileID: 6996166529012335227}
   - component: {fileID: 4986285999183174363}
   - component: {fileID: 8871909594781310471}
+  - component: {fileID: 6898628689511488146}
   m_Layer: 0
   m_Name: ProgressText
   m_TagString: Untagged
@@ -425,6 +426,24 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
+--- !u!114 &6898628689511488146
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5309850889164148114}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b89df2e4ddb20df418099f0ff0736981, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Overwork.Core::RapidMashTextEffect
+  targetTransform: {fileID: 6996166529012335227}
+  duration: 0.15
+  strength: 15
+  vibrato: 20
+  usePunchScale: 1
+  punchScaleAmount: {x: 0.2, y: 0.2, z: 0}
 --- !u!1 &6376002635238043940
 GameObject:
   m_ObjectHideFlags: 0
@@ -437,6 +456,7 @@ GameObject:
   - component: {fileID: 5871244997838050624}
   - component: {fileID: 6169074702994517031}
   - component: {fileID: 6307164032663298642}
+  - component: {fileID: 473435945241730666}
   m_Layer: 0
   m_Name: RapidClickMiniGame
   m_TagString: Untagged
@@ -491,6 +511,7 @@ MonoBehaviour:
   timeText: {fileID: 3284615270583090248}
   timeFormat: "\u6B8B\u308A\u6642\u9593: {0:F1} \u79D2"
   progressText: {fileID: 8871909594781310471}
+  textEffect: {fileID: 6898628689511488146}
   progressFormat: "\u9023\u6253! {0} / {1}"
   baseClicks: 8
   clicksPerLevel: 3
@@ -525,6 +546,24 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &473435945241730666
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6376002635238043940}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b89df2e4ddb20df418099f0ff0736981, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Overwork.Core::RapidMashTextEffect
+  targetTransform: {fileID: 6996166529012335227}
+  duration: 0.15
+  strength: 15
+  vibrato: 20
+  usePunchScale: 1
+  punchScaleAmount: {x: 0.2, y: 0.2, z: 0}
 --- !u!1 &6748089661784224975
 GameObject:
   m_ObjectHideFlags: 0
