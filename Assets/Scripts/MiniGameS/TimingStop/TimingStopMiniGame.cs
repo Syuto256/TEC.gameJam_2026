@@ -11,7 +11,7 @@ namespace Overwork.MiniGames.TimingStop
     /// マーカーとゾーンの位置はアンカーで指定するため、バーの幅を変えても判定はずれない。
     /// クリックを受けるにはルートに Raycast Target が有効な Graphic（Image など）が必要である。
     /// </remarks>
-    public sealed class TimingStopMiniGame : MiniGameBase, IPointerClickHandler
+    public sealed class TimingStopMiniGame : MiniGameBase, IPointerDownHandler
     {
         [Header("【表示先】")]
         [Tooltip("当たりゾーン。バーの子に置く。位置と幅はコードが毎回決める。")]
@@ -91,7 +91,7 @@ namespace Overwork.MiniGames.TimingStop
             RefreshStatus(prompt);
         }
 
-        public void OnPointerClick(PointerEventData eventData)
+        public void OnPointerDown(PointerEventData eventData)
         {
             TryStop();
         }
