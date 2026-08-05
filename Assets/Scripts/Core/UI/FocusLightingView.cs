@@ -89,6 +89,13 @@ public sealed class FocusLightingView : MonoBehaviour
         glowTween?.Kill();
         glowTween = null;
 
+        // 強さが 0 なら描画に入れない。入れても、透明な板を毎フレーム描くだけになる。
+        if (glowAlpha <= 0f)
+        {
+            Clear(glow);
+            return;
+        }
+
         if (!focused)
         {
             Clear(glow);
