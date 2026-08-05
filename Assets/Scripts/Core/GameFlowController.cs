@@ -41,8 +41,19 @@ public sealed class GameFlowController : MonoBehaviour
         DontDestroyOnLoad(gameObject);
     }
 
+    /// <summary>タイトルから難易度選択へ。PC の蓋を開ける演出をはさむ。</summary>
+    /// <remarks>
+    /// **ここだけ暗転を使わない。** 蓋が開いて画面が起動するまでを続けて見せたいので、
+    /// 途中で真っ暗にすると演出が切れる。演出が用意できない場合は暗転に戻す。
+    /// </remarks>
     public void OpenDifficultySelect()
     {
+        var lid = PcLidView.EnsureInstance();
+        if (lid != null && lid.TryOpen(() => SceneManager.LoadScene(DifficultySelectSceneName)))
+        {
+            return;
+        }
+
         Transition(DifficultySelectSceneName);
     }
 
@@ -72,10 +83,24 @@ public sealed class GameFlowController : MonoBehaviour
         Transition(GameSceneName);
     }
 
+    /// <summary>ゲームを終えて結果画面へ。PC の蓋を閉じる演出をはさむ。</summary>
+    /// <remarks>
+    /// クリアでもゲームオーバーでも同じ演出を使う。**どちらも「仕事が終わった」ことに変わりはなく、
+    /// 良し悪しは結果画面の中身で伝える。** 蓋が閉じ切ってから次のシーンを読み込むため、
+    /// 結果画面の背景は閉じた PC になっている。
+    /// </remarks>
     public void PresentResult(GameSessionResult result)
     {
         LastSessionResult = result;
-        Transition(result.EndState == GameEndState.Clear ? ClearSceneName : GameOverSceneName);
+        var sceneName = result.EndState == GameEndState.Clear ? ClearSceneName : GameOverSceneName;
+
+        var lid = PcLidView.EnsureInstance();
+        if (lid != null && lid.TryClose(() => SceneManager.LoadScene(sceneName)))
+        {
+            return;
+        }
+
+        Transition(sceneName);
     }
 
     /// <summary>暗転をはさんでシーンを切り替える。暗幕が用意できない場合はそのまま切り替える。</summary>

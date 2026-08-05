@@ -31,6 +31,34 @@ public sealed class TypingInputEvaluatorTests
     }
 
     [Test]
+    public void TypableCharacters_CoverEverythingASpellingCanContain()
+    {
+        // 綴りに出てくるのは英字だけではない。「ー」からは -、「ん」からは n'、英熟語には空白が要る。
+        Assert.That(TypingInputEvaluator.IsTypableCharacter('a'), Is.True);
+        Assert.That(TypingInputEvaluator.IsTypableCharacter('-'), Is.True);
+        Assert.That(TypingInputEvaluator.IsTypableCharacter('\''), Is.True);
+        Assert.That(TypingInputEvaluator.IsTypableCharacter(' '), Is.True);
+
+        // 日本語入力が有効なまま打つと飛んでくる文字。ミスにせず捨てるため、ここで落とす。
+        Assert.That(TypingInputEvaluator.IsTypableCharacter('あ'), Is.False);
+        Assert.That(TypingInputEvaluator.IsTypableCharacter('新'), Is.False);
+        Assert.That(TypingInputEvaluator.IsTypableCharacter('\b'), Is.False);
+    }
+
+    [Test]
+    public void NonLetterCharacterInACandidateCanBeTyped()
+    {
+        var evaluator = new TypingInputEvaluator(new List<string> { "ko-hi-" });
+
+        foreach (var input in "ko-hi-")
+        {
+            Assert.That(evaluator.TryInput(input), Is.True, "「" + input + "」で止まった。");
+        }
+
+        Assert.That(evaluator.IsCompleted, Is.True);
+    }
+
+    [Test]
     public void DefaultDatabase_ProvidesEightQuestionsForEachLevel()
     {
         var database = ScriptableObject.CreateInstance<TypingQuestionDatabase>();

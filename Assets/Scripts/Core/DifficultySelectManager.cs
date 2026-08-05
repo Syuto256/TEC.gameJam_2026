@@ -48,14 +48,21 @@ public sealed class DifficultySelectManager : MonoBehaviour
         }
     }
 
+    /// <summary>保存されたハイスコアを読み込んで UI に反映する。</summary>
+    /// <remarks>
+    /// **数値だけを書く。** 「記録:」の見出しはカードの絵に描かれているため、
+    /// ここで "BEST:" のような文字を足すと見出しが二重になる。
+    /// </remarks>
     private void UpdateHighScoreDisplay(Choice choice)
     {
         if (choice.highScoreText == null) return;
 
-        var key = "HighScore_" + choice.difficulty.ToString();
-        int highScore = PlayerPrefs.GetInt(key, 0);
+        // 保存先のキーは HighScoreManager が持つ。ここで組み立てると、
+        // 片方だけ変えたときに黙って 0 が出るようになる。
+        var highScore = HighScoreManager.GetHighScore(choice.difficulty);
 
-        choice.highScoreText.text = $"BEST: {highScore:N0}";
+        // 例: "1,234" / 未プレイ時は "0"
+        choice.highScoreText.text = highScore.ToString("N0");
     }
 
     private void Select(GameDifficulty difficulty)

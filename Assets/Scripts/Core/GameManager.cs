@@ -17,6 +17,10 @@ public sealed class GameManager : MonoBehaviour
     [SerializeField] private MiniGameHostView miniGameHostView;
     [SerializeField] private PauseMenuView pauseMenuView;
 
+    [Tooltip("ミニゲーム中の集中演出（背後を落とし、窓のまわりを光らせる）。\n" +
+             "未設定でも進行には影響しない（明るさが変わらないだけ）。")]
+    [SerializeField] private FocusLightingView focusLightingView;
+
     [Header("【デバイス面】")]
     [Tooltip("デバイス面を並べる。Surface が重複しないこと。3 つ目の面を足す場合もここへ追加する。")]
     [SerializeField] private DeviceWorkspaceView[] workspaces = Array.Empty<DeviceWorkspaceView>();
@@ -51,6 +55,11 @@ public sealed class GameManager : MonoBehaviour
             viewsReady = workspace.Initialize() & viewsReady;
         }
 
+        if (focusLightingView != null)
+        {
+            viewsReady = focusLightingView.Initialize() & viewsReady;
+        }
+
         if (!viewsReady)
         {
             return;
@@ -63,13 +72,35 @@ public sealed class GameManager : MonoBehaviour
         pauseMenuView.ResumeRequested += mainGameController.Resume;
         pauseMenuView.BackToDifficultyRequested += mainGameController.ReturnToDifficultySelect;
         mainGameController.PlayerMiniGameActiveChanged += OnPlayerMiniGameActiveChanged;
+        mainGameController.SessionFinished += OnSessionFinished;
         miniGameHostView.Hide();
+    }
+
+    /// <summary>ゲームを終えたら、PC 面へ戻してから結果画面へ移る。</summary>
+    /// <remarks>
+    /// **蓋を閉じる絵はノート PC のものである。** 液タブを見たまま終わると、
+    /// 見ていない機械が閉じることになるため、先に既存の切替演出で PC 面へ戻す。
+    /// すでに PC 面なら待たずに進むので、余計な間は入らない。
+    /// <para>
+    /// 戻している最中にタブを押されると行き先が変わってしまうため、先に切替を止める。
+    /// </para>
+    /// </remarks>
+    private void OnSessionFinished(GameSessionResult result)
+    {
+        deviceScreenController.SetSwitchEnabled(false);
+        deviceScreenController.ReturnToPc(
+            () => GameFlowController.EnsureInstance().PresentResult(result));
     }
 
     /// <summary>ミニゲーム中はデバイス切替を受け付けない（暫定仕様）。</summary>
     private void OnPlayerMiniGameActiveChanged(bool active)
     {
         deviceScreenController.SetSwitchEnabled(!active);
+
+        if (focusLightingView != null)
+        {
+            focusLightingView.SetFocused(active);
+        }
 
             // 追加：ミニゲーム中は全 Workspace 内のタスク操作を無効化する
         foreach (var workspace in workspaces)
@@ -116,6 +147,7 @@ public sealed class GameManager : MonoBehaviour
         if (mainGameController != null)
         {
             mainGameController.PlayerMiniGameActiveChanged -= OnPlayerMiniGameActiveChanged;
+            mainGameController.SessionFinished -= OnSessionFinished;
         }
     }
 }

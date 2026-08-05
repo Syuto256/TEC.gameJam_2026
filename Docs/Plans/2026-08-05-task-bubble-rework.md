@@ -234,7 +234,11 @@ MainCanvas/Shared/TaskBacklog   RectTransform + TaskBacklogView
 
 ## この計画の外にある既知の残課題
 
-- **QTE と TimingStop はメインゲームに出てこない。** `TaskSpawnTable.asset` が PC に
-  Typing/DragDrop/RapidClick、Pad に Tracing しか登録していない。**新しい絵の 6 種のうち 2 種が
-  誰の目にも触れない状態。** データ 1 行で直るが、どちらの面に出すかは仕様待ち
+- ~~**QTE と TimingStop はメインゲームに出てこない。**~~ 解決（2026-08-05）。
+  `TaskSpawnTable.asset` を **PC = Typing / DragDrop / RapidClick / Qte、Pad = Tracing / TimingStop**
+  にした。振り分けは入力方法で決めている。**QTE はキーボード専用**（`Keyboard.current` しか見ない）で
+  タブレットには鍵盤が無く、**TimingStop はクリックで成立する**（`IPointerClickHandler`、
+  スペースキーは任意）ため触れる画面に馴染む。結果として 4 対 2 になり、
+  両方 PC へ寄せた場合の 5 対 1 よりタブレット側が痩せない。
+  これで**吹き出しの絵 6 種がすべて画面に出る**ようになった
 - 難易度ごとの出現間隔・寿命が 5 難易度で同一

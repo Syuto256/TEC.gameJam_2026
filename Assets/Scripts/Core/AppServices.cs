@@ -12,6 +12,7 @@ public static class AppServices
         GameFlowController.EnsureInstance();
         AudioManager.EnsureInstance();
         FadeOverlayView.EnsureInstance();
+        PcLidView.EnsureInstance();
     }
 
     /// <summary>決定音を鳴らしてから遷移する、画面共通のボタン動作。</summary>

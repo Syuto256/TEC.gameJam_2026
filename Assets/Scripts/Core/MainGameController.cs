@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using DG.Tweening;
 using UnityEngine;
@@ -56,6 +57,7 @@ public sealed class MainGameController : MonoBehaviour
     private DeviceWorkspaceView[] workspaces;
     private MiniGameHostView miniGameHost;
     private PauseMenuView pauseMenu;
+    private MiniGameBase activeMiniGame;
     private int activePlayerTaskId = -1;
     private float spawnElapsedSec;
     private bool hpLowNotified;
@@ -310,6 +312,10 @@ public sealed class MainGameController : MonoBehaviour
             return false;
         }
 
+        // 生成物の破棄は TaskResolved -> CloseMiniGame() が担当する。
+        // 決着表示の秒数をそこで読むため、実体を控えておく。
+        activeMiniGame = miniGame;
+
         // ★ 修正: チュートリアル中（overrideTaskLifetimeSec > 0）は「成功」のみ受け付ける
         miniGame.OnCompleted += (success, reason) =>
         {
@@ -437,7 +443,8 @@ public sealed class MainGameController : MonoBehaviour
         rushElapsedSec = 0f;
         var minSec = Mathf.Min(minRushIntervalSec, maxRushIntervalSec);
         var maxSec = Mathf.Max(minRushIntervalSec, maxRushIntervalSec);
-        nextRushIntervalSec = Random.Range(minSec, maxSec);
+        // using System; を足したため Random だけでは System.Random と紛れる。
+        nextRushIntervalSec = UnityEngine.Random.Range(minSec, maxSec);
     }
 
     /// <summary>タスクが画面に出るときに吹き出しを作る。発生直後とは限らない（待機列からの繰り上げを含む）。</summary>
@@ -638,10 +645,11 @@ public sealed class MainGameController : MonoBehaviour
             AudioManager.PlaySfx(AudioCue.MiniGameFailure);
         }
 
+        var playerHoldSec = 0f;
         if (activePlayerTaskId == result.Task.Id)
         {
-            SetActivePlayerTask(-1);
-            miniGameHost.Hide();
+            playerHoldSec = activeMiniGame != null ? Mathf.Max(0f, activeMiniGame.ResultHoldSec) : 0f;
+            CloseMiniGame(playerHoldSec);
         }
 
         if (taskViews.TryGetValue(result.Task.Id, out var view))
@@ -655,8 +663,35 @@ public sealed class MainGameController : MonoBehaviour
             // AI の決着では吹き出しの上に結果が出る。同時に粒を飛ばすと読み取りが喧嘩するため、
             // 結果を見せ終わってから出す。待ち時間は吹き出し側が持っている値を使う。
             var holdSec = view.PlayExitAndDestroy(result.Resolution);
-            PlayResultEffect(effectPosition, result.Resolution, addedScore, holdSec);
+
+            // 自力の決着では窓の中に結果が出る。粒はその上へ重ねず、窓が閉じてから飛ばす。
+            PlayResultEffect(effectPosition, result.Resolution, addedScore, holdSec + playerHoldSec);
         }
+    }
+
+    /// <summary>ミニゲームの窓を閉じる。決着表示があるときはその秒数だけ待つ。</summary>
+    /// <remarks>
+    /// **担当中の印を落とすのも一緒に遅らせる。** 先に落とすと、結果を出している最中に
+    /// 集中演出の暗幕が戻り、タスク吹き出しもクリックできるようになってしまう
+    /// （<see cref="GameManager"/> が <see cref="PlayerMiniGameActiveChanged"/> で
+    /// 面の操作可否を切り替えているため）。待っているあいだ次のミニゲームは始められない。
+    /// </remarks>
+    private void CloseMiniGame(float delaySec)
+    {
+        activeMiniGame = null;
+
+        if (delaySec <= 0f)
+        {
+            SetActivePlayerTask(-1);
+            miniGameHost.Hide();
+            return;
+        }
+
+        DOVirtual.DelayedCall(delaySec, () =>
+        {
+            SetActivePlayerTask(-1);
+            miniGameHost.Hide();
+        }, false).SetLink(gameObject);
     }
 
     /// <summary>HP が減る決着かどうか。</summary>
@@ -754,11 +789,28 @@ public sealed class MainGameController : MonoBehaviour
         taskBacklogView.Render(taskManager.QueuedCount);
     }
 
+    /// <summary>セッションが終わり、結果画面へ移る直前。</summary>
+    /// <remarks>
+    /// **終了演出を差しはさむ余地をここに作っている。** 購読者がいればそちらに任せ、
+    /// いなければこれまでどおり自分で結果画面へ移る。
+    /// この Controller はどの機械を映しているかを知らないため、
+    /// 「PC 面へ戻してから蓋を閉じる」といった判断は購読側（<c>GameManager</c>）が持つ。
+    /// </remarks>
+    public event Action<GameSessionResult> SessionFinished;
+
     private void FinishSession()
     {
         ending = true;
         Time.timeScale = 1f;
-        GameFlowController.EnsureInstance().PresentResult(session.CreateResult());
+
+        var result = session.CreateResult();
+        if (SessionFinished != null)
+        {
+            SessionFinished(result);
+            return;
+        }
+
+        GameFlowController.EnsureInstance().PresentResult(result);
     }
 
     private void SetPaused(bool value)
