@@ -3985,6 +3985,8 @@ MonoBehaviour:
   taskSpawnTable: {fileID: 11400000, guid: 22dff04e80ea0764ea8788c3c9a5e75d, type: 2}
   resultEffectLayer: {fileID: 1217896928}
   taskBacklogView: {fileID: 766733150}
+  enableAutoSpawn: 1
+  overrideTaskLifetimeSec: 0
   enableTaskRush: 1
   minRushIntervalSec: 40
   maxRushIntervalSec: 55
