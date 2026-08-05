@@ -268,15 +268,31 @@ public sealed class MainGameController : MonoBehaviour
         }
     }
 
+    /// <summary>タスクを自分で片付ける。ミニゲームの窓を開く。</summary>
+    /// <remarks>
+    /// **すでに 1 つ抱えているあいだは受け付けない。**
+    /// <see cref="MiniGameHostView.Spawn"/> は窓の中身を捨てて入れ替えるため、
+    /// 2 つ目を開くと 1 つ目が黙って消える。決着の購読だけが残り、
+    /// 消えたはずのミニゲームがタスクを片付けてしまう。
+    /// <para>
+    /// 決着を見せているあいだも <c>activePlayerTaskId</c> は落ちない
+    /// （<see cref="CloseMiniGame"/> を参照）。そのため結果表示の途中で
+    /// 次のミニゲームが始まることもない。
+    /// </para>
+    /// </remarks>
     public bool TryAssignPlayer(int taskId)
     {
-        // ★追加: AI右クリック誘導中（ForceAiOnlyMode == true）は左クリックでのミニゲーム開始を禁止する
+        // AI へ右クリックで誘導している最中は、左クリックで始めさせない。
         if (ForceAiOnlyMode)
         {
             return false;
         }
 
-        
+        if (activePlayerTaskId >= 0)
+        {
+            return false;
+        }
+
         if (!initialized || ending || paused || !taskManager.TryGetTask(taskId, out var task) || task.State != TaskState.Available)
         {
             return false;
@@ -667,9 +683,9 @@ public sealed class MainGameController : MonoBehaviour
     /// <summary>ミニゲームの窓を閉じる。決着表示があるときはその秒数だけ待つ。</summary>
     /// <remarks>
     /// **担当中の印を落とすのも一緒に遅らせる。** 先に落とすと、結果を出している最中に
-    /// 集中演出の暗幕が戻り、タスク吹き出しもクリックできるようになってしまう
-    /// （<see cref="GameManager"/> が <see cref="PlayerMiniGameActiveChanged"/> で
-    /// 面の操作可否を切り替えているため）。待っているあいだ次のミニゲームは始められない。
+    /// 次のミニゲームを始められてしまい、まだ読んでいない結果ごと窓が差し替わる
+    /// （<see cref="TryAssignPlayer"/> はこの印を見て弾いている）。
+    /// デバイス切替が戻るのも同じ理由で、決着を見せ終わってからにする。
     /// </remarks>
     private void CloseMiniGame(float delaySec)
     {

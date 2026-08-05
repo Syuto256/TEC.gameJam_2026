@@ -3483,7 +3483,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Overwork.Core::FocusLightingView
   dimmer: {fileID: 1387010155}
   glow: {fileID: 662427469}
-  dimAlpha: 0.5
+  dimAlpha: 0
   glowAlpha: 0.4
   fadeInSec: 0.22
   fadeOutSec: 0.14

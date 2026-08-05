@@ -92,7 +92,20 @@ public sealed class GameManager : MonoBehaviour
             () => GameFlowController.EnsureInstance().PresentResult(result));
     }
 
-    /// <summary>ミニゲーム中はデバイス切替を受け付けない（暫定仕様）。</summary>
+    /// <summary>ミニゲーム中はデバイス切替を受け付けない。</summary>
+    /// <remarks>
+    /// **タスクの操作は止めない。** ミニゲームを解いている最中でも、
+    /// 残りのタスクを右クリックで AI に任せられるようにするためである。
+    /// <para>
+    /// 以前はここで全ての面の操作を無効にしていた。AI に任せる操作まで一緒に
+    /// 塞がっていたので外した。左クリックで 2 つ目のミニゲームが開くのは
+    /// <see cref="MainGameController.TryAssignPlayer"/> 側で弾いている。
+    /// </para>
+    /// <para>
+    /// デバイス切替を止めるのは残す。ミニゲームは面をまたがないため、
+    /// 解いている最中に別の面へ移れても得るものが無い。
+    /// </para>
+    /// </remarks>
     private void OnPlayerMiniGameActiveChanged(bool active)
     {
         deviceScreenController.SetSwitchEnabled(!active);
@@ -100,15 +113,6 @@ public sealed class GameManager : MonoBehaviour
         if (focusLightingView != null)
         {
             focusLightingView.SetFocused(active);
-        }
-
-            // 追加：ミニゲーム中は全 Workspace 内のタスク操作を無効化する
-        foreach (var workspace in workspaces)
-        {
-            if (workspace != null)
-            {
-                workspace.SetInteractionEnabled(!active);
-            }
         }
     }
 
