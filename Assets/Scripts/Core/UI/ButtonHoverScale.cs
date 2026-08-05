@@ -45,22 +45,12 @@ public class ButtonHoverScale : MonoBehaviour, IPointerEnterHandler, IPointerExi
 
     public void OnPointerDown(PointerEventData eventData)
     {
-        if (!IsInteractable())
-        {
-            return;
-        }
-
         isPointerDown = true;
         UpdateScaleAnimation();
     }
 
     public void OnPointerUp(PointerEventData eventData)
     {
-        if (!IsInteractable())
-        {
-            return;
-        }
-
         isPointerDown = false;
         UpdateScaleAnimation();
     }
@@ -70,21 +60,27 @@ public class ButtonHoverScale : MonoBehaviour, IPointerEnterHandler, IPointerExi
         return button == null || button.interactable;
     }
 
+    /// <summary>今のカーソルの状態から目標の大きさを決めて動かす。</summary>
+    /// <remarks>
+    /// 押せないボタンは「元の大きさが目標」として扱い、ここで打ち切らない。
+    /// 打ち切ると、拡大している最中に押せなくなったボタンが戻れなくなる。
+    /// デバイスのタブは選択された時点で押せなくなる（<see cref="DeviceTabsView"/> を参照）ため、
+    /// 切り替えたあとカーソルを外しても拡大したまま残っていた。
+    /// </remarks>
     private void UpdateScaleAnimation()
     {
-        if (!IsInteractable())
-        {
-            return;
-        }
-
         var targetScale = defaultScale;
-        if (isPointerDown && isPointerOver)
+
+        if (IsInteractable())
         {
-            targetScale = defaultScale * pressScale;
-        }
-        else if (isPointerOver)
-        {
-            targetScale = defaultScale * hoverScale;
+            if (isPointerDown && isPointerOver)
+            {
+                targetScale = defaultScale * pressScale;
+            }
+            else if (isPointerOver)
+            {
+                targetScale = defaultScale * hoverScale;
+            }
         }
 
         StartScaleAnimation(targetScale);
