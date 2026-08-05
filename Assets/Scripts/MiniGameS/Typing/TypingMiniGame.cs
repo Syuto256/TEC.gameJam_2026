@@ -1,3 +1,4 @@
+using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -85,13 +86,14 @@ namespace Overwork.MiniGames.Typing
                 return;
             }
 
-            // 打てるローマ字は読みから毎回作る。問題データはローマ字を持たない。
+            // 打てる綴りは毎回この場で組み立てる。読みからの自動生成、手書きのユニーク入力、
+            // 英単語のお題そのもの、どれが使われるかは問題データが決める。
             System.Collections.Generic.IReadOnlyList<string> candidates;
             string error;
-            if (!RomanizationGenerator.TryGenerate(question.reading, out candidates, out error))
+            if (!TypingCandidateBuilder.TryBuild(question, out candidates, out error))
             {
                 Debug.LogError(
-                    nameof(TypingMiniGame) + " (" + name + "): 「" + question.displayText + "」の読みからローマ字を作れません -> "
+                    nameof(TypingMiniGame) + " (" + name + "): 「" + question.displayText + "」の打てる綴りを作れません -> "
                     + error, this);
                 base.Initialize(difficulty, timeLimit);
                 FinishGame(false, "BAD READING");
@@ -106,11 +108,7 @@ namespace Overwork.MiniGames.Typing
             remainingInputColor = remainingInputText.color;
 
             questionText.text = string.Format(questionFormat, question.displayText);
-            if (targetRomanizationText != null)
-            {
-                targetRomanizationText.text = string.Format(
-                    targetRomanizationFormat, evaluator.AcceptedInput + evaluator.RemainingInput);
-            }
+            RefreshHint();
 
             RefreshUi();
             Subscribe();
@@ -119,6 +117,14 @@ namespace Overwork.MiniGames.Typing
         public bool ProcessInput(char input)
         {
             if (!IsPlaying || evaluator == null)
+            {
+                return false;
+            }
+
+            // 打てない文字は、そもそも打たれなかったことにする。
+            // 日本語入力が有効なままだとかなが飛んでくるが、それをミスに数えると打ち始めた瞬間に失敗する。
+            // BackSpace などの退避キーも同じくここで落ちる。
+            if (!TypingInputEvaluator.IsTypableCharacter(input))
             {
                 return false;
             }
@@ -226,6 +232,27 @@ namespace Overwork.MiniGames.Typing
         private void HandleTextInput(char input)
         {
             ProcessInput(input);
+        }
+
+        /// <summary>「ローマ字」の行を整える。お題と同じ綴りになるときは行ごと隠す。</summary>
+        /// <remarks>
+        /// 英単語のお題では、打つ綴りがお題そのものになる。
+        /// 「お題: pull」の下に「ローマ字: pull」と並べても案内にならないため、そのときは出さない。
+        /// </remarks>
+        private void RefreshHint()
+        {
+            if (targetRomanizationText == null)
+            {
+                return;
+            }
+
+            var hint = evaluator.AcceptedInput + evaluator.RemainingInput;
+            var duplicated = string.Equals(hint, question.displayText.Trim(), StringComparison.OrdinalIgnoreCase);
+            targetRomanizationText.gameObject.SetActive(!duplicated);
+            if (!duplicated)
+            {
+                targetRomanizationText.text = string.Format(targetRomanizationFormat, hint);
+            }
         }
 
         private void RefreshUi()

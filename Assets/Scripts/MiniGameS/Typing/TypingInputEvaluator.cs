@@ -38,9 +38,28 @@ namespace Overwork.MiniGames.Typing
         public string DisplayCandidate => canonicalCandidate.StartsWith(AcceptedInput, StringComparison.Ordinal) ? canonicalCandidate : activeCandidates[0];
         public string RemainingInput => DisplayCandidate.Substring(AcceptedInput.Length);
 
+        /// <summary>キーボードから打てる文字か。打てない文字はミスにも進捗にもしない。</summary>
+        /// <remarks>
+        /// <para>
+        /// **英字に限らないのは、綴りに英字以外が出てくるためである。** 長音符「ー」からは
+        /// <c>-</c> が、「ん」からは <c>n'</c> が作られる。英熟語をお題にすれば空白も要る。
+        /// 英字だけを通していたころは「コーヒー」が <c>ko-hi-</c> にしかならず、
+        /// <c>-</c> がミスとして数えられて必ず失敗していた。
+        /// </para>
+        /// <para>
+        /// **かな・漢字がここで落ちるのは意図した動きである。** 日本語入力が有効なまま打つと
+        /// かなが飛んでくるが、それをミスとして数えると打ち始めた瞬間に失敗する。
+        /// 退避キー（BackSpace など）も同じ理由でここに含めない。
+        /// </para>
+        /// </remarks>
+        public static bool IsTypableCharacter(char value)
+        {
+            return value >= ' ' && value <= '~';
+        }
+
         public bool TryInput(char input)
         {
-            if (IsCompleted || !char.IsLetter(input))
+            if (IsCompleted || !IsTypableCharacter(input))
             {
                 return false;
             }
