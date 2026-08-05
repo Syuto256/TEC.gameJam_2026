@@ -239,8 +239,9 @@ MainCanvas
 
 ### E5: デバイス画面の作り込みと発光
 
-**2026-08-05: E5 以降は保留。** タスク吹き出しの正式版 UI が上がってきたため、そちらの置き換えを先に進める。
-続きは [2026-08-05-task-bubble-rework.md](2026-08-05-task-bubble-rework.md) を参照。
+**2026-08-05: 吹き出しの刷新が終わったため再開した。** 経緯は
+[2026-08-05-task-bubble-rework.md](2026-08-05-task-bubble-rework.md) を参照。
+発光（疑似 2D ライティング）から着手し、試作まで進んでいる。画面の作り込みは未着手。
 
 #### 画面をそれらしくする（主に Prefab 作業）
 
@@ -267,18 +268,52 @@ MainCanvas
 
 なぞりのガイド線は `TracingMiniGame` が Prefab 上の複製元を複製して作るので、線の見た目も Prefab で調整できる。
 
-#### 発光（疑似 2D ライティング）
+#### 発光（疑似 2D ライティング）— 試作済み・2026-08-05
 
-[延期の決定](../Decisions/2026-08-04-deferred-ui-lighting-prototype.md) の前提条件は達成済みのため着手してよい。URP 2D Light は使えない（[方式の決定](../Decisions/2026-08-04-combo-and-effect-approach.md) 参照）。
+[延期の決定](../Decisions/2026-08-04-deferred-ui-lighting-prototype.md) の前提条件は達成済み。
 
-Hierarchy 上の置き場所は次のとおり。uGUI の描画順は兄弟の並び順である。
+**URP の Bloom は使えない。** ポストプロセスはカメラの絵にかかり、`Screen Space - Overlay` の Canvas はその後で合成されるため、UI には一切届かない。2D Light を採らなかったのと同じ理由で、発光は Image の重ね合わせで作る。
 
-- **暗幕は `Shared` の最初の子**（`Hud` より前）に置く。こうするとデバイス画面だけが暗くなり、HUD・タブ・`MiniGameHost` は明るいまま残る。
-- **発光は `MiniGameHost` の子で、`Content` より前**（奥）に置き、`Content` より大きくする。
-- **暗幕と発光は Raycast Target を必ず切る。** 切り忘れるとクリックが `TaskBubble` に届かなくなる。
-- 暗幕の濃さは `MiniGameHost` の表示・非表示に合わせて DOTween で補間する。
+**まず「暗い部屋で画面が光っている」常時の見え方だけを作った。コードは 1 行も足していない。** 採否を判断するのに必要なのはこの部分だけで、値はすべて Inspector にある。
 
-**確認ゲート:** 発光を入れた状態で、タスク吹き出しの左右クリックとタブ操作が従来どおり効く。試作を見て採否を判断する。
+##### 置き場所（当初案から変更した）
+
+当初は「暗幕を `Shared` の最初の子に置く」としていたが、**それだとタスク吹き出しまで暗くなる。** 吹き出しは `PcOnly/TaskAreas` の下にあり、`Shared` は両面より後ろに描かれるためである。吹き出しは部屋の中の物ではなく UI なので、暗くする理由がない。そのため暗幕は各面の内側へ移した。
+
+```
+PcOnly
+├─ Background     ← 暗くする（机・部屋）
+├─ PC             ← 暗くする（筐体）
+├─ RoomDimmer     ← 黒 α0.42。画面より上下左右 10px 大きく、端に明るい隙間を残さない
+├─ ScreenGlow     ← 加算のにじみ。画面より一回り大きい
+├─ DeviceFrame    ← 光源そのもの。暗くしない
+└─ TaskAreas      ← 吹き出し。暗くしない
+```
+
+**発光は `DeviceFrame` より奥に置く。** 手前に置くと画面の中身の上に光がかぶって白茶けるが、奥に置けば画面のふちから外へ滲むだけになり、「モニターが部屋を照らしている」形になる。`TabletOnly` も同じ並び（`PC` が無いだけ）。
+
+**暗幕・発光とも Raycast Target は切ってある。** 切り忘れるとクリックが `TaskBubble` に届かない。
+
+##### 足した資産
+
+- `Assets/Materials/UIAdditive.shader` + `UIAdditive.mat`（`UI/Additive`）。`UI/Default` の Blend を `SrcAlpha One` に変え、`_Intensity` を足しただけ。**半透明の白を重ねる方式は採らなかった。** 下の色が白へ寄って霞むためで、加算なら色を保ったまま明るさだけが足される
+- `Assets/Sprites/InGameUI/BackGround/ScreenGlow.png`（256 × 256、ふち 96px で減衰）。**9 スライスにしてあるため、どんな大きさに伸ばしても減衰の幅が歪まない。** 滲みの広さは Image の `Pixels Per Unit Multiplier` で変えられる（0.5 でふちが 2 倍＝192px）
+
+##### 調整場所
+
+| 変えたいもの | 場所 |
+|---|---|
+| 部屋の暗さ | `RoomDimmer` の Image 色の alpha（今 0.42） |
+| 光の強さ | `ScreenGlow` の Image 色の alpha（今 0.30）、または `UIAdditive.mat` の `_Intensity` |
+| 光の色味 | `ScreenGlow` の Image 色（今わずかに青い白） |
+| 滲みの広さ | `ScreenGlow` の `Pixels Per Unit Multiplier`（今 0.5）と矩形の大きさ |
+
+##### 未着手（採用が決まってからでよい）
+
+- ミニゲーム中の集中演出（`MiniGameHost` を開いたら周囲をさらに落とし、ウィンドウを光らせる）。暗幕の濃さを DOTween で補間する形になるので、ここで初めてコードが要る
+- デバイス切替に合わせて光の色を変える（PC とタブレットで色温度を分ける）
+
+**確認ゲート:** タスク吹き出しの左右クリックとタブ操作が従来どおり効く。そのうえで見た目の採否を判断する。
 
 ### E6: 追加の演出要望
 
