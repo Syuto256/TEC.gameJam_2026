@@ -157,7 +157,11 @@ public sealed class PcLidView : MonoBehaviour
         // 覆いきってから読み込む。次のシーンはこの下に隠れたまま用意される。
         action();
 
-        // LoadScene はフレームの終わりに効く。次のシーンが出るまで 1 フレーム待つ。
+        // **2 フレーム見送る。1 枚では足りない。**
+        // LoadScene は同期で、そのフレームだけが 0.3 秒以上続く。1 枚目は読み込みその
+        // もののフレーム、2 枚目はその長さが deltaTime に出るフレームである。
+        // 見送らずにコマを進めると、最初の数コマがその 1 回で消化されて飛ぶ。
+        yield return null;
         yield return null;
 
         foreach (var frame in frames)
@@ -168,11 +172,12 @@ public sealed class PcLidView : MonoBehaviour
             }
 
             lidImage.sprite = frame.sprite;
-            var remaining = frame.durationSec;
-            while (remaining > 0f)
+
+            // 実時間で測る。差分の足し上げだと、長いフレームを 1 枚またぐたびに
+            // その秒数がまるごと乗り、コマが飛ぶ。
+            if (frame.durationSec > 0f)
             {
-                remaining -= Time.unscaledDeltaTime;
-                yield return null;
+                yield return new WaitForSecondsRealtime(frame.durationSec);
             }
         }
 

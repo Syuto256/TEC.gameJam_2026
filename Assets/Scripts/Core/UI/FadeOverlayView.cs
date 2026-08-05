@@ -1,5 +1,5 @@
 using System;
-using DG.Tweening;
+using System.Collections;
 using UnityEngine;
 
 /// <summary>シーンをまたいで生き残る暗幕。遷移の前後を暗転・明転でつなぐ。</summary>
@@ -30,8 +30,7 @@ public sealed class FadeOverlayView : MonoBehaviour
     [Tooltip("明るくなるまでの秒数。暗くなる時間より少し長いと落ち着いて見える。")]
     [Min(0f)] [SerializeField] private float fadeInDurationSec = 0.30f;
 
-    private Sequence sequence;
-    private bool running;
+    private Coroutine running;
 
     /// <summary>暗幕を用意する。Prefab が無い場合は null を返し、呼び出し側はフェードなしで進む。</summary>
     public static FadeOverlayView EnsureInstance()
@@ -61,26 +60,74 @@ public sealed class FadeOverlayView : MonoBehaviour
     /// <returns>受け付けたら true。遷移中にもう一度呼ばれた場合は false を返し、何もしない。</returns>
     public bool TryRun(Action action)
     {
-        if (action == null || canvasGroup == null || running)
+        if (action == null || canvasGroup == null || running != null)
         {
             return false;
         }
 
-        running = true;
+        running = StartCoroutine(Run(action));
+        return true;
+    }
+
+    /// <remarks>
+    /// **明転は、読み込みが終わってから始める。**
+    /// <c>SceneManager.LoadScene</c> は同期で、そのフレームだけが 0.3 秒以上続く。
+    /// 時間で動かしている以上、待たずに明転を始めるとその 1 フレームで明転が最後まで
+    /// 終わってしまい、暗転しか見えない。
+    /// <para>
+    /// 実測（難易度選択 → ゲーム画面）: 暗転 0.25 秒は正常に動いていた。そのあと
+    /// 1 フレームが 357 ms 続き、待ち 0.05 + 明転 0.30 = 0.35 秒ぶんが 1 回で消化されていた。
+    /// **行き先が重いほど起きるので、特定の遷移だけの問題ではない。**
+    /// </para>
+    /// </remarks>
+    private IEnumerator Run(Action action)
+    {
         canvasGroup.blocksRaycasts = true;
-        sequence?.Kill();
 
         // ポーズ中（timeScale = 0）に難易度選択へ戻る経路があるため、実時間で動かす。
-        sequence = DOTween.Sequence()
-            .Append(canvasGroup.DOFade(1f, fadeOutDurationSec))
-            .AppendCallback(() => action())
-            .AppendInterval(holdDurationSec)
-            .Append(canvasGroup.DOFade(0f, fadeInDurationSec))
-            .SetUpdate(true)
-            .SetLink(gameObject)
-            .OnComplete(Finish);
+        yield return Fade(0f, 1f, fadeOutDurationSec);
 
-        return true;
+        action();
+
+        // **2 フレーム見送る。1 枚では足りない。**
+        // 1 枚目は読み込みそのもののフレーム、2 枚目はその長さが deltaTime に出るフレームである。
+        yield return null;
+        yield return null;
+
+        if (holdDurationSec > 0f)
+        {
+            yield return new WaitForSecondsRealtime(holdDurationSec);
+        }
+
+        yield return Fade(1f, 0f, fadeInDurationSec);
+
+        Finish();
+    }
+
+    /// <remarks>
+    /// 経過は差分の足し上げではなく実時間の引き算で測る。
+    /// 足し上げだと、長いフレームを 1 枚またいだだけでその秒数がまるごと乗ってしまう。
+    /// </remarks>
+    private IEnumerator Fade(float from, float to, float durationSec)
+    {
+        if (durationSec <= 0f)
+        {
+            canvasGroup.alpha = to;
+            yield break;
+        }
+
+        var start = Time.realtimeSinceStartup;
+        while (true)
+        {
+            var progress = (Time.realtimeSinceStartup - start) / durationSec;
+            canvasGroup.alpha = Mathf.Lerp(from, to, Mathf.Clamp01(progress));
+            if (progress >= 1f)
+            {
+                yield break;
+            }
+
+            yield return null;
+        }
     }
 
     private void Awake()
@@ -112,8 +159,7 @@ public sealed class FadeOverlayView : MonoBehaviour
 
     private void Finish()
     {
-        running = false;
-        sequence = null;
+        running = null;
         if (canvasGroup != null)
         {
             canvasGroup.blocksRaycasts = false;
@@ -127,7 +173,10 @@ public sealed class FadeOverlayView : MonoBehaviour
             instance = null;
         }
 
-        sequence?.Kill();
-        sequence = null;
+        if (running != null)
+        {
+            StopCoroutine(running);
+            running = null;
+        }
     }
 }

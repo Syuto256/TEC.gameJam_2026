@@ -190,6 +190,10 @@ public sealed class TutorialSequenceController : MonoBehaviour
 
             case TutorialStep.SpawnHardTaskNotice:
                 ShowInstruction("おっと。", canClickAdvance: true);
+                // **ここから AI に任せてもらう場面なので、左クリックでは始めさせない。**
+                // 吹き出しは矢印で指されていて押したくなるが、押して自分で片付けてしまうと
+                // 右クリックの説明に来たときに任せる相手が居なくなる。
+                mainGameController.ForceAiOnlyMode = true;
                 mainGameController.SpawnCustomTaskOnSurface(TaskSurface.Pc, level: 3, customLifetimeSec: 99f);
                 break;
 
@@ -208,7 +212,11 @@ public sealed class TutorialSequenceController : MonoBehaviour
 
             case TutorialStep.WaitAiProcess: break;
 
-            case TutorialStep.ExplainAiCleared: ShowInstruction("無事に対応できましたね。", canClickAdvance: true); break;
+            case TutorialStep.ExplainAiCleared:
+                // AI に任せる場面は終わり。以降は自分でも始められるように戻す。
+                mainGameController.ForceAiOnlyMode = false;
+                ShowInstruction("無事に対応できましたね。", canClickAdvance: true);
+                break;
 
             case TutorialStep.ExplainAiFailurePossibility:
                 ShowInstruction("たまに失敗するかもしれません。\nゴメンネ。XP", canClickAdvance: true);

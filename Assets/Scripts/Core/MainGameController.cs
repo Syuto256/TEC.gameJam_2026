@@ -316,18 +316,13 @@ public sealed class MainGameController : MonoBehaviour
         // 決着表示の秒数をそこで読むため、実体を控えておく。
         activeMiniGame = miniGame;
 
-        // ★ 修正: チュートリアル中（overrideTaskLifetimeSec > 0）は「成功」のみ受け付ける
-        miniGame.OnCompleted += (success, reason) =>
-        {
-            // チュートリアル中で失敗通知が来た場合は無視してゲームを継続させる
-            if (overrideTaskLifetimeSec > 0f && !success)
-            {
-                Debug.Log("[Tutorial] 失敗判定を無視し、クリアまで継続します。");
-                return;
-            }
-
-            CompletePlayerMiniGame(taskId, success);
-        };
+        // **成功も失敗もそのまま通す。チュートリアルでも例外を作らない。**
+        // 以前はチュートリアル中の失敗をここで捨てていたが、
+        // <see cref="MiniGameBase.FinishGame"/> は通知より先に IsPlaying を false にするため、
+        // 捨てた時点でミニゲームは既に終わっている。決着が誰にも届かず、窓が閉じないまま
+        // 操作も止まったままになり、そこから進めなくなっていた。
+        // 失敗したときの出題し直しは TutorialSequenceController.OnTaskResolved が持っている。
+        miniGame.OnCompleted += (success, reason) => CompletePlayerMiniGame(taskId, success);
 
         // 時間は 9999 などの極端な数値ではなく 99 秒程度にして計算崩れを防ぐ
         var timeLimit = overrideTaskLifetimeSec > 0f ? 99f : entry.GetTimeLimit(task.Level);
