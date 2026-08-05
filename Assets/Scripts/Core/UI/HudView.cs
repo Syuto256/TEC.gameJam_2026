@@ -130,6 +130,13 @@ public sealed class HudView : MonoBehaviour
     private string lastTimeText;
     private bool initialized;
 
+    // HudView.cs 内に追加
+public GameObject ScoreTextObject => scoreText != null ? scoreText.gameObject : null;
+// HudView.cs 内に追加（ScoreTextObject の隣などに）
+// HudView.cs 内に追加（ScoreTextObject の隣などに）
+public GameObject HpBarObject => hpBarFill != null ? hpBarFill.gameObject : null;
+// HudView.cs 内に追加（ScoreTextObject や HpBarObject の隣などに）
+public GameObject TimeTextObject => timeText != null ? timeText.gameObject : null;
     /// <summary>ポーズボタンが押された。</summary>
     public event Action PauseRequested;
 
@@ -446,6 +453,12 @@ public sealed class HudView : MonoBehaviour
         damageOverlay.color = color;
 
         damageFlashTween = damageOverlay.DOFade(0f, flashDurationSec).SetEase(Ease.OutQuad);
+    }
+
+    /// <summary>HUD全体（HPバー・タイマー・スコア等）の表示/非表示を一括切り替え</summary>
+    public void SetVisible(bool visible)
+    {
+        gameObject.SetActive(visible);
     }
 
 }
