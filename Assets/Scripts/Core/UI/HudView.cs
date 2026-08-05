@@ -89,6 +89,21 @@ public sealed class HudView : MonoBehaviour
     [Tooltip("弾む時間（秒）")]
     [SerializeField] private float comboPunchDuration = 0.2f;
 
+
+    [Header("【タイマー警告演出】")]
+    [Tooltip("残り時間がこの秒数以下になったら点滅を開始する")]
+    [SerializeField] private float timeWarningThresholdSec = 30f;
+
+    [Tooltip("警告時のテキストカラー（通常色とこの色の間を点滅）")]
+    [SerializeField] private Color timeWarningColor = Color.red;
+
+    [Tooltip("点滅の1往復にかかる秒数")]
+    [SerializeField] private float timeWarningBlinkDuration = 0.5f;
+
+    private Tween timeWarningTween;
+    private Color originalTimeTextColor = Color.white;
+    private bool isTimeWarningActive;
+
     private int lastCombo = int.MinValue;
     private Tween comboPunchTween;
 
@@ -137,6 +152,11 @@ public sealed class HudView : MonoBehaviour
         if (currentTaskNameText != null)
         {
             currentTaskNameText.gameObject.SetActive(false);
+        }
+
+        if (timeText != null)
+        {
+            originalTimeTextColor = timeText.color;
         }
 
         initialized = true;
@@ -188,6 +208,23 @@ public sealed class HudView : MonoBehaviour
         {
             lastTimeText = time;
             timeText.text = time;
+        }
+
+        var isWarningTime = !snapshot.IsEndless && snapshot.RemainingTimeSec <= timeWarningThresholdSec && snapshot.RemainingTimeSec > 0f;
+        if (isWarningTime && !isTimeWarningActive)
+        {
+            // 30秒以下になったら点滅開始
+            isTimeWarningActive = true;
+            timeWarningTween?.Kill();
+            timeWarningTween = timeText
+                .DOColor(timeWarningColor, timeWarningBlinkDuration)
+                .SetLoops(-1, LoopType.Yoyo) // 往復無限ループ
+                .SetEase(Ease.InOutSine);
+        }
+        else if (!isWarningTime && isTimeWarningActive)
+        {
+            // 30秒より多くなった（または0秒になった）ら点滅停止
+            StopWarningBlink();
         }
 
         if (difficultyText != null)
@@ -340,7 +377,17 @@ public sealed class HudView : MonoBehaviour
             comboPopupText.color = comboPopupBaseColor;
         }
     }
+    private void StopWarningBlink()
+    {
+        isTimeWarningActive = false;
+        timeWarningTween?.Kill();
+        timeWarningTween = null;
 
+        if (timeText != null)
+        {
+            timeText.color = originalTimeTextColor;
+        }
+    }
     private void OnDestroy()
     {
         scorePopupTween?.Kill();
@@ -351,6 +398,7 @@ public sealed class HudView : MonoBehaviour
         hpDamageBarTween = null;
         comboPunchTween?.Kill();
         comboPunchTween = null;
+        StopWarningBlink();
     }
 
     /// <summary>★追加: 現在プレイ中のタスク名を表示する</summary>
