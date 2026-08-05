@@ -6,6 +6,7 @@
 - [メインゲーム画面・接続仕様](main-game-flow.md) — Canvas UI、シーン遷移、PC / パッド、ミニゲーム接続の規約。
 - [タイピングミニゲーム仕様](typing-mini-game.md) — 日本語ローマ字入力とレベル別問題データ。
 - [なぞりミニゲーム仕様](tracing-mini-game.md) — Canvas UI で線をなぞる入力・判定ルール。
+- [ミニゲーム作業風 UI 必要素材](minigame-ui-assets.md) — PC 作業風 UI へ変えるための発注用素材一覧。
 
 ## 追加時の要件
 
