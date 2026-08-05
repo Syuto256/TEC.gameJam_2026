@@ -97,6 +97,18 @@ public sealed class HudView : MonoBehaviour
     [Tooltip("警告時のテキストカラー（通常色とこの色の間を点滅）")]
     [SerializeField] private Color timeWarningColor = Color.red;
 
+    [Header("【被弾フラッシュ演出】")]
+    [Tooltip("画面全体を覆う赤色の Image")]
+    [SerializeField] private Image damageOverlay;
+
+    [Tooltip("フラッシュが消えるまでの秒数")]
+    [SerializeField] private float flashDurationSec = 0.3f;
+
+    [Tooltip("フラッシュの最大不透明度（0〜1）")]
+    [Range(0f, 1f)] [SerializeField] private float maxFlashAlpha = 0.5f;
+
+    private Tween damageFlashTween;
+    
     [Tooltip("点滅の1往復にかかる秒数")]
     [SerializeField] private float timeWarningBlinkDuration = 0.5f;
 
@@ -399,6 +411,7 @@ public sealed class HudView : MonoBehaviour
         comboPunchTween?.Kill();
         comboPunchTween = null;
         StopWarningBlink();
+        damageFlashTween?.Kill();
     }
 
     /// <summary>★追加: 現在プレイ中のタスク名を表示する</summary>
@@ -418,6 +431,21 @@ public sealed class HudView : MonoBehaviour
         {
             currentTaskNameText.gameObject.SetActive(false);
         }
+    }
+
+    /// <summary>被弾時に画面を一瞬赤くフラッシュさせる</summary>
+    public void PlayDamageFlash()
+    {
+        if (damageOverlay == null) return;
+
+        damageFlashTween?.Kill(true);
+
+        // 一瞬で指定のAlpha値まで上げてから、透明(0)へフェードアウトさせる
+        var color = damageOverlay.color;
+        color.a = maxFlashAlpha;
+        damageOverlay.color = color;
+
+        damageFlashTween = damageOverlay.DOFade(0f, flashDurationSec).SetEase(Ease.OutQuad);
     }
 
 }

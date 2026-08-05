@@ -536,6 +536,7 @@ public sealed class MainGameController : MonoBehaviour
         if (IsDamageResolution(result.Resolution))
         {
             PlayDamageShake();
+            hudView.PlayDamageFlash();
         }
 
         // 自力成功。獲得点を見せ、節目とそれ以外で鳴らす音を切り替える。
