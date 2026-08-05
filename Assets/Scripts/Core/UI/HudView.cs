@@ -7,7 +7,7 @@ using UnityEngine.UI;
 /// <summary>HUD へ渡す 1 フレーム分の表示値。</summary>
 public readonly struct HudSnapshot
 {
-    public HudSnapshot(int hp, int maxHp, int score, float remainingTimeSec, bool isEndless, GameDifficulty difficulty)
+    public HudSnapshot(int hp, int maxHp, int score, float remainingTimeSec, bool isEndless, GameDifficulty difficulty,int comboCount)
     {
         Hp = hp;
         MaxHp = maxHp;
@@ -15,6 +15,7 @@ public readonly struct HudSnapshot
         RemainingTimeSec = remainingTimeSec;
         IsEndless = isEndless;
         Difficulty = difficulty;
+        ComboCount = comboCount;
     }
 
     public int Hp { get; }
@@ -23,6 +24,7 @@ public readonly struct HudSnapshot
     public float RemainingTimeSec { get; }
     public bool IsEndless { get; }
     public GameDifficulty Difficulty { get; }
+    public int ComboCount { get; }
 }
 
 /// <summary>HP・残り時間・スコア・難易度の表示と、ポーズ要求だけを担当する。</summary>
@@ -76,6 +78,19 @@ public sealed class HudView : MonoBehaviour
 
     [Tooltip("赤いバーが現在HPに追いつくまでの秒数。0 にすると赤ゲージは残らない。")]
     [Min(0f)] [SerializeField] private float hpDamageBarDurationSec = 0.4f;
+
+    [Header("【常時コンボ表示】")]
+    [Tooltip("画面右上に常時表示するコンボテキスト")]
+    [SerializeField] private TextMeshProUGUI persistentComboText;
+
+    [Tooltip("コンボが増えたときの拡大・弾み具合")]
+    [SerializeField] private Vector3 comboPunchScale = new Vector3(0.3f, 0.3f, 0f);
+
+    [Tooltip("弾む時間（秒）")]
+    [SerializeField] private float comboPunchDuration = 0.2f;
+
+    private int lastCombo = int.MinValue;
+    private Tween comboPunchTween;
 
     private Tween hpBarTween;
     private Tween hpDamageBarTween;
@@ -179,8 +194,38 @@ public sealed class HudView : MonoBehaviour
         {
             difficultyText.text = snapshot.Difficulty.ToString();
         }
+
+        if (snapshot.ComboCount != lastCombo)
+        {
+            var isFirstRender = lastCombo == int.MinValue;
+            var increased = !isFirstRender && snapshot.ComboCount > lastCombo;
+            lastCombo = snapshot.ComboCount;
+            if (persistentComboText != null)
+            {
+                // 1コンボ以上なら表示、0コンボなら非表示
+                if (snapshot.ComboCount > 0)
+                {
+                    persistentComboText.gameObject.SetActive(true);
+                    persistentComboText.text = $"{snapshot.ComboCount} COMBO";
+                    // コンボが増えた瞬間だけ拡大＆振動演出（DOPunchScale）
+                    if (increased)
+                    {
+                        comboPunchTween?.Kill(true);
+                        persistentComboText.transform.localScale = Vector3.one;
+                        comboPunchTween = persistentComboText.transform
+                            .DOPunchScale(comboPunchScale, comboPunchDuration, 10, 1f);
+                    }
+                }
+                else
+                {
+                    persistentComboText.gameObject.SetActive(false);
+                }
+            }
+        }
     }
 
+
+    
     /// <summary>減ったHPぶんを赤いまま残し、少し待ってから現在HPまで追いつかせる。</summary>
     /// <remarks>
     /// 赤いバーは常に現在HPのバー以上の値を保つ。減ったときだけ遅らせ、それ以外は即座に合わせるためである。
@@ -304,6 +349,8 @@ public sealed class HudView : MonoBehaviour
         hpBarTween = null;
         hpDamageBarTween?.Kill();
         hpDamageBarTween = null;
+        comboPunchTween?.Kill();
+        comboPunchTween = null;
     }
 
     /// <summary>★追加: 現在プレイ中のタスク名を表示する</summary>

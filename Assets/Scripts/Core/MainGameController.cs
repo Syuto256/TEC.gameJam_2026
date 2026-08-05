@@ -609,7 +609,8 @@ public sealed class MainGameController : MonoBehaviour
             session.Score,
             session.RemainingTimeSec,
             session.IsEndless,
-            session.Difficulty));
+            session.Difficulty,
+            session.ComboCount));
     }
 
     /// <summary>待機中のタスク件数を表示へ渡す。</summary>
