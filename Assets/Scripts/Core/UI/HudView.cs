@@ -44,6 +44,7 @@ public sealed class HudView : MonoBehaviour
              "未設定なら赤ゲージは出ず、従来どおりの見た目になる。")]
     [SerializeField] private Image hpBarDamageFill;
 
+    [SerializeField] private TextMeshProUGUI currentTaskNameText;
     [Header("【演出部品】")]
     [SerializeField] private TextMeshProUGUI centerScorePopupText;
     [SerializeField] private TextMeshProUGUI comboPopupText;
@@ -116,6 +117,11 @@ public sealed class HudView : MonoBehaviour
         if (comboPopupText != null)
         {
             comboPopupBaseColor = comboPopupText.color;
+        }
+
+        if (currentTaskNameText != null)
+        {
+            currentTaskNameText.gameObject.SetActive(false);
         }
 
         initialized = true;
@@ -298,6 +304,25 @@ public sealed class HudView : MonoBehaviour
         hpBarTween = null;
         hpDamageBarTween?.Kill();
         hpDamageBarTween = null;
+    }
+
+    /// <summary>★追加: 現在プレイ中のタスク名を表示する</summary>
+    public void ShowCurrentTaskName(string taskName)
+    {
+        if (currentTaskNameText != null)
+        {
+            currentTaskNameText.text = taskName;
+            currentTaskNameText.gameObject.SetActive(true);
+        }
+    }
+
+    /// <summary>★追加: タスク名の表示を消す</summary>
+    public void HideCurrentTaskName()
+    {
+        if (currentTaskNameText != null)
+        {
+            currentTaskNameText.gameObject.SetActive(false);
+        }
     }
 
 }

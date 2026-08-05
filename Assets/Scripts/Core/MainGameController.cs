@@ -247,12 +247,14 @@ public sealed class MainGameController : MonoBehaviour
 
         miniGameHost.Show();
         SetActivePlayerTask(taskId);
-
+        string taskName = !string.IsNullOrEmpty(entry.displayName) ? entry.displayName : task.Kind.ToString();
+        hudView.ShowCurrentTaskName(taskName);
         var miniGame = miniGameHost.Spawn(entry.prefab);
         if (miniGame == null)
         {
             SetActivePlayerTask(-1);
             miniGameHost.Hide();
+            hudView.HideCurrentTaskName();
             taskManager.CompletePlayer(taskId, false);
             return false;
         }
@@ -381,6 +383,12 @@ public sealed class MainGameController : MonoBehaviour
         if (wasActive != isActive)
         {
             PlayerMiniGameActiveChanged?.Invoke(isActive);
+        
+            // ★ 追加: 自力ミニゲームが終了したら（isActive == false）表示を非表示にする
+            if (!isActive)
+            {
+                hudView.HideCurrentTaskName();
+            }
         }
     }
 
