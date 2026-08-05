@@ -56,13 +56,17 @@ public sealed class PcLidView : MonoBehaviour
     [SerializeField] private Frame[] closeFrames = Array.Empty<Frame>();
 
     [Header("【時間】")]
+    [Tooltip("演出が画面を覆いきるまでの秒数。\n" +
+             "0 にすると、いま映っている画面が一瞬で差し替わる。")]
+    [Min(0f)] [SerializeField] private float coverSec = 0.15f;
+
     [Tooltip("画面が光りきるまでの秒数。0 にすると光らない。")]
     [Min(0f)] [SerializeField] private float flashInSec = 0.12f;
 
     [Tooltip("光が消えるまでの秒数。")]
     [Min(0f)] [SerializeField] private float flashOutSec = 0.35f;
 
-    [Tooltip("次のシーンが出てから、この演出が消えるまでの秒数。\n" +
+    [Tooltip("演出が引き上げるまでの秒数。\n" +
              "最後のコマとシーン側の PC は完全には同じ絵ではないため、\n" +
              "0 にすると切り替わりが目に見える。")]
     [Min(0f)] [SerializeField] private float handoffSec = 0.18f;
@@ -123,12 +127,38 @@ public sealed class PcLidView : MonoBehaviour
         return true;
     }
 
+    /// <remarks>
+    /// **順番に理由がある。「覆う → 読み込む → 動かす → 引き上げる」である。**
+    /// <para>
+    /// この演出は不透明な背景を持ち、画面全体を隠す。隠したうえで次のシーンを読み込むので、
+    /// 動いている最中に次のシーンが透けて見えることがない。
+    /// </para>
+    /// <para>
+    /// 以前は「動かす → 読み込む → 引き上げる」の順で、背景も持っていなかった。
+    /// **読み込んでから引き上げるまでのあいだ、次のシーンが PC の絵の後ろに見えていた。**
+    /// 閉じるときは、シーン側の PC と閉じていく PC が重なって二重に見えていた。
+    /// </para>
+    /// </remarks>
     private IEnumerator Run(Frame[] frames, bool flashAfterwards, Action action)
     {
-        // ポーズ中（timeScale = 0）にゲームが終わる経路があるため、実時間で動かす。
-        canvasGroup.alpha = 1f;
-        canvasGroup.blocksRaycasts = true;
+        // 覆う前に最初のコマを出す。いま映っている画面と同じ絵から始めるためである。
+        var first = FirstSprite(frames);
+        if (first != null)
+        {
+            lidImage.sprite = first;
+        }
+
         SetFlashAlpha(0f);
+        canvasGroup.blocksRaycasts = true;
+
+        // ポーズ中（timeScale = 0）にゲームが終わる経路があるため、実時間で動かす。
+        yield return FadeGroup(0f, 1f, coverSec);
+
+        // 覆いきってから読み込む。次のシーンはこの下に隠れたまま用意される。
+        action();
+
+        // LoadScene はフレームの終わりに効く。次のシーンが出るまで 1 フレーム待つ。
+        yield return null;
 
         foreach (var frame in frames)
         {
@@ -150,31 +180,47 @@ public sealed class PcLidView : MonoBehaviour
         if (flashAfterwards)
         {
             yield return Fade(0f, 1f, flashInSec);
-        }
-
-        action();
-
-        // LoadScene はフレームの終わりに効く。次のシーンが出るまで 1 フレーム待つ。
-        yield return null;
-
-        if (flashAfterwards)
-        {
             yield return Fade(1f, 0f, flashOutSec);
         }
 
         // 最後のコマとシーン側の PC は完全に同じ絵ではないため、間を置いて引き上げる。
-        var elapsed = 0f;
-        while (elapsed < handoffSec)
-        {
-            elapsed += Time.unscaledDeltaTime;
-            canvasGroup.alpha = handoffSec <= 0f ? 0f : 1f - (elapsed / handoffSec);
-            yield return null;
-        }
+        yield return FadeGroup(1f, 0f, handoffSec);
 
-        canvasGroup.alpha = 0f;
         canvasGroup.blocksRaycasts = false;
         SetFlashAlpha(0f);
         running = null;
+    }
+
+    private static Sprite FirstSprite(Frame[] frames)
+    {
+        foreach (var frame in frames)
+        {
+            if (frame != null && frame.sprite != null)
+            {
+                return frame.sprite;
+            }
+        }
+
+        return null;
+    }
+
+    private IEnumerator FadeGroup(float from, float to, float durationSec)
+    {
+        if (durationSec <= 0f)
+        {
+            canvasGroup.alpha = to;
+            yield break;
+        }
+
+        var elapsed = 0f;
+        while (elapsed < durationSec)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            canvasGroup.alpha = Mathf.Lerp(from, to, elapsed / durationSec);
+            yield return null;
+        }
+
+        canvasGroup.alpha = to;
     }
 
     private IEnumerator Fade(float from, float to, float durationSec)

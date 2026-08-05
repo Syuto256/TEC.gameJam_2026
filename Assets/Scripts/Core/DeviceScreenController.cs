@@ -38,6 +38,7 @@ public sealed class DeviceScreenController : MonoBehaviour
     private float slideWidth;
     private float slideProgress;
     private float slideScale = 1f;
+    private Action slideCompleted;
 
     public TaskSurface ActiveSurface { get; private set; } = TaskSurface.Pc;
 
@@ -76,9 +77,54 @@ public sealed class DeviceScreenController : MonoBehaviour
     /// <summary>指定した面へ切り替える。条件がそろわない場合は演出なしで切り替える。</summary>
     public void Show(TaskSurface surface)
     {
-        if (!switchEnabled || IsSliding || surface == ActiveSurface)
+        ShowInternal(surface, false);
+    }
+
+    /// <summary>PC 面へ戻し終えてから知らせる。すでに PC 面なら待たずに知らせる。</summary>
+    /// <remarks>
+    /// **終了演出のためにある。** 蓋を閉じる絵はノート PC のものなので、液タブを見たまま終わると
+    /// 見ていない機械が閉じることになる。先に PC 面へ戻してから閉じる。
+    /// <para>
+    /// <see cref="Show"/> と違い、切替禁止でも通す。**時間切れと HP 0 はミニゲーム中にも起こり、
+    /// そのとき切替は禁止されている。** 禁止のままだと、まさに戻したい場面で戻せない。
+    /// </para>
+    /// </remarks>
+    public void ReturnToPc(Action onComplete)
+    {
+        if (onComplete == null)
         {
             return;
+        }
+
+        // 切替の最中に終わることがある。**その移動先が液タブなら、待たずに進むと
+        // 液タブを映したまま蓋が閉じる。** いま動いているぶんを見送ってから改めて判断する。
+        if (IsSliding)
+        {
+            slideCompleted = () => ReturnToPc(onComplete);
+            return;
+        }
+
+        if (ActiveSurface == TaskSurface.Pc)
+        {
+            onComplete();
+            return;
+        }
+
+        slideCompleted = onComplete;
+        if (!ShowInternal(TaskSurface.Pc, true))
+        {
+            // 演出に入れなかった場合でも面は切り替わっている。待たずに進む。
+            slideCompleted = null;
+            onComplete();
+        }
+    }
+
+    /// <returns>スライド演出を始めたら true。即時切替で済ませた場合は false。</returns>
+    private bool ShowInternal(TaskSurface surface, bool force)
+    {
+        if (IsSliding || surface == ActiveSurface || (!force && !switchEnabled))
+        {
+            return false;
         }
 
         var fromIndex = IndexOf(ActiveSurface);
@@ -86,7 +132,7 @@ public sealed class DeviceScreenController : MonoBehaviour
         if (fromIndex < 0 || toIndex < 0 || fromIndex == toIndex)
         {
             ShowImmediate(surface);
-            return;
+            return false;
         }
 
         // 幅はレイアウト確定後でないと 0 になりうるため、ここで読む。
@@ -94,10 +140,11 @@ public sealed class DeviceScreenController : MonoBehaviour
         if (slideDurationSec <= 0f || width <= 0f)
         {
             ShowImmediate(surface);
-            return;
+            return false;
         }
 
         StartSlide(surface, workspaces[fromIndex], workspaces[toIndex], toIndex > fromIndex ? 1f : -1f, width);
+        return true;
     }
 
     /// <summary>席の並び順は <c>workspaces</c> の並び順とする。0 が左端。</summary>
@@ -204,6 +251,15 @@ public sealed class DeviceScreenController : MonoBehaviour
         if (tabs != null)
         {
             tabs.SetInteractable(switchEnabled);
+        }
+
+        // 待っている相手がいれば知らせる。先に null にしてから呼ぶ。
+        // 呼び先が次の切替を始めても、古い待ち手が二重に走らないようにするためである。
+        var completed = slideCompleted;
+        slideCompleted = null;
+        if (completed != null)
+        {
+            completed();
         }
     }
 

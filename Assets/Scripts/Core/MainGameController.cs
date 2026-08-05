@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using DG.Tweening;
 using UnityEngine;
@@ -367,7 +368,8 @@ public sealed class MainGameController : MonoBehaviour
         rushElapsedSec = 0f;
         var minSec = Mathf.Min(minRushIntervalSec, maxRushIntervalSec);
         var maxSec = Mathf.Max(minRushIntervalSec, maxRushIntervalSec);
-        nextRushIntervalSec = Random.Range(minSec, maxSec);
+        // using System; を足したため Random だけでは System.Random と紛れる。
+        nextRushIntervalSec = UnityEngine.Random.Range(minSec, maxSec);
     }
 
     /// <summary>タスクが画面に出るときに吹き出しを作る。発生直後とは限らない（待機列からの繰り上げを含む）。</summary>
@@ -710,11 +712,28 @@ public sealed class MainGameController : MonoBehaviour
         taskBacklogView.Render(taskManager.QueuedCount);
     }
 
+    /// <summary>セッションが終わり、結果画面へ移る直前。</summary>
+    /// <remarks>
+    /// **終了演出を差しはさむ余地をここに作っている。** 購読者がいればそちらに任せ、
+    /// いなければこれまでどおり自分で結果画面へ移る。
+    /// この Controller はどの機械を映しているかを知らないため、
+    /// 「PC 面へ戻してから蓋を閉じる」といった判断は購読側（<c>GameManager</c>）が持つ。
+    /// </remarks>
+    public event Action<GameSessionResult> SessionFinished;
+
     private void FinishSession()
     {
         ending = true;
         Time.timeScale = 1f;
-        GameFlowController.EnsureInstance().PresentResult(session.CreateResult());
+
+        var result = session.CreateResult();
+        if (SessionFinished != null)
+        {
+            SessionFinished(result);
+            return;
+        }
+
+        GameFlowController.EnsureInstance().PresentResult(result);
     }
 
     private void SetPaused(bool value)

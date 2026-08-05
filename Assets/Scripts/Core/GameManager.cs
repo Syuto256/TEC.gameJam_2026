@@ -72,7 +72,24 @@ public sealed class GameManager : MonoBehaviour
         pauseMenuView.ResumeRequested += mainGameController.Resume;
         pauseMenuView.BackToDifficultyRequested += mainGameController.ReturnToDifficultySelect;
         mainGameController.PlayerMiniGameActiveChanged += OnPlayerMiniGameActiveChanged;
+        mainGameController.SessionFinished += OnSessionFinished;
         miniGameHostView.Hide();
+    }
+
+    /// <summary>ゲームを終えたら、PC 面へ戻してから結果画面へ移る。</summary>
+    /// <remarks>
+    /// **蓋を閉じる絵はノート PC のものである。** 液タブを見たまま終わると、
+    /// 見ていない機械が閉じることになるため、先に既存の切替演出で PC 面へ戻す。
+    /// すでに PC 面なら待たずに進むので、余計な間は入らない。
+    /// <para>
+    /// 戻している最中にタブを押されると行き先が変わってしまうため、先に切替を止める。
+    /// </para>
+    /// </remarks>
+    private void OnSessionFinished(GameSessionResult result)
+    {
+        deviceScreenController.SetSwitchEnabled(false);
+        deviceScreenController.ReturnToPc(
+            () => GameFlowController.EnsureInstance().PresentResult(result));
     }
 
     /// <summary>ミニゲーム中はデバイス切替を受け付けない（暫定仕様）。</summary>
@@ -130,6 +147,7 @@ public sealed class GameManager : MonoBehaviour
         if (mainGameController != null)
         {
             mainGameController.PlayerMiniGameActiveChanged -= OnPlayerMiniGameActiveChanged;
+            mainGameController.SessionFinished -= OnSessionFinished;
         }
     }
 }
