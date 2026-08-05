@@ -20,6 +20,22 @@ public sealed class MainGameController : MonoBehaviour
     [Tooltip("画面に出しきれず待機しているタスクの件数表示。未設定でも進行には影響しない（件数が出ないだけ）。")]
     [SerializeField] private TaskBacklogView taskBacklogView;
 
+    [Header("【一斉飛来（ラッシュ）イベント設定】")]
+    [Tooltip("一斉飛来（ラッシュ）イベントを有効にするか")]
+    [SerializeField] private bool enableTaskRush = true;
+
+    [Tooltip("ラッシュ発生の間隔（最小秒数）")]
+    [Min(1f)] [SerializeField] private float minRushIntervalSec = 20f;
+
+    [Tooltip("ラッシュ発生の間隔（最大秒数）")]
+    [Min(1f)] [SerializeField] private float maxRushIntervalSec = 35f;
+
+    [Tooltip("一斉に発生させるタスクの数")]
+    [Min(2)] [SerializeField] private int rushTaskCount = 3;
+
+    private float rushElapsedSec;
+    private float nextRushIntervalSec;
+
     [Header("【音】")]
     [Tooltip("HP がこの割合を下回ったら警告音を一度だけ鳴らす。")]
     [Range(0f, 1f)] [SerializeField] private float hpLowRatio = 0.3f;
@@ -168,6 +184,9 @@ public sealed class MainGameController : MonoBehaviour
             MaxComboMultiplier = tuningSettings.score.maxComboMultiplier
         });
 
+        // ★ 追加: 最初のラッシュタイマーをセット
+        ResetNextRushInterval();
+
         initialized = true;
         RefreshHud();
         RefreshBacklog();
@@ -195,6 +214,17 @@ public sealed class MainGameController : MonoBehaviour
         {
             spawnElapsedSec -= spawnInterval;
             TrySpawnTask();
+        }
+
+        // ★ 追加: ラッシュイベントの経過計測と発生判定
+        if (enableTaskRush)
+        {
+            rushElapsedSec += deltaTime;
+            if (rushElapsedSec >= nextRushIntervalSec)
+            {
+                TriggerTaskRush(rushTaskCount);
+                ResetNextRushInterval();
+            }
         }
 
         UpdateHpLowCue();
@@ -248,12 +278,14 @@ public sealed class MainGameController : MonoBehaviour
 
         miniGameHost.Show();
         SetActivePlayerTask(taskId);
-
+        string taskName = !string.IsNullOrEmpty(entry.displayName) ? entry.displayName : task.Kind.ToString();
+        hudView.ShowCurrentTaskName(taskName);
         var miniGame = miniGameHost.Spawn(entry.prefab);
         if (miniGame == null)
         {
             SetActivePlayerTask(-1);
             miniGameHost.Hide();
+            hudView.HideCurrentTaskName();
             taskManager.CompletePlayer(taskId, false);
             return false;
         }
@@ -316,6 +348,26 @@ public sealed class MainGameController : MonoBehaviour
         // 吹き出しの生成は OnTaskShown が担当する。表示枠が埋まっていれば待機列に積まれ、
         // 枠が空いたときに改めて通知が飛ぶ。
         taskManager.CreateTask(kind, surface, level, difficultyProfile.taskLifetimeSec);
+    }
+
+    // ★ 追加: ラッシュ実行メソッド
+    public void TriggerTaskRush(int count)
+    {
+        for (var i = 0; i < count; i++)
+        {
+            TrySpawnTask();
+        }
+
+        Debug.Log($"[Task Rush] タスクが一斉に {count} 個発生しました！");
+    }
+
+    // ★ 追加: 次のラッシュ時間のリセット処理
+    private void ResetNextRushInterval()
+    {
+        rushElapsedSec = 0f;
+        var minSec = Mathf.Min(minRushIntervalSec, maxRushIntervalSec);
+        var maxSec = Mathf.Max(minRushIntervalSec, maxRushIntervalSec);
+        nextRushIntervalSec = Random.Range(minSec, maxSec);
     }
 
     /// <summary>タスクが画面に出るときに吹き出しを作る。発生直後とは限らない（待機列からの繰り上げを含む）。</summary>
@@ -384,6 +436,12 @@ public sealed class MainGameController : MonoBehaviour
         if (wasActive != isActive)
         {
             PlayerMiniGameActiveChanged?.Invoke(isActive);
+        
+            // ★ 追加: 自力ミニゲームが終了したら（isActive == false）表示を非表示にする
+            if (!isActive)
+            {
+                hudView.HideCurrentTaskName();
+            }
         }
     }
 
@@ -481,6 +539,7 @@ public sealed class MainGameController : MonoBehaviour
         if (IsDamageResolution(result.Resolution))
         {
             PlayDamageShake();
+            hudView.PlayDamageFlash();
         }
 
         // 自力成功。獲得点を見せ、節目とそれ以外で鳴らす音を切り替える。
@@ -632,7 +691,8 @@ public sealed class MainGameController : MonoBehaviour
             session.Score,
             session.RemainingTimeSec,
             session.IsEndless,
-            session.Difficulty));
+            session.Difficulty,
+            session.ComboCount));
     }
 
     /// <summary>待機中のタスク件数を表示へ渡す。</summary>
