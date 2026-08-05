@@ -2910,6 +2910,9 @@ MonoBehaviour:
   persistentComboText: {fileID: 531529259}
   comboPunchScale: {x: 0.3, y: 0.3, z: 0}
   comboPunchDuration: 0.2
+  timeWarningThresholdSec: 30
+  timeWarningColor: {r: 1, g: 0, b: 0, a: 1}
+  timeWarningBlinkDuration: 0.5
 --- !u!224 &1211787340 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 2957127156499609359, guid: bbfac399f1308204d8dce4d2d623d695, type: 3}
@@ -4332,6 +4335,10 @@ MonoBehaviour:
   taskSpawnTable: {fileID: 11400000, guid: 22dff04e80ea0764ea8788c3c9a5e75d, type: 2}
   resultEffectLayer: {fileID: 1217896928}
   taskBacklogView: {fileID: 766733150}
+  enableTaskRush: 1
+  minRushIntervalSec: 40
+  maxRushIntervalSec: 55
+  rushTaskCount: 3
   hpLowRatio: 0.3
 --- !u!1001 &1576202600
 PrefabInstance:
