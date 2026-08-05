@@ -5,18 +5,15 @@ using UnityEngine.InputSystem;
 
 namespace Overwork.MiniGames.RapidClick
 {
-    /// <summary>規定回数まで連打するミニゲーム。</summary>
-    /// <remarks>
-    /// クリックに加えてスペースキーでも数える規則は Hiroto の試作
-    /// （`Assets/Personal/Hiroto/rendagame/`）から取り込んでいる。
-    /// 配置・配色・文字サイズは `Assets/Prefabs/MiniGames/RapidClickMiniGame.prefab` で調整する。
-    /// クリックを受けるにはルートに Raycast Target が有効な Graphic（Image など）が必要である。
-    /// </remarks>
     public sealed class RapidClickMiniGame : MiniGameBase, IPointerClickHandler
     {
         [Header("【表示先】")]
         [Tooltip("連打の進捗。")]
         [SerializeField] private TMP_Text progressText;
+
+        // ★追加: 文字揺れエフェクトの参照
+        [Tooltip("連打時に文字を揺らすエフェクト（未設定でも動作に影響しない）")]
+        [SerializeField] private RapidMashTextEffect textEffect;
 
         [Tooltip("進捗の書式。{0} が現在の回数、{1} が必要回数。")]
         [SerializeField] private string progressFormat = "連打! {0} / {1}";
@@ -70,6 +67,13 @@ namespace Overwork.MiniGames.RapidClick
 
             clicks++;
             PlayInputFeedback(true);
+
+            // ★追加: 連打時にテキスト揺れ演出を実行
+            if (textEffect != null)
+            {
+                textEffect.OnMash();
+            }
+
             if (clicks >= requiredClicks)
             {
                 FinishGame(true, "COMPLETE");
