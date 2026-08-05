@@ -796,6 +796,7 @@ GameObject:
   - component: {fileID: 176833314}
   - component: {fileID: 176833313}
   - component: {fileID: 176833312}
+  - component: {fileID: 176833315}
   m_Layer: 0
   m_Name: BackToDifficultyButton
   m_TagString: Untagged
@@ -905,6 +906,20 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 176833310}
   m_CullTransparentMesh: 1
+--- !u!114 &176833315
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 176833310}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 45799c1f718759d42879e294d8f42372, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Overwork.Core::ButtonHoverScale
+  hoverScale: 1.05
+  duration: 0.1
 --- !u!1 &186874931
 GameObject:
   m_ObjectHideFlags: 0
@@ -2080,6 +2095,7 @@ GameObject:
   - component: {fileID: 963276367}
   - component: {fileID: 963276366}
   - component: {fileID: 963276365}
+  - component: {fileID: 963276368}
   m_Layer: 0
   m_Name: OptionButton
   m_TagString: Untagged
@@ -2189,6 +2205,20 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 963276363}
   m_CullTransparentMesh: 1
+--- !u!114 &963276368
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 963276363}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 45799c1f718759d42879e294d8f42372, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Overwork.Core::ButtonHoverScale
+  hoverScale: 1.05
+  duration: 0.1
 --- !u!1 &998434862
 GameObject:
   m_ObjectHideFlags: 0
@@ -3147,6 +3177,7 @@ GameObject:
   - component: {fileID: 1334445745}
   - component: {fileID: 1334445744}
   - component: {fileID: 1334445743}
+  - component: {fileID: 1334445746}
   m_Layer: 0
   m_Name: PauseButton
   m_TagString: Untagged
@@ -3256,6 +3287,20 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1334445741}
   m_CullTransparentMesh: 1
+--- !u!114 &1334445746
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1334445741}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 45799c1f718759d42879e294d8f42372, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Overwork.Core::ButtonHoverScale
+  hoverScale: 1.05
+  duration: 0.1
 --- !u!1 &1351273353
 GameObject:
   m_ObjectHideFlags: 0
@@ -4458,6 +4503,7 @@ GameObject:
   - component: {fileID: 1692253239}
   - component: {fileID: 1692253238}
   - component: {fileID: 1692253237}
+  - component: {fileID: 1692253240}
   m_Layer: 0
   m_Name: ResumeButton
   m_TagString: Untagged
@@ -4567,6 +4613,20 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1692253235}
   m_CullTransparentMesh: 1
+--- !u!114 &1692253240
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1692253235}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 45799c1f718759d42879e294d8f42372, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Overwork.Core::ButtonHoverScale
+  hoverScale: 1.05
+  duration: 0.1
 --- !u!1 &1731916847
 GameObject:
   m_ObjectHideFlags: 0
@@ -4579,6 +4639,7 @@ GameObject:
   - component: {fileID: 1731916851}
   - component: {fileID: 1731916850}
   - component: {fileID: 1731916849}
+  - component: {fileID: 1731916852}
   m_Layer: 0
   m_Name: TabletTab
   m_TagString: Untagged
@@ -4688,6 +4749,20 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1731916847}
   m_CullTransparentMesh: 1
+--- !u!114 &1731916852
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1731916847}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 45799c1f718759d42879e294d8f42372, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Overwork.Core::ButtonHoverScale
+  hoverScale: 1.05
+  duration: 0.1
 --- !u!1 &1741457331
 GameObject:
   m_ObjectHideFlags: 0
@@ -4914,6 +4989,7 @@ GameObject:
   - component: {fileID: 1821044600}
   - component: {fileID: 1821044599}
   - component: {fileID: 1821044598}
+  - component: {fileID: 1821044601}
   m_Layer: 0
   m_Name: CloseButton
   m_TagString: Untagged
@@ -5023,6 +5099,20 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1821044596}
   m_CullTransparentMesh: 1
+--- !u!114 &1821044601
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1821044596}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 45799c1f718759d42879e294d8f42372, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Overwork.Core::ButtonHoverScale
+  hoverScale: 1.05
+  duration: 0.1
 --- !u!1 &1848687212
 GameObject:
   m_ObjectHideFlags: 0
@@ -5035,6 +5125,7 @@ GameObject:
   - component: {fileID: 1848687216}
   - component: {fileID: 1848687215}
   - component: {fileID: 1848687214}
+  - component: {fileID: 1848687217}
   m_Layer: 0
   m_Name: PcTab
   m_TagString: Untagged
@@ -5144,6 +5235,20 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1848687212}
   m_CullTransparentMesh: 1
+--- !u!114 &1848687217
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1848687212}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 45799c1f718759d42879e294d8f42372, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Overwork.Core::ButtonHoverScale
+  hoverScale: 1.05
+  duration: 0.1
 --- !u!1 &1854927337
 GameObject:
   m_ObjectHideFlags: 0
