@@ -20,6 +20,12 @@ public sealed class MainGameController : MonoBehaviour
     [Tooltip("画面に出しきれず待機しているタスクの件数表示。未設定でも進行には影響しない（件数が出ないだけ）。")]
     [SerializeField] private TaskBacklogView taskBacklogView;
 
+    [Header("【タスク生成設定】")]
+    [Tooltip("通常の自動タスク生成（定期発生）を有効にするか。チュートリアル等では false にする")]
+    [SerializeField] private bool enableAutoSpawn = true;
+    [Tooltip("タスク制限時間の上書き（秒）。0より大きい値を入れるとその秒数で固定される。チュートリアルで無制限にする場合は 9999 等を設定")]
+    [SerializeField] private float overrideTaskLifetimeSec = 0f;
+
     [Header("【一斉飛来（ラッシュ）イベント設定】")]
     [Tooltip("一斉飛来（ラッシュ）イベントを有効にするか")]
     [SerializeField] private bool enableTaskRush = true;
@@ -60,9 +66,12 @@ public sealed class MainGameController : MonoBehaviour
     public GameSession Session => session;
     public TaskManager TaskManager => taskManager;
     public bool IsPaused => paused;
+    /// <summary>★追加: チュートリアル用：プレイヤーの自力ミニゲーム開始（左クリック）を禁止するフラグ</summary>
+    public bool ForceAiOnlyMode { get; set; }
 
     /// <summary>自力ミニゲームの進行中・終了を通知する。デバイス切替の可否に使う。</summary>
     public event System.Action<bool> PlayerMiniGameActiveChanged;
+    public event System.Action<TaskResolutionResult> TaskResolved;
 
     public void Initialize(
         GameTuningSettings settings,
@@ -155,7 +164,8 @@ public sealed class MainGameController : MonoBehaviour
         WarnIfSlotsAreFewerThanVisibleLimit();
         taskManager = new TaskManager(new TaskManagerSettings
         {
-            AiSuccessRate = tuningSettings.ai.successRate,
+            // ★修正: チュートリアル時（overrideTaskLifetimeSec > 0）は AI 成功率を 100% (1f) にして絶対成功させる
+            AiSuccessRate = overrideTaskLifetimeSec > 0f ? 1f : tuningSettings.ai.successRate,
             AiProcessDurationSec = tuningSettings.ai.processDurationSec,
             AiCooldownSec = tuningSettings.ai.cooldownSec,
             MaxVisibleTasksPerSurface = difficultyProfile.maxTasksPerSurface,
@@ -207,12 +217,16 @@ public sealed class MainGameController : MonoBehaviour
             return;
         }
 
-        spawnElapsedSec += deltaTime;
-        var spawnInterval = difficultyProfile.GetSpawnInterval(taskManager.ElapsedSec);
-        if (spawnElapsedSec >= spawnInterval)
+        // ★修正: enableAutoSpawn が true の時だけ自動生成のタイマーを進める
+        if (enableAutoSpawn)
         {
-            spawnElapsedSec -= spawnInterval;
-            TrySpawnTask();
+            spawnElapsedSec += deltaTime;
+            var spawnInterval = difficultyProfile.GetSpawnInterval(taskManager.ElapsedSec);
+            if (spawnElapsedSec >= spawnInterval)
+            {
+                spawnElapsedSec -= spawnInterval;
+                TrySpawnTask();
+            }
         }
 
         // ★ 追加: ラッシュイベントの経過計測と発生判定
@@ -254,6 +268,13 @@ public sealed class MainGameController : MonoBehaviour
 
     public bool TryAssignPlayer(int taskId)
     {
+        // ★追加: AI右クリック誘導中（ForceAiOnlyMode == true）は左クリックでのミニゲーム開始を禁止する
+        if (ForceAiOnlyMode)
+        {
+            return false;
+        }
+
+        
         if (!initialized || ending || paused || !taskManager.TryGetTask(taskId, out var task) || task.State != TaskState.Available)
         {
             return false;
@@ -289,9 +310,22 @@ public sealed class MainGameController : MonoBehaviour
             return false;
         }
 
-        // 生成物の破棄は TaskResolved -> miniGameHost.Hide() が担当する。
-        miniGame.OnCompleted += (success, reason) => CompletePlayerMiniGame(taskId, success);
-        miniGame.Initialize(task.Level, entry.GetTimeLimit(task.Level));
+        // ★ 修正: チュートリアル中（overrideTaskLifetimeSec > 0）は「成功」のみ受け付ける
+        miniGame.OnCompleted += (success, reason) =>
+        {
+            // チュートリアル中で失敗通知が来た場合は無視してゲームを継続させる
+            if (overrideTaskLifetimeSec > 0f && !success)
+            {
+                Debug.Log("[Tutorial] 失敗判定を無視し、クリアまで継続します。");
+                return;
+            }
+
+            CompletePlayerMiniGame(taskId, success);
+        };
+
+        // 時間は 9999 などの極端な数値ではなく 99 秒程度にして計算崩れを防ぐ
+        var timeLimit = overrideTaskLifetimeSec > 0f ? 99f : entry.GetTimeLimit(task.Level);
+        miniGame.Initialize(task.Level, timeLimit);
         return true;
     }
 
@@ -342,9 +376,10 @@ public sealed class MainGameController : MonoBehaviour
             return;
         }
 
-        // 吹き出しの生成は OnTaskShown が担当する。表示枠が埋まっていれば待機列に積まれ、
-        // 枠が空いたときに改めて通知が飛ぶ。
-        taskManager.CreateTask(kind, surface, level, difficultyProfile.taskLifetimeSec);
+        var lifetime = overrideTaskLifetimeSec > 0f ? overrideTaskLifetimeSec : difficultyProfile.taskLifetimeSec;
+
+        // ★ 修正: 最後の引数を difficultyProfile... から lifetime に変更
+        taskManager.CreateTask(kind, surface, level, lifetime);
     }
 
     // ★ 追加: ラッシュ実行メソッド
@@ -356,6 +391,44 @@ public sealed class MainGameController : MonoBehaviour
         }
 
         Debug.Log($"[Task Rush] タスクが一斉に {count} 個発生しました！");
+    }
+
+    
+    /// <summary>★追加: チュートリアル用：指定したレベルと寿命でタスクを1つ生成する</summary>
+    public void SpawnCustomTask(int level, float customLifetimeSec)
+    {
+        if (!TryPickSpawnSurface(out var surface) || !taskSpawnTable.TryGetKinds(surface, out var kinds))
+        {
+            return;
+        }
+
+        var kind = kinds[NextKindIndex(surface) % kinds.Length];
+        var parent = ResolveSpawnArea(surface);
+        if (parent == null)
+        {
+            return;
+        }
+
+        // 指定された寿命（3秒や99秒など）で生成
+        taskManager.CreateTask(kind, surface, level, customLifetimeSec);
+    }
+
+    /// <summary>★追加: チュートリアル用：指定した面（PC/Pad等）・レベル・寿命でタスクを生成する</summary>
+    public void SpawnCustomTaskOnSurface(TaskSurface surface, int level, float customLifetimeSec)
+    {
+        if (!taskSpawnTable.TryGetKinds(surface, out var kinds))
+        {
+            return;
+        }
+
+        var kind = kinds[NextKindIndex(surface) % kinds.Length];
+        var parent = ResolveSpawnArea(surface);
+        if (parent == null)
+        {
+            return;
+        }
+
+        taskManager.CreateTask(kind, surface, level, customLifetimeSec);
     }
 
     // ★ 追加: 次のラッシュ時間のリセット処理
@@ -529,6 +602,8 @@ public sealed class MainGameController : MonoBehaviour
 
     private void OnTaskResolved(TaskResolutionResult result)
     {
+        // ★追加: 外部（チュートリアル等）へクリア通知を飛ばす
+        TaskResolved?.Invoke(result);
         // ここで最新の ComboCount が確定する。
         var addedScore = session.Apply(result);
         PlayResolutionCue(result.Resolution);

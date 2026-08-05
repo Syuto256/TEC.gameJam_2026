@@ -143,11 +143,15 @@ namespace Overwork.MiniGames.Typing
                 return true;
             }
 
+            // TypingMiniGame.cs の 137行目付近
             PlayInputFeedback(false);
             missCount++;
             lockoutRemaining = missLockoutSeconds;
             RefreshUi();
-            if (missCount >= allowedMisses)
+
+            // ★ 修正: 制限時間が 90 秒以上（チュートリアル時）はミス失敗を行わない！
+            var isTutorial = TimeLimit >= 90f;
+            if (!isTutorial && missCount >= allowedMisses)
             {
                 FinishGame(false, "MISSED");
             }
