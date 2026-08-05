@@ -24,6 +24,10 @@ public abstract class MiniGameBase : MonoBehaviour
     [Tooltip("残り時間の書式。{0} に残り秒数が入る。")]
     [SerializeField] private string timeFormat = "残り時間: {0:F1} 秒";
 
+    [Tooltip("決着を窓の中で知らせる層。共通ウィンドウフレームが持っている。\n" +
+             "未設定なら結果を出さず、従来どおり即座に閉じる。")]
+    [SerializeField] private MiniGameResultView resultView;
+
     /// <summary>
     /// ミニゲーム完了時に発火するイベント
     /// arg1: 成功フラグ (true=成功, false=失敗)
@@ -35,6 +39,13 @@ public abstract class MiniGameBase : MonoBehaviour
     public float TimeLimit { get; private set; }
     public float TimeRemaining { get; private set; }
     public bool IsPlaying { get; private set; }
+
+    /// <summary>決着を見せるために窓を開いたままにする秒数。決着した後に読むこと。</summary>
+    /// <remarks>
+    /// <see cref="MainGameController"/> がこの秒数だけ、窓を閉じるのと担当中の印を落とすのを遅らせる。
+    /// 結果の層を置いていないミニゲームでは 0 のままなので、従来どおり即座に閉じる。
+    /// </remarks>
+    public float ResultHoldSec { get; private set; }
 
     /// <summary>
     /// ミニゲームの初期化。生成時に MainGameController から呼び出される。
@@ -99,6 +110,10 @@ public abstract class MiniGameBase : MonoBehaviour
         if (!IsPlaying) return; // 二重発火防止ガード
 
         IsPlaying = false;
+
+        // 通知より先に結果を出す。通知を受けた側がこの秒数を読んで窓の片付けを遅らせるためである。
+        ResultHoldSec = resultView != null ? resultView.Show(success) : 0f;
+
         OnCompleted?.Invoke(success, reason);
     }
 

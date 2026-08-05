@@ -34,6 +34,7 @@ public sealed class MainGameController : MonoBehaviour
     private DeviceWorkspaceView[] workspaces;
     private MiniGameHostView miniGameHost;
     private PauseMenuView pauseMenu;
+    private MiniGameBase activeMiniGame;
     private int activePlayerTaskId = -1;
     private float spawnElapsedSec;
     private bool hpLowNotified;
@@ -257,7 +258,9 @@ public sealed class MainGameController : MonoBehaviour
             return false;
         }
 
-        // 生成物の破棄は TaskResolved -> miniGameHost.Hide() が担当する。
+        // 生成物の破棄は TaskResolved -> CloseMiniGame() が担当する。
+        // 決着表示の秒数をそこで読むため、実体を控えておく。
+        activeMiniGame = miniGame;
         miniGame.OnCompleted += (success, reason) => CompletePlayerMiniGame(taskId, success);
         miniGame.Initialize(task.Level, entry.GetTimeLimit(task.Level));
         return true;
@@ -504,10 +507,11 @@ public sealed class MainGameController : MonoBehaviour
             AudioManager.PlaySfx(AudioCue.MiniGameFailure);
         }
 
+        var playerHoldSec = 0f;
         if (activePlayerTaskId == result.Task.Id)
         {
-            SetActivePlayerTask(-1);
-            miniGameHost.Hide();
+            playerHoldSec = activeMiniGame != null ? Mathf.Max(0f, activeMiniGame.ResultHoldSec) : 0f;
+            CloseMiniGame(playerHoldSec);
         }
 
         if (taskViews.TryGetValue(result.Task.Id, out var view))
@@ -521,8 +525,35 @@ public sealed class MainGameController : MonoBehaviour
             // AI の決着では吹き出しの上に結果が出る。同時に粒を飛ばすと読み取りが喧嘩するため、
             // 結果を見せ終わってから出す。待ち時間は吹き出し側が持っている値を使う。
             var holdSec = view.PlayExitAndDestroy(result.Resolution);
-            PlayResultEffect(effectPosition, result.Resolution, addedScore, holdSec);
+
+            // 自力の決着では窓の中に結果が出る。粒はその上へ重ねず、窓が閉じてから飛ばす。
+            PlayResultEffect(effectPosition, result.Resolution, addedScore, holdSec + playerHoldSec);
         }
+    }
+
+    /// <summary>ミニゲームの窓を閉じる。決着表示があるときはその秒数だけ待つ。</summary>
+    /// <remarks>
+    /// **担当中の印を落とすのも一緒に遅らせる。** 先に落とすと、結果を出している最中に
+    /// 集中演出の暗幕が戻り、タスク吹き出しもクリックできるようになってしまう
+    /// （<see cref="GameManager"/> が <see cref="PlayerMiniGameActiveChanged"/> で
+    /// 面の操作可否を切り替えているため）。待っているあいだ次のミニゲームは始められない。
+    /// </remarks>
+    private void CloseMiniGame(float delaySec)
+    {
+        activeMiniGame = null;
+
+        if (delaySec <= 0f)
+        {
+            SetActivePlayerTask(-1);
+            miniGameHost.Hide();
+            return;
+        }
+
+        DOVirtual.DelayedCall(delaySec, () =>
+        {
+            SetActivePlayerTask(-1);
+            miniGameHost.Hide();
+        }, false).SetLink(gameObject);
     }
 
     /// <summary>HP が減る決着かどうか。</summary>
