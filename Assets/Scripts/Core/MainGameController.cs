@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using DG.Tweening;
 using UnityEngine;
 
 /// <summary>Game シーンでセッション、タスク生成、AI 処理、HUD、終了遷移を接続する。</summary>
@@ -12,6 +13,12 @@ public sealed class MainGameController : MonoBehaviour
 
     [Tooltip("デバイス面ごとの出現タスク。どの面に何が出るかはこのアセットで決める。")]
     [SerializeField] private TaskSpawnTable taskSpawnTable;
+
+    [Tooltip("タスクの決着を吹き出しの位置に知らせる層。未設定でも進行には影響しない（演出が出ないだけ）。")]
+    [SerializeField] private ResultEffectLayerView resultEffectLayer;
+
+    [Tooltip("画面に出しきれず待機しているタスクの件数表示。未設定でも進行には影響しない（件数が出ないだけ）。")]
+    [SerializeField] private TaskBacklogView taskBacklogView;
 
     [Header("【音】")]
     [Tooltip("HP がこの割合を下回ったら警告音を一度だけ鳴らす。")]
@@ -117,15 +124,30 @@ public sealed class MainGameController : MonoBehaviour
         miniGameHost = host;
         pauseMenu = pause;
 
+        if (resultEffectLayer != null && !resultEffectLayer.Initialize())
+        {
+            return;
+        }
+
+        if (taskBacklogView != null && !taskBacklogView.Initialize())
+        {
+            return;
+        }
+
         var flow = GameFlowController.EnsureInstance();
         difficultyProfile = tuningSettings.GetDifficultyProfile(flow.SelectedDifficulty);
+        WarnIfSlotsAreFewerThanVisibleLimit();
         taskManager = new TaskManager(new TaskManagerSettings
         {
             AiSuccessRate = tuningSettings.ai.successRate,
             AiProcessDurationSec = tuningSettings.ai.processDurationSec,
-            AiCooldownSec = tuningSettings.ai.cooldownSec
+            AiCooldownSec = tuningSettings.ai.cooldownSec,
+            MaxVisibleTasksPerSurface = difficultyProfile.maxTasksPerSurface,
+            MaxQueuedTasksPerSurface = tuningSettings.taskQueue.maxQueuedPerSurface,
+            QueuedLifetimeTicks = tuningSettings.taskQueue.lifetimeTicksWhileQueued
         });
         taskManager.TaskResolved += OnTaskResolved;
+        taskManager.TaskShown += OnTaskShown;
         session = new GameSession(new GameSessionSettings
         {
             Difficulty = flow.SelectedDifficulty,
@@ -140,11 +162,14 @@ public sealed class MainGameController : MonoBehaviour
             BaseScoreLevel2 = tuningSettings.score.baseScoreDiff2,
             BaseScoreLevel3 = tuningSettings.score.baseScoreDiff3,
             BaseScoreLevel4 = tuningSettings.score.baseScoreDiff4,
-            MaxTimeBonusAdd = tuningSettings.score.maxTimeBonusAdd
+            MaxTimeBonusAdd = tuningSettings.score.maxTimeBonusAdd,
+            ComboScoreAddPerCombo = tuningSettings.score.comboScoreAddPerCombo,
+            MaxComboMultiplier = tuningSettings.score.maxComboMultiplier
         });
 
         initialized = true;
         RefreshHud();
+        RefreshBacklog();
     }
 
     private void Update()
@@ -174,6 +199,7 @@ public sealed class MainGameController : MonoBehaviour
         UpdateHpLowCue();
         RefreshTaskViews();
         RefreshHud();
+        RefreshBacklog();
     }
 
     /// <summary>HP が危険域へ入った瞬間に一度だけ警告音を鳴らす。</summary>
@@ -284,11 +310,24 @@ public sealed class MainGameController : MonoBehaviour
             return;
         }
 
-        var task = taskManager.CreateTask(kind, surface, level, difficultyProfile.taskLifetimeSec);
+        // 吹き出しの生成は OnTaskShown が担当する。表示枠が埋まっていれば待機列に積まれ、
+        // 枠が空いたときに改めて通知が飛ぶ。
+        taskManager.CreateTask(kind, surface, level, difficultyProfile.taskLifetimeSec);
+    }
+
+    /// <summary>タスクが画面に出るときに吹き出しを作る。発生直後とは限らない（待機列からの繰り上げを含む）。</summary>
+    private void OnTaskShown(TaskInstance task)
+    {
+        var parent = ResolveSpawnArea(task.Surface);
+        if (parent == null)
+        {
+            return;
+        }
+
         var bubble = Instantiate(taskBubblePrefab, parent, false);
         bubble.name = "TaskBubble_" + task.Id;
-        miniGameCatalog.TryGetEntry(kind, out var entry);
-        bubble.Bind(this, task, entry?.displayName, entry?.icon);
+        miniGameCatalog.TryGetEntry(task.Kind, out var entry);
+        bubble.Bind(this, task, entry?.GetBubbleSprite(task.Level));
         taskViews.Add(task.Id, bubble);
         AudioManager.PlaySfx(AudioCue.TaskSpawned);
     }
@@ -300,7 +339,6 @@ public sealed class MainGameController : MonoBehaviour
     private bool TryPickSpawnSurface(out TaskSurface surface)
     {
         surface = default;
-        var maxTasks = Mathf.Max(1, difficultyProfile.maxTasksPerSurface);
         var fewest = int.MaxValue;
         var found = false;
 
@@ -311,8 +349,9 @@ public sealed class MainGameController : MonoBehaviour
                 continue;
             }
 
+            // 表示上限に達していても待機列があるので、ここで弾くのは待機列が満杯の面だけ。
             var count = CountActiveTasks(workspace.Surface);
-            if (count >= maxTasks || count >= fewest)
+            if (!taskManager.CanAcceptTask(workspace.Surface) || count >= fewest)
             {
                 continue;
             }
@@ -359,13 +398,52 @@ public sealed class MainGameController : MonoBehaviour
         return false;
     }
 
+    /// <summary>決着の演出を出す。待ち時間が指定されていれば、その分だけ遅らせる。</summary>
+    private void PlayResultEffect(Vector3 position, TaskResolution resolution, int addedScore, float delaySec)
+    {
+        if (resultEffectLayer == null)
+        {
+            return;
+        }
+
+        if (delaySec <= 0f)
+        {
+            resultEffectLayer.Play(position, resolution, addedScore);
+            return;
+        }
+
+        // 遅らせているあいだにシーンが終わることがあるため、この GameObject に寿命を紐づける。
+        DOVirtual.DelayedCall(delaySec, () => resultEffectLayer.Play(position, resolution, addedScore), false)
+            .SetLink(gameObject);
+    }
+
+    /// <summary>枠が足りない面を報告する。足りないと、表示されるはずのタスクが画面に出ない。</summary>
+    /// <remarks>
+    /// 吹き出しの大きさと画面の空きから、1 面に置けるのは 4 つまで。
+    /// 難易度設定の値だけ上げても枠は増えないため、ここで気づけるようにしている。
+    /// </remarks>
+    private void WarnIfSlotsAreFewerThanVisibleLimit()
+    {
+        var limit = Mathf.Max(1, difficultyProfile.maxTasksPerSurface);
+        foreach (var workspace in workspaces)
+        {
+            if (workspace != null && workspace.SlotCount < limit)
+            {
+                Debug.LogError(
+                    "MainGameController: " + workspace.Surface + " の枠が " + workspace.SlotCount
+                    + " 個しかありませんが、同時に表示できる数は " + limit + " です。"
+                    + "枠を増やすか、難易度設定の maxTasksPerSurface を下げてください。", workspace);
+            }
+        }
+    }
+
     private RectTransform ResolveSpawnArea(TaskSurface surface)
     {
         foreach (var workspace in workspaces)
         {
-            if (workspace != null && workspace.Surface == surface)
+            if (workspace != null && workspace.Surface == surface && workspace.TryPickFreeSlot(out var slot))
             {
-                return workspace.PickSpawnArea();
+                return slot;
             }
         }
 
@@ -393,10 +471,16 @@ public sealed class MainGameController : MonoBehaviour
 
     private void OnTaskResolved(TaskResolutionResult result)
     {
-        var addedScore = session.Apply(result); // ここで最新の ComboCount が確定[cite: 10, 11]
+        // ここで最新の ComboCount が確定する。
+        var addedScore = session.Apply(result);
         PlayResolutionCue(result.Resolution);
 
-        // ★ 自力ミニゲーム成功時の処理
+        if (IsDamageResolution(result.Resolution))
+        {
+            PlayDamageShake();
+        }
+
+        // 自力成功。獲得点を見せ、節目とそれ以外で鳴らす音を切り替える。
         if (result.Resolution == TaskResolution.PlayerSuccess)
         {
             if (addedScore > 0)
@@ -404,7 +488,7 @@ public sealed class MainGameController : MonoBehaviour
                 hudView.ShowScorePopup(addedScore, session.ComboCount);
             }
 
-            // 節目の判定で鳴らす SE を完全に分離（排他制御）
+            // 節目の音と通常の成功音は排他にする。同時に鳴らさない。
             if (IsComboMilestone(session.ComboCount))
             {
                 AudioManager.PlaySfx(AudioCue.ComboMilestone);  // ★ 節目達成時のみ再生
@@ -428,19 +512,44 @@ public sealed class MainGameController : MonoBehaviour
 
         if (taskViews.TryGetValue(result.Task.Id, out var view))
         {
+            // 演出の位置は、吹き出しが消え始める前に控えておく。
+            var effectPosition = view.transform.position;
+
+            // 先に一覧から外すことで、消滅演出の間 Refresh の対象から外れる。破棄は View 自身が行う。
             taskViews.Remove(result.Task.Id);
-            Destroy(view.gameObject);
+
+            // AI の決着では吹き出しの上に結果が出る。同時に粒を飛ばすと読み取りが喧嘩するため、
+            // 結果を見せ終わってから出す。待ち時間は吹き出し側が持っている値を使う。
+            var holdSec = view.PlayExitAndDestroy(result.Resolution);
+            PlayResultEffect(effectPosition, result.Resolution, addedScore, holdSec);
         }
     }
-    /// <summary>★追加: コンボ数が大台に乗ったかどうかを判定する</summary>
-    private static bool IsComboMilestone(int combo)
+
+    /// <summary>HP が減る決着かどうか。</summary>
+    private static bool IsDamageResolution(TaskResolution resolution)
     {
-        if (combo <= 0) return false;
+        return resolution == TaskResolution.PlayerFailure
+            || resolution == TaskResolution.AiFailure
+            || resolution == TaskResolution.Expired;
+    }
 
-        // 例1: 5, 10, 15, 20... と 5 コンボごとに鳴らしたい場合
-        return combo % 5 == 0;
+    /// <summary>被弾を表す揺れを、表示中のデバイス面に出す。HUD は揺らさない。</summary>
+    private void PlayDamageShake()
+    {
+        foreach (var workspace in workspaces)
+        {
+            if (workspace != null)
+            {
+                workspace.PlayDamageShake();
+            }
+        }
+    }
 
-        // 例2: 10コンボ以上の時だけ鳴らしたい場合なら: return combo == 10;
+    /// <summary>コンボ数が節目に達したか。間隔は GameTuningSettings の comboMilestoneInterval で変える。</summary>
+    private bool IsComboMilestone(int combo)
+    {
+        var interval = tuningSettings.score.comboMilestoneInterval;
+        return combo > 0 && interval > 0 && combo % interval == 0;
     }
 
     /// <summary>タスクの決着に応じた音を鳴らす。自力の成否は <see cref="CompletePlayerMiniGame"/> が鳴らす。</summary>
@@ -495,6 +604,21 @@ public sealed class MainGameController : MonoBehaviour
             session.Difficulty));
     }
 
+    /// <summary>待機中のタスク件数を表示へ渡す。</summary>
+    /// <remarks>
+    /// 面ごとの内訳ではなく合計を渡す。どの面に溜まっているかは、その面へ切り替えれば
+    /// 吹き出しの数で分かるためである。
+    /// </remarks>
+    private void RefreshBacklog()
+    {
+        if (taskBacklogView == null || taskManager == null)
+        {
+            return;
+        }
+
+        taskBacklogView.Render(taskManager.QueuedCount);
+    }
+
     private void FinishSession()
     {
         ending = true;
@@ -520,6 +644,7 @@ public sealed class MainGameController : MonoBehaviour
         if (taskManager != null)
         {
             taskManager.TaskResolved -= OnTaskResolved;
+            taskManager.TaskShown -= OnTaskShown;
         }
 
         Time.timeScale = 1f;

@@ -1,3 +1,5 @@
+using System;
+using DG.Tweening;
 using UnityEngine;
 
 /// <summary>1 つのデバイス面の表示状態と、タスク吹き出しの生成先だけを担当する。</summary>
@@ -11,16 +13,38 @@ public sealed class DeviceWorkspaceView : MonoBehaviour
     [Header("【必須】")]
     [Tooltip("この面が受け持つタスクの所属。各面で重複しないこと。")]
     [SerializeField] private TaskSurface surface;
-    [SerializeField] private RectTransform leftSpawnArea;
-    [SerializeField] private RectTransform rightSpawnArea;
+
+    [Tooltip("吹き出しを置く枠。空いている枠を上から順に使うため、\n" +
+             "並べる順番がそのまま埋まる順番になる（左上・右上・左下・右下 の順に入れると左右交互に埋まる）。\n" +
+             "枠の数は、難易度設定の「同時に表示できる数」以上にすること。")]
+    [SerializeField] private RectTransform[] slots = Array.Empty<RectTransform>();
 
     [Header("【任意】")]
     [Tooltip("未設定なら同じ GameObject の CanvasGroup を使う。")]
     [SerializeField] private CanvasGroup canvasGroup;
 
+    [Header("【被弾時の揺れ】")]
+    [Tooltip("HPが減ったときにこの面が揺れる幅（ピクセル）。0 にすると揺れない。\n" +
+             "背景は画面より上下左右 10px 大きく作ってあるため、10 を超えると画面端に隙間が見えることがある。")]
+    [Min(0f)] [SerializeField] private float damageShakeStrength = 8f;
+
+    [Tooltip("揺れが収まるまでの秒数。長くすると衝撃が重くなる。")]
+    [Min(0f)] [SerializeField] private float damageShakeDurationSec = 0.25f;
+
+    [Tooltip("揺れの細かさ。大きいほど細かく震える。")]
+    [Min(1)] [SerializeField] private int damageShakeVibrato = 20;
+
+    private RectTransform rectTransform;
+    private Vector2 shakeOrigin;
+    private Tween shakeTween;
+    private bool sliding;
     private bool initialized;
 
     public TaskSurface Surface => surface;
+
+    /// <summary>この面の横幅。切替演出でどれだけ動かせばよいかを決めるのに使う。</summary>
+    /// <remarks>レイアウトが確定する前は 0 を返すことがあるため、演出を始める直前に読むこと。</remarks>
+    public float Width => rectTransform != null ? rectTransform.rect.width : 0f;
 
     /// <summary>参照を検証する。</summary>
     public bool Initialize()
@@ -30,10 +54,19 @@ public sealed class DeviceWorkspaceView : MonoBehaviour
             return true;
         }
 
-        if (!SceneUiValidation.Require(this,
-                (nameof(leftSpawnArea), leftSpawnArea), (nameof(rightSpawnArea), rightSpawnArea)))
+        if (slots == null || slots.Length == 0)
         {
+            Debug.LogError("DeviceWorkspaceView (" + name + "): slots が空です。", this);
             return false;
+        }
+
+        for (var i = 0; i < slots.Length; i++)
+        {
+            if (slots[i] == null)
+            {
+                Debug.LogError("DeviceWorkspaceView (" + name + "): slots[" + i + "] が未設定です。", this);
+                return false;
+            }
         }
 
         if (canvasGroup == null)
@@ -47,8 +80,83 @@ public sealed class DeviceWorkspaceView : MonoBehaviour
             return false;
         }
 
+        rectTransform = transform as RectTransform;
+        if (rectTransform != null)
+        {
+            shakeOrigin = rectTransform.anchoredPosition;
+        }
+
         initialized = true;
         return true;
+    }
+
+    /// <summary>被弾を表す短い揺れを再生する。表示されていない面は揺らさない。</summary>
+    /// <remarks>
+    /// 揺らすのはこの面だけで、HUD は動かさない。残り時間や HP の数値を読めなくしないためである。
+    /// 揺れ幅・時間・細かさは Prefab Variant ごとに Inspector で調整する。
+    /// </remarks>
+    public void PlayDamageShake()
+    {
+        if (!initialized || rectTransform == null || damageShakeStrength <= 0f || damageShakeDurationSec <= 0f)
+        {
+            return;
+        }
+
+        // 切替演出中は座標を演出側が握っている。ここで揺らすと、終了時に基準位置へ戻す処理が働き、
+        // 画面外を移動中の面が中央へ飛んでしまう。
+        if (sliding)
+        {
+            return;
+        }
+
+        if (canvasGroup == null || canvasGroup.alpha <= 0f)
+        {
+            return;
+        }
+
+        // 揺れが重なると原点がずれるため、前の揺れは終端まで進めてから始める。
+        shakeTween?.Complete();
+        shakeTween = rectTransform
+            .DOShakeAnchorPos(damageShakeDurationSec, damageShakeStrength, damageShakeVibrato)
+            .OnKill(() => rectTransform.anchoredPosition = shakeOrigin);
+    }
+
+    /// <summary>切替演出のために、この面を基準位置から横へずらし、拡大する。</summary>
+    /// <remarks>
+    /// 動かすのは演出の 1 コマぶんだけで、時間の管理は <see cref="DeviceScreenController"/> が持つ。
+    /// 呼ばれているあいだは移動中とみなし、被弾の揺れを見送る。
+    /// <paramref name="scale"/> に 1 未満を渡さないこと。面は画面と同じ大きさなので、
+    /// 縮めると画面の端と面の継ぎ目に隙間が空き、背後が覗く。
+    /// </remarks>
+    public void ApplySlide(float offsetX, float scale)
+    {
+        if (rectTransform == null)
+        {
+            return;
+        }
+
+        sliding = true;
+        rectTransform.anchoredPosition = shakeOrigin + new Vector2(offsetX, 0f);
+        rectTransform.localScale = new Vector3(scale, scale, 1f);
+    }
+
+    /// <summary>切替演出を終え、基準位置と等倍に戻す。</summary>
+    public void EndSlide()
+    {
+        sliding = false;
+        if (rectTransform == null)
+        {
+            return;
+        }
+
+        rectTransform.anchoredPosition = shakeOrigin;
+        rectTransform.localScale = Vector3.one;
+    }
+
+    private void OnDestroy()
+    {
+        shakeTween?.Kill();
+        shakeTween = null;
     }
 
     /// <summary>表示・非表示を切り替える。非表示側もタスクの寿命と演出は進み続ける。</summary>
@@ -81,19 +189,31 @@ public sealed class DeviceWorkspaceView : MonoBehaviour
         }
     }
 
-    /// <summary>吹き出しの少ない側の生成先を返す。同数なら左を使う。</summary>
-    public RectTransform PickSpawnArea()
+    /// <summary>この面に置ける吹き出しの数。</summary>
+    public int SlotCount => slots?.Length ?? 0;
+
+    /// <summary>空いている枠を、並べた順に 1 つ返す。</summary>
+    /// <remarks>
+    /// 枠に子がいなければ空きとみなす。消滅演出中の吹き出しは枠から外れているため
+    /// （<see cref="TaskBubbleView.PlayExitAndDestroy"/> を参照）、待機列から繰り上がってきた
+    /// タスクがすぐに入れる。
+    /// 抽選はしない。毎回位置が変わると、狙っていた吹き出しを探し直すことになるためである。
+    /// </remarks>
+    public bool TryPickFreeSlot(out RectTransform slot)
     {
-        if (leftSpawnArea == null)
+        if (slots != null)
         {
-            return rightSpawnArea;
+            foreach (var candidate in slots)
+            {
+                if (candidate != null && candidate.childCount == 0)
+                {
+                    slot = candidate;
+                    return true;
+                }
+            }
         }
 
-        if (rightSpawnArea == null)
-        {
-            return leftSpawnArea;
-        }
-
-        return rightSpawnArea.childCount < leftSpawnArea.childCount ? rightSpawnArea : leftSpawnArea;
+        slot = null;
+        return false;
     }
 }

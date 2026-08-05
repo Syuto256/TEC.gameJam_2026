@@ -40,25 +40,43 @@ public sealed class GameFlowController : MonoBehaviour
 
     public void OpenDifficultySelect()
     {
-        SceneManager.LoadScene(DifficultySelectSceneName);
+        Transition(DifficultySelectSceneName);
     }
 
     public void SelectDifficulty(GameDifficulty difficulty)
     {
         SelectedDifficulty = difficulty;
         LastSessionResult = null;
-        SceneManager.LoadScene(GameSceneName);
+        Transition(GameSceneName);
     }
 
     public void Retry()
     {
         LastSessionResult = null;
-        SceneManager.LoadScene(GameSceneName);
+        Transition(GameSceneName);
     }
 
     public void PresentResult(GameSessionResult result)
     {
         LastSessionResult = result;
-        SceneManager.LoadScene(result.EndState == GameEndState.Clear ? ClearSceneName : GameOverSceneName);
+        Transition(result.EndState == GameEndState.Clear ? ClearSceneName : GameOverSceneName);
+    }
+
+    /// <summary>暗転をはさんでシーンを切り替える。暗幕が用意できない場合はそのまま切り替える。</summary>
+    /// <remarks>
+    /// 遷移中の再要求は暗幕側が弾く。暗幕は遷移のあいだ入力も遮るため、
+    /// 暗転中にボタンを連打されても二重にシーンを読み込まない。
+    /// </remarks>
+    private void Transition(string sceneName)
+    {
+        var overlay = FadeOverlayView.EnsureInstance();
+        if (overlay == null)
+        {
+            SceneManager.LoadScene(sceneName);
+            return;
+        }
+
+        // 受け付けられなかった場合は遷移中である。ここで直接読み込むと二重遷移になるため、何もしない。
+        overlay.TryRun(() => SceneManager.LoadScene(sceneName));
     }
 }

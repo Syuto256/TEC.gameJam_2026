@@ -24,6 +24,10 @@ public class GameTuningSettings : ScriptableObject
     [Tooltip("タスクを片付けたときに入るスコア。全難易度で共通。")]
     public ScoreSettings score;
 
+    [Header("【待機列の設定】")]
+    [Tooltip("表示枠が埋まっているときに、あふれたタスクをどう扱うか。全難易度で共通。")]
+    public TaskQueueSettings taskQueue;
+
     [Header("【難易度ごとの設定】")]
     [Tooltip("難易度選択で選ばれた難易度の設定を、ここから探して使う。\n" +
              "行が無い難易度は、上の【全体ゲーム設定】の値で動く。\n" +
@@ -44,13 +48,29 @@ public class GameTuningSettings : ScriptableObject
     }
 
     [Serializable]
+    public class TaskQueueSettings
+    {
+        [Tooltip("待機中のタスクも寿命が減るようにする。\n" +
+                 "OFF（既定）だと、表示枠が空いて画面に出た時点から寿命が減り始める。\n" +
+                 "ON にすると、一度も画面に出ないまま時間切れになることがある。\n" +
+                 "出ていないタスクはクリックできないため、ON はプレイヤーに手立てが無い被弾を生む。")]
+        public bool lifetimeTicksWhileQueued;
+
+        [Tooltip("1つのデバイス面で待機列に積めるタスクの上限。0 で無制限。\n" +
+                 "上限に達している面には新しいタスクが出ない。")]
+        [Min(0)] public int maxQueuedPerSurface;
+    }
+
+    [Serializable]
     public class AISettings
     {
         [Tooltip("AIに任せたタスクが成功する確率。1 で必ず成功、0 で必ず失敗。")]
         [Range(0f, 1f)] public float successRate = 0.90f;
 
-        [Tooltip("AIに任せてから結果が出るまでの秒数。短いほどAIが強くなる。")]
-        public float processDurationSec = 0.40f;
+        [Tooltip("AIに任せてから結果が出るまでの秒数。短いほどAIが強くなる。\n" +
+                 "この時間が吹き出しの円ゲージの長さになる。1 秒を下回ると\n" +
+                 "「AIが作業中」の表示が読まれる前に終わってしまう。")]
+        public float processDurationSec = 1.50f;
 
         [Tooltip("次にAIへ依頼できるようになるまでの待ち時間（秒）。\n" +
                  "0 にすると待ち時間なしで、何件でも同時にAIへ任せられる。")]
@@ -89,6 +109,21 @@ public class GameTuningSettings : ScriptableObject
                  "タスクの残り寿命が多いうちに着手するほどスコアが伸びる。\n" +
                  "0.5 なら、出現直後に着手した場合が最大で 1.5 倍。0 にするとボーナス無し。")]
         public float maxTimeBonusAdd = 0.50f;
+
+        [Header("【コンボ】")]
+        [Tooltip("コンボが1段増えるごとに上乗せされるスコア倍率。\n" +
+                 "0.1 なら 1 コンボごとに +10%（2コンボ目が1.1倍、3コンボ目が1.2倍）。\n" +
+                 "0 にするとコンボでスコアが変わらなくなる。")]
+        [Min(0f)] public float comboScoreAddPerCombo = 0.10f;
+
+        [Tooltip("コンボ倍率の上限。2 なら何コンボ繋いでも最大2倍で頭打ちになる。\n" +
+                 "1 にするとコンボによるスコア上昇が実質的に無くなる。")]
+        [Min(1f)] public float maxComboMultiplier = 2.00f;
+
+        [Tooltip("何コンボごとに専用の効果音を鳴らすか。5 なら 5・10・15 コンボで鳴る。\n" +
+                 "節目では通常の成功音のかわりにこの音が鳴る（同時には鳴らさない）。\n" +
+                 "0 にすると鳴らさず、常に通常の成功音になる。")]
+        [Min(0)] public int comboMilestoneInterval = 5;
     }
 
     [Serializable]
@@ -131,9 +166,10 @@ public class GameTuningSettings : ScriptableObject
         [Tooltip("タスクが出現してから時間切れになるまでの秒数。短いほど余裕が無くなる。")]
         [Min(0.1f)] public float taskLifetimeSec = 20f;
 
-        [Tooltip("1つのデバイス面に同時に置いておけるタスクの数。\n" +
-                 "上限に達している面には新しいタスクが出ない。")]
-        [Min(1)] public int maxTasksPerSurface = 2;
+        [Tooltip("1つのデバイス面に同時に「表示」できるタスクの数。\n" +
+                 "上限に達している面で発生したタスクは、枠が空くまで待機列に積まれる。\n" +
+                 "画面の左右の帯には吹き出しが縦に2つまでしか入らないため、実質の上限は4。")]
+        [Min(1)] public int maxTasksPerSurface = 4;
 
         [Tooltip("ゲーム開始時のタスクの問題レベル（1〜4）。数字が大きいほどミニゲームが難しくなる。")]
         [Range(1, 4)] public int startingTaskLevel = 1;

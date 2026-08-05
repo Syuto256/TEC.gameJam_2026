@@ -19,7 +19,14 @@ public enum TaskKind
     TimingStop
 }
 public enum TaskSurface { Pc, Pad }
-public enum TaskState { Available, PlayerPlaying, AiProcessing, Resolved }
+/// <summary>タスクの進行状態。</summary>
+/// <remarks>
+/// <c>Queued</c> は「発生したが表示枠が埋まっていて、まだ画面に出ていない」状態である。
+/// 画面に出ていない＝クリックできないため、この状態のあいだ寿命を減らすかどうかは
+/// <c>GameTuningSettings.taskQueue</c> の設定で切り替える。既定では減らさない。
+/// 値は末尾に足すこと。途中に挿入すると、保存済みの選択が別の状態を指すようになる。
+/// </remarks>
+public enum TaskState { Available, PlayerPlaying, AiProcessing, Resolved, Queued }
 public enum TaskResolution { PlayerSuccess, PlayerFailure, AiSuccess, AiFailure, Expired }
 public enum GameEndState { Playing, Clear, GameOver }
 
@@ -45,6 +52,9 @@ public sealed class TaskInstance
     public float RemainingLifetimeSec { get; internal set; }
     public float CapturedTimeRatio { get; internal set; }
     public float AiRemainingProcessSec { get; internal set; }
+
+    /// <summary>AI に依頼したときの処理時間の全体。円ゲージの進み具合を出すのに使う。</summary>
+    public float AiTotalProcessSec { get; internal set; }
     public TaskState State { get; internal set; }
     public TaskResolution? Resolution { get; internal set; }
     public bool IsTerminal => State == TaskState.Resolved;
