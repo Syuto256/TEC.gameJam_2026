@@ -129,7 +129,9 @@ namespace Overwork.MiniGames.Tracing
             PlayInputFeedback(false);
             misses++;
             ResetTrace();
-            if (misses >= allowedMisses)
+            // ★ 修正: 制限時間が 90 秒以上（チュートリアル時）はミス失敗を行わず、何度でもやり直せるようにする！
+            var isTutorial = TimeLimit >= 90f;
+            if (!isTutorial && misses >= allowedMisses)
             {
                 FinishGame(false, "MISSED");
                 return;

@@ -9,6 +9,9 @@ public sealed class GameFlowController : MonoBehaviour
     public const string GameSceneName = "Game";
     public const string ClearSceneName = "Clear";
     public const string GameOverSceneName = "GameOver";
+    
+    // ★追加: チュートリアルシーンの識別名（Build Settings のシーン名と一致させる）
+    public const string TutorialSceneName = "Tutorial";
 
     public static GameFlowController Instance { get; private set; }
 
@@ -61,6 +64,19 @@ public sealed class GameFlowController : MonoBehaviour
         Transition(GameSceneName);
     }
 
+    // ★追加: 難易度を指定してメインゲームを開始する（SelectDifficulty と同等）
+    public void StartMainGame(GameDifficulty difficulty)
+    {
+        SelectDifficulty(difficulty);
+    }
+
+    // ★追加: チュートリアル画面へ遷移する
+    public void StartTutorial()
+    {
+        LastSessionResult = null;
+        Transition(TutorialSceneName);
+    }
+
     public void Retry()
     {
         LastSessionResult = null;
@@ -88,10 +104,6 @@ public sealed class GameFlowController : MonoBehaviour
     }
 
     /// <summary>暗転をはさんでシーンを切り替える。暗幕が用意できない場合はそのまま切り替える。</summary>
-    /// <remarks>
-    /// 遷移中の再要求は暗幕側が弾く。暗幕は遷移のあいだ入力も遮るため、
-    /// 暗転中にボタンを連打されても二重にシーンを読み込まない。
-    /// </remarks>
     private void Transition(string sceneName)
     {
         var overlay = FadeOverlayView.EnsureInstance();
@@ -101,7 +113,6 @@ public sealed class GameFlowController : MonoBehaviour
             return;
         }
 
-        // 受け付けられなかった場合は遷移中である。ここで直接読み込むと二重遷移になるため、何もしない。
         overlay.TryRun(() => SceneManager.LoadScene(sceneName));
     }
 }
