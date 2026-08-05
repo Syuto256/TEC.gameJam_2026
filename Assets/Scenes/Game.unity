@@ -1153,7 +1153,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: e00624e28ef258848b8944ed985c7cf6, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 0fd6985c3d5e63c48a5ad86dad9db7c9, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -4415,6 +4415,8 @@ MonoBehaviour:
   taskSpawnTable: {fileID: 11400000, guid: 22dff04e80ea0764ea8788c3c9a5e75d, type: 2}
   resultEffectLayer: {fileID: 1217896928}
   taskBacklogView: {fileID: 766733150}
+  enableAutoSpawn: 1
+  overrideTaskLifetimeSec: 0
   enableTaskRush: 1
   minRushIntervalSec: 40
   maxRushIntervalSec: 55
