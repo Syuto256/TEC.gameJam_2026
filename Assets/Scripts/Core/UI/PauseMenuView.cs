@@ -19,13 +19,6 @@ public sealed class PauseMenuView : MonoBehaviour
     [SerializeField] private GameObject optionPanel;
     [SerializeField] private Button optionCloseButton;
 
-    [Header("【任意】音量スライダー")]
-    [Tooltip("BGM 音量のスライダー。0〜1 の範囲にする。")]
-    [SerializeField] private Slider bgmVolumeSlider;
-
-    [Tooltip("SE 音量のスライダー。0〜1 の範囲にする。")]
-    [SerializeField] private Slider sfxVolumeSlider;
-
     private bool initialized;
 
     public event Action ResumeRequested;
@@ -66,9 +59,6 @@ public sealed class PauseMenuView : MonoBehaviour
             });
         }
 
-        InitializeVolumeSlider(bgmVolumeSlider, AudioManager.BgmVolume, value => AudioManager.BgmVolume = value);
-        InitializeVolumeSlider(sfxVolumeSlider, AudioManager.SfxVolume, value => AudioManager.SfxVolume = value);
-
         initialized = true;
         SetVisible(false);
         return true;
@@ -91,21 +81,22 @@ public sealed class PauseMenuView : MonoBehaviour
     {
         if (optionPanel != null)
         {
-            optionPanel.SetActive(value);
+            var optionPanelView = optionPanel.GetComponent<OptionPanelView>();
+            if (optionPanelView != null)
+            {
+                if (value)
+                {
+                    optionPanelView.Show();
+                }
+                else
+                {
+                    optionPanelView.Hide();
+                }
+            }
+            else
+            {
+                optionPanel.SetActive(value);
+            }
         }
-    }
-
-    /// <summary>保存済みの音量をスライダーへ反映し、操作を <see cref="AudioManager"/> へつなぐ。</summary>
-    private static void InitializeVolumeSlider(Slider slider, float currentValue, Action<float> apply)
-    {
-        if (slider == null)
-        {
-            return;
-        }
-
-        slider.minValue = 0f;
-        slider.maxValue = 1f;
-        slider.SetValueWithoutNotify(currentValue);
-        slider.onValueChanged.AddListener(value => apply(value));
     }
 }

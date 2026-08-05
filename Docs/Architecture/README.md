@@ -15,6 +15,7 @@
 - [DeviceScreenController](device-screen-controller.md)
 - [TaskManager](task-manager.md)
 - [AudioManager](audio-manager.md)
+- [OptionPanelView](option-panel-view.md)
 
 ## ミニゲーム別の詳細
 

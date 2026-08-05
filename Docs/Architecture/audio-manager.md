@@ -38,7 +38,7 @@ SE は以下の場所から鳴る。
 
 | 種類 | 鳴るタイミング | 呼ぶ場所 |
 | --- | --- | --- |
-| `UiConfirm` | ボタンを押したとき | `AppServices.PlayConfirm` / `PauseMenuView` |
+| `UiConfirm` | ボタンを押したとき、SE 音量を確認するとき | `AppServices.PlayConfirm` / `PauseMenuView` / `OptionPanelView` |
 | `UiCancel` | オプションを閉じたとき | `PauseMenuView` |
 | `TaskSpawned` | タスクが出現したとき | `MainGameController` |
 | `TaskExpired` | タスクが時間切れになったとき | `MainGameController` |
@@ -78,7 +78,7 @@ PlayCue(AudioCue.〇〇);      // ミニゲーム固有の音
 
 `PlayerPrefs` に保存されるため、次回起動時も維持される。カタログの `volume` はクリップごとの相対音量で、この全体音量と掛け合わされる。
 
-ポーズ画面のオプションから操作するには、`PauseMenuView` の `bgmVolumeSlider` / `sfxVolumeSlider` に `Slider` を割り当てる。範囲と現在値の反映、保存は `PauseMenuView` が行うため、Scene 側の作業は Slider を置いて参照を入れるだけである。
+オプション画面から操作するには、各シーンに置いた `OptionPanel.prefab` の `OptionPanelView` が BGM / SE の Slider を `AudioManager` へつなぐ。範囲、保存、現在値の反映も `OptionPanelView` が行うため、Title / Game / Tutorial で個別に音量配線を持たない。
 
 ## 動作の約束
 

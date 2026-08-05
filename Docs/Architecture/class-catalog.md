@@ -1,6 +1,6 @@
 # クラスカタログ
 
-最終確認: 2026-08-04  
+最終確認: 2026-08-06  
 このページは実装済みクラスの索引です。設計意図、外部契約、状態遷移が複雑になったクラスは `../Templates/class-detail.md` を元に個別ページを作成してください。
 
 はじめて読む場合は [シーン構造](scene-structure.md) を先に読んでください。「どこを触れば何が変わるか」はそちらにまとまっています。
@@ -52,6 +52,12 @@
 | `MiniGameHostView` | `Assets/Scripts/Core/UI/MiniGameHostView.cs` | 共通ミニゲーム領域の表示状態と、Prefab の生成・差し替え・破棄。大きさは決めない。 | UnityEngine |
 | `PauseMenuView` | `Assets/Scripts/Core/UI/PauseMenuView.cs` | ポーズ／オプションのパネル表示とボタン入力。ゲーム進行は判断しない。 | uGUI |
 | `SceneUiValidation` | `Assets/Scripts/Core/UI/SceneUiValidation.cs` | 必須参照の不足を、フィールド名を列挙して一度に報告する。 | UnityEngine |
+
+## 共通設定 UI
+
+| クラス | パス | 役割 | 主な依存先 |
+| --- | --- | --- | --- |
+| `OptionPanelView` | `Assets/Scripts/Core/UI/OptionPanelView.cs` | Title / Game / Tutorial の共通 OptionPanel Prefab 内で、BGM・SE・チュートリアル確認の設定 UI を保存設定へつなぐ。 | uGUI, `AudioManager`, `GameSettings` |
 
 ## ミニゲーム
 
