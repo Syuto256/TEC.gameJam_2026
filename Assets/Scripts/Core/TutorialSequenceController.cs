@@ -64,7 +64,11 @@ public sealed class TutorialSequenceController : MonoBehaviour
 
     private TutorialStep currentStep = TutorialStep.Title;
     private GameObject currentHighlightedObject;
-    private Canvas currentAddedCanvas;
+    private Canvas currentHighlightCanvas;
+    private GraphicRaycaster currentHighlightRaycaster;
+    private bool previousOverrideSorting;
+    private int previousSortingOrder;
+    private bool previousRaycasterEnabled;
     private Tween arrowTween;
 
     private void Start()
@@ -434,16 +438,48 @@ public sealed class TutorialSequenceController : MonoBehaviour
         currentHighlightedObject = targetObj;
         if (focusMaskPanel != null) focusMaskPanel.SetActive(true);
 
-        currentAddedCanvas = targetObj.AddComponent<Canvas>();
-        currentAddedCanvas.overrideSorting = true;
-        currentAddedCanvas.sortingOrder = 100;
+        // Canvas / GraphicRaycaster は DisallowMultipleComponent なので、
+        // 既に付いている場合 AddComponent は null を返す。必ず使い回すこと。
+        // （同じ対象を連続ステップでハイライトするケースがあるため）
+        var canvas = targetObj.GetComponent<Canvas>();
+        if (canvas == null) canvas = targetObj.AddComponent<Canvas>();
+        if (canvas == null)
+        {
+            Debug.LogWarning($"[Tutorial] {targetObj.name} に Canvas を用意できませんでした。ハイライトを中止します。");
+            return;
+        }
 
-        targetObj.AddComponent<GraphicRaycaster>();
+        currentHighlightCanvas = canvas;
+        previousOverrideSorting = canvas.overrideSorting;
+        previousSortingOrder = canvas.sortingOrder;
+        canvas.overrideSorting = true;
+        canvas.sortingOrder = 100;
+
+        var raycaster = targetObj.GetComponent<GraphicRaycaster>();
+        if (raycaster == null)
+        {
+            raycaster = targetObj.AddComponent<GraphicRaycaster>();
+            // 自分で追加した分は、解除時に無効化してマスクのクリックを妨げないようにする。
+            previousRaycasterEnabled = false;
+        }
+        else
+        {
+            previousRaycasterEnabled = raycaster.enabled;
+        }
+
+        currentHighlightRaycaster = raycaster;
+        if (raycaster != null) raycaster.enabled = true;
 
         if (arrowPointer != null)
         {
-            arrowPointer.gameObject.SetActive(true);
             var targetRect = targetObj.GetComponent<RectTransform>();
+            if (targetRect == null)
+            {
+                arrowPointer.gameObject.SetActive(false);
+                return;
+            }
+
+            arrowPointer.gameObject.SetActive(true);
             arrowPointer.position = targetRect.position + (Vector3)arrowOffset;
 
             arrowTween?.Kill();
@@ -460,16 +496,25 @@ public sealed class TutorialSequenceController : MonoBehaviour
 
         arrowTween?.Kill();
 
+        // Destroy は同フレーム内では反映されないため、破棄せず元の状態に戻すだけにする。
+        // （破棄すると、直後に同じ対象を再ハイライトした際に AddComponent が失敗する）
         if (currentHighlightedObject != null)
         {
-            var raycaster = currentHighlightedObject.GetComponent<GraphicRaycaster>();
-            if (raycaster != null) Destroy(raycaster);
+            if (currentHighlightCanvas != null)
+            {
+                currentHighlightCanvas.overrideSorting = previousOverrideSorting;
+                currentHighlightCanvas.sortingOrder = previousSortingOrder;
+            }
 
-            if (currentAddedCanvas != null) Destroy(currentAddedCanvas);
+            if (currentHighlightRaycaster != null)
+            {
+                currentHighlightRaycaster.enabled = previousRaycasterEnabled;
+            }
         }
 
         currentHighlightedObject = null;
-        currentAddedCanvas = null;
+        currentHighlightCanvas = null;
+        currentHighlightRaycaster = null;
     }
 
     private void HighlightFirstTaskBubble()
