@@ -349,8 +349,10 @@ Shared
 決定が下り次第、次を実装する。
 
 - リザルトの S / A / B / C ランク。現在 `ResultManager` は難易度・スコア・HP の 3 行のみ。
-- こだわりポイント。`GameTuningSettings.score.craftPointsDiff1〜3` が未使用のまま残っている。使わないと決まったら削除する。
-- AI 成功がコンボを伸ばすかどうか（`GameSession.Apply` の TODO）。
+  **2026-08-06: 論点を [リザルトのランクとカーソルの論点](2026-08-06-rank-and-cursor-questions.md) にまとめ、決定待ち。**
+- ~~こだわりポイント~~ **決着（2026-08-06）: 使わない。** `GameTuningSettings.score.craftPointsDiff1〜3` を削除する。
+- ~~AI 成功がコンボを伸ばすかどうか~~ **決着（2026-08-06）: 伸びない。**
+  今の `GameSession.Apply`（`ComboCount++` は自力成功のみ）が正しい。TODO を消してよい。
 
 ## 対象外
 
@@ -366,3 +368,4 @@ Shared
 - 日本語フォント `EnkaDotMincho24 SDF` に `締 憩 怠 捗 緊 絡 押 違 込` の字形が無い。
 - タイピングの難易度 高 / 超高 の読みが未登録。読みを入れれば `RomanizationGenerator` がローマ字を生成する。
 - 難易度 5 種の生成間隔・タスク寿命・同時表示上限が同値で、差は問題レベルのみ。
+  **2026-08-06: プランナー側で調整する。実装側からは触らない。**

@@ -495,6 +495,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 7352578931755610023}
     m_Modifications:
+    - target: {fileID: 1738256012442853458, guid: f5d836e5edafdda47a8c42ee002c2017, type: 3}
+      propertyPath: m_Type
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1738256012442853458, guid: f5d836e5edafdda47a8c42ee002c2017, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 0}
     - target: {fileID: 3099232815409352813, guid: f5d836e5edafdda47a8c42ee002c2017, type: 3}
       propertyPath: m_Sprite
       value: 
@@ -502,6 +510,14 @@ PrefabInstance:
     - target: {fileID: 4583462241348555448, guid: f5d836e5edafdda47a8c42ee002c2017, type: 3}
       propertyPath: m_Name
       value: AppWindowFrame
+      objectReference: {fileID: 0}
+    - target: {fileID: 5103355273679820065, guid: f5d836e5edafdda47a8c42ee002c2017, type: 3}
+      propertyPath: m_Type
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5103355273679820065, guid: f5d836e5edafdda47a8c42ee002c2017, type: 3}
+      propertyPath: m_Sprite
+      value: 
       objectReference: {fileID: 0}
     - target: {fileID: 5802247634085182505, guid: f5d836e5edafdda47a8c42ee002c2017, type: 3}
       propertyPath: m_text
@@ -602,6 +618,10 @@ PrefabInstance:
     - target: {fileID: 8641560909627268203, guid: f5d836e5edafdda47a8c42ee002c2017, type: 3}
       propertyPath: successMessage
       value: "\u7DDA\u753B\u3092\u4FDD\u5B58\u3057\u307E\u3057\u305F"
+      objectReference: {fileID: 0}
+    - target: {fileID: 9137617800550120450, guid: f5d836e5edafdda47a8c42ee002c2017, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

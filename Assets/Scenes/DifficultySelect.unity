@@ -266,6 +266,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Overwork.Core::ButtonHoverScale
   hoverScale: 1.05
+  pressScale: 0.95
   duration: 0.1
 --- !u!1 &112203332
 GameObject:
@@ -691,6 +692,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Overwork.Core::ButtonHoverScale
   hoverScale: 1.05
+  pressScale: 0.95
   duration: 0.1
 --- !u!1 &257767692
 GameObject:
@@ -842,6 +844,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Overwork.Core::ButtonHoverScale
   hoverScale: 1.05
+  pressScale: 0.95
   duration: 0.1
 --- !u!1 &384517398
 GameObject:
@@ -1708,6 +1711,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Overwork.Core::ButtonHoverScale
   hoverScale: 1.05
+  pressScale: 0.95
   duration: 0.1
 --- !u!1 &716176477
 GameObject:
@@ -1859,6 +1863,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Overwork.Core::ButtonHoverScale
   hoverScale: 1.05
+  pressScale: 0.95
   duration: 0.1
 --- !u!1 &850748225
 GameObject:
@@ -2621,11 +2626,11 @@ Transform:
   m_GameObject: {fileID: 1622813214}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -1071.861, y: -483.64465, z: -0.000030517576}
-  m_LocalScale: {x: 2.3766322, y: 2.3766322, z: 2.3766322}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1970487349}
+  m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1700613117
 GameObject:
@@ -3093,7 +3098,6 @@ RectTransform:
   - {fileID: 1936365800}
   - {fileID: 90696631}
   - {fileID: 906872259}
-  - {fileID: 1622813216}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -3438,3 +3442,4 @@ SceneRoots:
   - {fileID: 2055139271}
   - {fileID: 1970487349}
   - {fileID: 1262564734}
+  - {fileID: 1622813216}

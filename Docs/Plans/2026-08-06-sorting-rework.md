@@ -248,7 +248,7 @@ public sealed class SortingLevelSetting
 - [ ] 違うフォルダに入れるとミスが増え、上限でゲームオーバーになる
 - [ ] **ドラッグして途中で離したファイルが、元の位置に戻る**
 - [ ] `Level1Layout` 〜 `Level4Layout` が Prefab から消えている
-- [ ] `unity command run_tests --mode EditMode` が全件通る（**67 件**）
+- [ ] `unity command run_tests --mode EditMode` が全件通る（**73 件**）
 - [ ] コンソールにエラー・例外が 0 件
 
 ## 目視で見てほしいところ

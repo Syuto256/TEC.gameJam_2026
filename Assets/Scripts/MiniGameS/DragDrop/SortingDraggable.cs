@@ -1,13 +1,14 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.UI;
 
 namespace Overwork.MiniGames.DragDrop
 {
     [RequireComponent(typeof(RectTransform), typeof(CanvasGroup))]
     public sealed class SortingDraggable : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
     {
-        [Tooltip("正解となる箱の categoryId。同じ文字列の SortingDropBox が正解になる。")]
-        [SerializeField] private string categoryId;
+        [Tooltip("正解となるファイルの種類。実行時に SortingMiniGame から設定する。")]
+        [SerializeField] private SortingFileKind fileKind;
 
         [Header("【吸い寄せ（マグネット）設定】")]
         [Tooltip("この距離（ピクセル換算）以内に入ると吸い寄せを開始する")]
@@ -26,7 +27,20 @@ namespace Overwork.MiniGames.DragDrop
         // シーン内の DropBox のキャッシュ
         private SortingDropBox[] dropBoxes;
 
-        public bool Matches(string otherCategoryId) => categoryId == otherCategoryId;
+        /// <summary>生成直後に種類と絵を決める。Prefab には仮の絵だけを置く。</summary>
+        /// <remarks>ファイルの色は PNG が持っているため、ここでは染めない。</remarks>
+        public void Setup(SortingFileKind kind, Sprite icon)
+        {
+            fileKind = kind;
+            var image = GetComponent<Image>();
+            if (image != null)
+            {
+                image.sprite = icon;
+                image.color = Color.white;
+            }
+        }
+
+        public bool Matches(SortingFileKind otherKind) => fileKind == otherKind;
 
         private void Awake()
         {
