@@ -234,6 +234,11 @@ namespace Overwork.MiniGames.Qte
                 LastCleared = active[index];
                 active.RemoveAt(index);
                 ClearedCount++;
+
+                // **さばいたら次をすぐ出す。** 間隔を待たせると、正しく押せているのに
+                // 画面が空く時間ができて手が止まる。次の Tick で 1 枚出るように、
+                // 経過時間を間隔ぶんまで進めておく。
+                sinceLastSpawn = settings.SpawnIntervalSec;
                 return QtePressResult.Cleared;
             }
 

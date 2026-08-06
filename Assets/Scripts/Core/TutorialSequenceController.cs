@@ -503,7 +503,11 @@ public sealed class TutorialSequenceController : MonoBehaviour
             var targetRect = targetObj.GetComponent<RectTransform>();
             if (targetRect == null)
             {
-                arrowPointer.gameObject.SetActive(false);
+                // **ハイライトごと諦める。** RectTransform が無い対象は矢印の位置を決められず、
+                // uGUI 上でハイライトのしようがない。ここで矢印だけ消して抜けると、
+                // 入口で出した暗幕が残り「何も指していない暗幕」が 1 ステップぶん出る。
+                // ClearHighlight は暗幕と矢印を消し、直前に足した Canvas / GraphicRaycaster も外す。
+                ClearHighlight();
                 return;
             }
 

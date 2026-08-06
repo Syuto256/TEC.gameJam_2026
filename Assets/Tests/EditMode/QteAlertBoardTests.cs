@@ -195,6 +195,40 @@ public sealed class QteAlertBoardTests
     }
 
     [Test]
+    public void Press_ClearingMakesTheNextAlertAppearWithoutWaiting()
+    {
+        // 正しく押せているのに画面が空く時間ができると手が止まるため、
+        // さばいた直後の Tick で次が出ること。
+        var board = Build(interval: 2f, grace: 100f, maxConcurrent: 1);
+        board.Tick(0.1f);
+        Assert.That(board.ActiveAlerts.Count, Is.EqualTo(1));
+
+        board.Press(board.ActiveAlerts[0].KeyId);
+        Assert.That(board.ActiveAlerts.Count, Is.EqualTo(0));
+
+        // 間隔（2 秒）を待たずに次が出る。
+        board.Tick(0.1f);
+        Assert.That(board.SpawnedThisTick.Count, Is.EqualTo(1));
+        Assert.That(board.ActiveAlerts.Count, Is.EqualTo(1));
+    }
+
+    [Test]
+    public void Press_MissDoesNotMakeTheNextAlertAppearEarly()
+    {
+        // 早出しは「さばけたご褒美」であり、打ち間違えたときには効かせない。
+        var board = Build(interval: 2f, grace: 100f, maxConcurrent: 1, keyPoolSize: 4);
+        board.Tick(0.1f);
+        var shown = board.ActiveAlerts[0].KeyId;
+
+        board.Press((shown + 1) % 4);
+        Assert.That(board.Misses, Is.EqualTo(1));
+        Assert.That(board.ActiveAlerts.Count, Is.EqualTo(1), "外した警告は残ったまま");
+
+        board.Tick(0.1f);
+        Assert.That(board.SpawnedThisTick.Count, Is.EqualTo(0));
+    }
+
+    [Test]
     public void Constructor_RejectsBrokenSettings()
     {
         Assert.Throws<ArgumentOutOfRangeException>(() => Build(totalCount: 0));

@@ -264,11 +264,15 @@ ExplainGameOver  hpBar[ canvas=無                    ray=無 ]   ← 外れた
 後始末が `if (currentHighlightedObject != null)` で丸ごと囲まれていた。
 **対象（タスク吹き出し等）が先に破棄されると後始末が全部飛ぶ。** Component 側の null 判定で足りる。
 
-### 残っている軽微なもの
+### 7-4. 何も指していない暗幕が出る（2026-08-07 修正済み）
 
-`HighlightObject` は対象に `RectTransform` が無いと矢印を消して `return` するが、
-**暗幕は出したまま抜ける**。進行は止まらないが「何も指していない暗幕」が出る。
-計測では `ExplainTimeUp` で `mask=True arrow=False` として観測された。
+`HighlightObject` は対象に `RectTransform` が無いと矢印を消して `return` していたが、
+**入口で出した暗幕はそのまま残っていた**。進行は止まらないが「何も指していない暗幕」が
+1 ステップぶん出る。計測では `ExplainTimeUp` で `mask=True arrow=False` として観測された。
+
+**修正**: `return` の前に `ClearHighlight()` を呼び、**ハイライトごと諦める**ようにした。
+`RectTransform` が無い対象は uGUI 上でハイライトのしようがない（`Canvas` を足しても位置が決まらない）ため、
+暗幕だけ残す意味が無い。直前に足した `Canvas` / `GraphicRaycaster` も同時に外れる。
 
 ## 効果
 

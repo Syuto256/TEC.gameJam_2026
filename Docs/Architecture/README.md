@@ -3,9 +3,23 @@
 はじめて読む場合は上から順に読んでください。
 
 - [シーン構造](scene-structure.md): どこを触れば何が変わるか。**最初に読む資料**
-- [ミニゲームの追加・改造手順](mini-game-catalog.md): 自分のミニゲームを足す・直す手順
 - [概要・依存関係](overview.md): 層の分かれ方と依存の向き
 - [クラスカタログ](class-catalog.md): 現在の全クラスの責務と接点、調整場所の索引
+
+## 機能ごとの入口
+
+**担当する機能の 1 枚を読めば、その作業は始められます。** 全部を読む必要はありません。
+
+| 機能 | 入口 |
+| --- | --- |
+| ミニゲームを足す・直す | [ミニゲームの追加・改造手順](mini-game-catalog.md) |
+| チュートリアル | [チュートリアル](tutorial.md) |
+| 演出（アニメ・エフェクト） | [演出の置き場と、時間の扱い](effects.md) |
+| デバイス切替 | [DeviceScreenController](device-screen-controller.md) |
+| タスクと吹き出し | [MainGameController と TaskBubbleView](main-game-controller.md) |
+
+> **入口が無い機能**: QTE・タイミングのミニゲームには個別ページがありません
+> （他 4 本にはあります）。触ることになったら、`../Templates/class-detail.md` から作ってください。
 
 ## クラス別の詳細
 
@@ -16,6 +30,8 @@
 - [TaskManager](task-manager.md)
 - [AudioManager](audio-manager.md)
 - [OptionPanelView](option-panel-view.md)
+- [演出の置き場と、時間の扱い](effects.md)
+- [チュートリアル](tutorial.md)
 
 ## ミニゲーム別の詳細
 

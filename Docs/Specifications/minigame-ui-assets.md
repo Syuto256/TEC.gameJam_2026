@@ -323,7 +323,7 @@ Assets/Sprites/InGameUI/MiniGameUI/
 
 ## 12. 素材が届いてから着手する作業
 
-> **着手順は [ミニゲーム改修 統合作業計画](../Plans/2026-08-06-minigame-overhaul-integrated.md) を参照。**
+> **着手順は [ミニゲーム改修 統合作業計画](../Archive/2026-08-06-minigame-overhaul-integrated.md) を参照。**
 > この節の作業を、素材が要らない作業と合わせて 1 本の順序に並べ直してある。
 
 **ここに挙げたものは、絵が無い状態で先に手を付けても二度手間になる。** 仮素材のままレイアウトを

@@ -57,4 +57,4 @@
 
 - [シーン構造](../Architecture/scene-structure.md)
 - [ミニゲームの追加・改造手順](../Architecture/mini-game-catalog.md)
-- [Game 画面の静的 UI 化・再構成計画](../Plans/2026-08-04-game-screen-restructure.md)
+- [Game 画面の静的 UI 化・再構成計画](../Archive/2026-08-04-game-screen-restructure.md)

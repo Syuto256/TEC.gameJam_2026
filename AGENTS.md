@@ -43,6 +43,7 @@
 
 1. `git status --short` で他メンバーの未コミット変更を確認する。関係のない変更は触らない。
 2. `Docs/README.md` と、変更対象に対応する資料を読む。コードの責務・依存が変わる場合は資料も更新する。
+   - **`Docs/Archive/` は読まない。** 終わった計画の保管庫であり、その後の決定で覆っている記述が混ざっています。判断に使うのは `Architecture/` `Specifications/` `Decisions/` の 3 つです。経緯を調べる目的でだけ開き、開いたら「いつの記述か」を必ず確認します。
 3. `ProjectSettings/ProjectVersion.txt` と `Packages/manifest.json` を確認し、Unity バージョンと PipelinePackage の導入状況を確かめる。
 4. **Unity CLI の有無を確認する。** Windows では `Get-Command unity -ErrorAction SilentlyContinue`、macOS/Linux では `command -v unity` を実行する。メンバーごとに CLI の導入状況は異なるため、確認を省略しない。
 5. Unity 操作が必要な場合は、対象プロジェクトを Unity Editor で開き、`Library/Pipeline/.unity-pipeline-port` が存在することを確認してから `unity command --project-path <project-path>` で接続・コマンド一覧を取得する。

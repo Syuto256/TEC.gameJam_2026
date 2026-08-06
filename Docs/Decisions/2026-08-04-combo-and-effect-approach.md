@@ -67,4 +67,4 @@ URP 2D Light は使えない。本プロジェクトの URP は 3D の Universal
 ## 関連資料
 
 - [コアゲームプレイ仕様](../Specifications/gameplay-core.md)
-- [演出強化・仕上げ計画](../Plans/2026-08-04-effects-and-polish.md)
+- [演出強化・仕上げ計画](../Archive/2026-08-04-effects-and-polish.md)
