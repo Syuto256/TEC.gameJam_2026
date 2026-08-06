@@ -65,17 +65,18 @@
 
 | クラス | パス | 役割 | 主な依存先 |
 | --- | --- | --- | --- |
-| `TypingMiniGame` | `Assets/Scripts/MiniGameS/Typing/TypingMiniGame.cs` | キーボード入力を受け、進捗を表示し、完了結果を 1 回通知する。 | `MiniGameBase`, Input System, TextMeshPro |
+| `TypingMiniGame` | `Assets/Scripts/MiniGameS/Typing/TypingMiniGame.cs` | キーボード入力を受け、読みと入力済み / 残りの綴りを表示し、完了結果を 1 回通知する。 | `MiniGameBase`, Input System, TextMeshPro |
 | `TypingQuestionDatabase` / `TypingQuestion` | `Assets/Scripts/MiniGameS/Typing/TypingQuestionDatabase.cs` | レベル別の日本語表示文字列と読みを持つ。ローマ字は持たない。 | UnityEngine |
 | `RomanizationGenerator` | `Assets/Scripts/MiniGameS/Typing/RomanizationGenerator.cs` | ひらがなの読みから打てるローマ字をすべて作る。訓令式・ヘボン式、促音・撥音・拗音の打ち方の差を吸収する。 | System |
 | `TypingInputEvaluator` | `Assets/Scripts/MiniGameS/Typing/TypingInputEvaluator.cs` | 複数の許容ローマ字に対する入力進捗を Unity 非依存で判定する。 | System |
 | `TracingMiniGame` | `Assets/Scripts/MiniGameS/Tracing/TracingMiniGame.cs` | 経路のなぞりを判定する。ガイド線のみ Prefab 上の複製元から実行時に複製する。 | `MiniGameBase`, Input System, uGUI, TextMeshPro |
 | `TracingPathDatabase` / `TracingPathEntry` | `Assets/Scripts/MiniGameS/Tracing/TracingPathDatabase.cs` | レベル別の正規化経路と許容逸脱量を持つ。 | UnityEngine |
 | `TracingPathMath` | `Assets/Scripts/MiniGameS/Tracing/TracingPathMath.cs` | 点と折れ線の距離を物理演算なしで求める。 | UnityEngine |
-| `RapidClickMiniGame` | `Assets/Scripts/MiniGameS/RapidClick/RapidClickMiniGame.cs` | 規定回数までの連打を判定する。必要数は Prefab の 2 値から決める。 | `MiniGameBase`, EventSystem, TextMeshPro |
-| `SortingMiniGame` | `Assets/Scripts/MiniGameS/DragDrop/SortingMiniGame.cs` | カードの仕分けを判定する。箱とカードは Prefab 上の実体を配列で受け取る。 | `MiniGameBase`, TextMeshPro |
-| `SortingDraggable` | `Assets/Scripts/MiniGameS/DragDrop/SortingDraggable.cs` | カード 1 枚のドラッグ。Canvas の拡大率で移動量を補正する。 | uGUI, EventSystem |
-| `SortingDropBox` | `Assets/Scripts/MiniGameS/DragDrop/SortingDropBox.cs` | 受け皿 1 つ。落とされたカードの `categoryId` の一致を判定する。 | uGUI, EventSystem |
+| `RapidClickMiniGame` | `Assets/Scripts/MiniGameS/RapidClick/RapidClickMiniGame.cs` | 規定回数までの連打を判定し、クリックに応じたプレビュー・ファイル情報・残り回数を更新する。 | `MiniGameBase`, EventSystem, TextMeshPro |
+| `SortingMiniGame` | `Assets/Scripts/MiniGameS/DragDrop/SortingMiniGame.cs` | レベル設定に応じてカードとフォルダーをテンプレートから生成し、仕分けを判定する。 | `MiniGameBase`, TextMeshPro |
+| `SortingTypes` | `Assets/Scripts/MiniGameS/DragDrop/SortingTypes.cs` | `SortingFileKind`、種別ごとの見た目、レベル設定のシリアライズ形式を定義する。 | UnityEngine |
+| `SortingDraggable` | `Assets/Scripts/MiniGameS/DragDrop/SortingDraggable.cs` | `SortingFileKind` を持つカード 1 枚をドラッグする。Canvas の拡大率で移動量を補正する。 | uGUI, EventSystem |
+| `SortingDropBox` | `Assets/Scripts/MiniGameS/DragDrop/SortingDropBox.cs` | `SortingFileKind` を持つフォルダー 1 つ。落とされたカードの種別一致を判定する。 | uGUI, EventSystem |
 | `QteMiniGame` | `Assets/Scripts/MiniGameS/Qte/QteMiniGame.cs` | 並びどおりのキー入力を判定する。キーの枠のみ Prefab 上の複製元から実行時に複製する。 | `MiniGameBase`, Input System, TextMeshPro |
 | `QteSequence` / `QtePressResult` | `Assets/Scripts/MiniGameS/Qte/QteSequence.cs` | 押す順番と進捗だけを持ち、1 回の押下の正誤を Unity 非依存で判定する。 | System |
 | `QteKeyCell` / `QteCellState` | `Assets/Scripts/MiniGameS/Qte/QteKeyCell.cs` | キー 1 つ分の枠。状態ごとの色と拡大率を持つ。判定には関わらない。 | uGUI, TextMeshPro |
@@ -167,7 +168,7 @@
 ## MiniGameBase の契約
 
 - `Initialize(difficulty, timeLimit)` が初期状態を設定し、`IsPlaying` を有効にする。
-- 任意の `timeGaugeFill`（Filled Image）と `timeText` を Prefab で割り当てると、残り時間表示を基底クラスが更新する。各ミニゲームは何も書かなくてよい。
+- 任意の `timeGaugeFill`（単色の Image。Source Image は空）と `timeText` を Prefab で割り当てると、残り時間表示を基底クラスが更新する。ゲージ幅は `RectTransform` の横方向アンカーで表現し、各ミニゲームは何も書かなくてよい。
 - `Update` が残り時間を減算し、派生クラスの `OnUpdate(deltaTime)` を実行する。
 - 時間切れは `FinishGame(false, "TIME OUT")` で通知する。
 - 派生クラスは成功・失敗を `FinishGame(success, reason)` で一度だけ通知する。

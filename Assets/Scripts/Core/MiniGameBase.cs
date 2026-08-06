@@ -15,7 +15,7 @@ using UnityEngine.UI;
 public abstract class MiniGameBase : MonoBehaviour
 {
     [Header("共通 UI（任意）")]
-    [Tooltip("残り時間ゲージ。Image Type を Filled にする。")]
+    [Tooltip("残り時間ゲージ。Source Image を空にした単色 Image を割り当てる。残り時間は幅で表す。")]
     [SerializeField] private Image timeGaugeFill;
 
     [Tooltip("残り時間の数値表示。画面右上に置くのが共通の並びである。")]
@@ -124,7 +124,12 @@ public abstract class MiniGameBase : MonoBehaviour
 
         if (timeGaugeFill != null)
         {
-            timeGaugeFill.fillAmount = TimeLimit <= 0f ? 0f : Mathf.Clamp01(remaining / TimeLimit);
+            var ratio = TimeLimit <= 0f ? 0f : Mathf.Clamp01(remaining / TimeLimit);
+            var fillRect = timeGaugeFill.rectTransform;
+            fillRect.anchorMin = new Vector2(0f, 0f);
+            fillRect.anchorMax = new Vector2(ratio, 1f);
+            fillRect.offsetMin = Vector2.zero;
+            fillRect.offsetMax = Vector2.zero;
         }
 
         if (timeText != null)

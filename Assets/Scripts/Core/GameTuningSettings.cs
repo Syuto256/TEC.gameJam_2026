@@ -96,15 +96,6 @@ public class GameTuningSettings : ScriptableObject
         [Tooltip("問題レベル4のタスクを片付けたときの基礎スコア。")]
         public int baseScoreDiff4 = 300;
 
-        [Tooltip("【未使用】現在どこからも参照していない。使う予定が無ければ消してよい。")]
-        public int craftPointsDiff1 = 10;
-
-        [Tooltip("【未使用】現在どこからも参照していない。使う予定が無ければ消してよい。")]
-        public int craftPointsDiff2 = 15;
-
-        [Tooltip("【未使用】現在どこからも参照していない。使う予定が無ければ消してよい。")]
-        public int craftPointsDiff3 = 25;
-
         [Tooltip("早く着手したときのボーナス上限。\n" +
                  "タスクの残り寿命が多いうちに着手するほどスコアが伸びる。\n" +
                  "0.5 なら、出現直後に着手した場合が最大で 1.5 倍。0 にするとボーナス無し。")]

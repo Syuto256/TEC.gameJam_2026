@@ -272,8 +272,9 @@
 | **合計** | **50** | |
 
 **仮素材が入っている。** 共通フレームの 12 枚は、寸法とふちだけ仕様どおりに合わせた白い図形を
-`Assets/Sprites/MiniGameUI/Common/` に置いてある。**本番の絵は同じ名前で上書きすればよい。**
-取り込み設定（ふち・縮小率）は自動で引き継がれるので、Prefab 側の作業は発生しない。
+`Assets/Sprites/InGameUI/MiniGameUI/Common/` に置いていた。本番素材の納品先も同じ場所へ統一し、
+2026-08-06 に本素材へ差し替え済みである。今後の差し替えも同じ名前で上書きすればよい。
+取り込み設定（ふち・縮小率）は仮素材の meta を引き継いでいるので、Prefab 側の作業は発生しない。
 
 ## 9. 絵が要らないと確定しているもの
 
@@ -289,7 +290,7 @@
 ## 10. 納品先
 
 ```
-Assets/Sprites/MiniGameUI/
+Assets/Sprites/InGameUI/MiniGameUI/
 ├─ Common/      共通ウィンドウフレーム
 ├─ Sorting/     仕分け
 ├─ RapidClick/  連打

@@ -8,7 +8,7 @@ namespace Overwork.MiniGames.Typing
     /// <summary>Keyboard.onTextInput でローマ字入力を受ける共有タイピングミニゲーム。</summary>
     /// <remarks>
     /// 表示の並びは Suzuki の試作（`Assets/Personal/Suzuki/Suzuki.unity`）から取り込んでいる。
-    /// お題・ローマ字・入力済み・残りを縦に並べ、ミスを左下、残り時間を右下に置く。
+    /// 読み・お題・入力済みと残りを表示し、ミスを左下、残り時間を右下に置く。
     /// 配置・配色・文字サイズは `Assets/Prefabs/MiniGames/TypingMiniGame.prefab` で調整する。
     /// </remarks>
     public sealed class TypingMiniGame : MiniGameBase
@@ -21,24 +21,25 @@ namespace Overwork.MiniGames.Typing
         [Tooltip("お題（漢字表記）。")]
         [SerializeField] private TMP_Text questionText;
 
-        [Tooltip("打つべきローマ字の全体。任意。")]
-        [SerializeField] private TMP_Text targetRomanizationText;
+        [Tooltip("お題の読み。空の問題では行ごと隠す。")]
+        [SerializeField] private TMP_Text readingText;
 
-        [Tooltip("すでに正しく打てた部分。")]
-        [SerializeField] private TMP_Text acceptedInputText;
-
-        [Tooltip("これから打つ部分。")]
-        [SerializeField] private TMP_Text remainingInputText;
+        [Tooltip("すでに打てた部分と、これから打つ部分を1行で表示する。")]
+        [SerializeField] private TMP_Text spellingText;
 
         [Tooltip("ミス数。任意。")]
         [SerializeField] private TMP_Text missText;
 
         [Header("【文言の書式】")]
-        [SerializeField] private string questionFormat = "お題: {0}";
-        [SerializeField] private string targetRomanizationFormat = "ローマ字: {0}";
-        [SerializeField] private string acceptedInputFormat = "入力済み: {0}";
-        [SerializeField] private string remainingInputFormat = "残り: {0}";
+        [SerializeField] private string questionFormat = "{0}";
         [SerializeField] private string missFormat = "ミス: {0} / {1}";
+
+        [Header("【綴りの色】")]
+        [Tooltip("すでに正しく打てた部分の色。")]
+        [SerializeField] private Color acceptedInputColor = new Color(0.55f, 1f, 0.70f, 1f);
+
+        [Tooltip("これから打つ部分の色。")]
+        [SerializeField] private Color remainingInputColor = new Color(0.72f, 0.80f, 0.90f, 1f);
 
         [Header("【難度の調整】")]
         [Tooltip("何回打ち間違えたら失敗にするか。")]
@@ -59,7 +60,6 @@ namespace Overwork.MiniGames.Typing
         private bool subscribed;
         private Keyboard subscribedKeyboard;
         private float lockoutRemaining;
-        private Color remainingInputColor;
 
         public string CurrentQuestionText => question == null ? string.Empty : question.displayText;
 
@@ -71,8 +71,8 @@ namespace Overwork.MiniGames.Typing
             if (!SceneUiValidation.Require(this,
                     (nameof(database), database),
                     (nameof(questionText), questionText),
-                    (nameof(acceptedInputText), acceptedInputText),
-                    (nameof(remainingInputText), remainingInputText)))
+                    (nameof(readingText), readingText),
+                    (nameof(spellingText), spellingText)))
             {
                 base.Initialize(difficulty, timeLimit);
                 FinishGame(false, "PREFAB NOT CONFIGURED");
@@ -105,11 +105,7 @@ namespace Overwork.MiniGames.Typing
 
             missCount = 0;
             lockoutRemaining = 0f;
-            remainingInputColor = remainingInputText.color;
-
             questionText.text = string.Format(questionFormat, question.displayText);
-            RefreshHint();
-
             RefreshUi();
             Subscribe();
         }
@@ -149,7 +145,6 @@ namespace Overwork.MiniGames.Typing
                 return true;
             }
 
-            // TypingMiniGame.cs の 137行目付近
             PlayInputFeedback(false);
             missCount++;
             lockoutRemaining = missLockoutSeconds;
@@ -176,16 +171,21 @@ namespace Overwork.MiniGames.Typing
             if (lockoutRemaining <= 0f)
             {
                 lockoutRemaining = 0f;
-                ApplyLockoutColor();
+                RefreshSpellingText();
             }
         }
 
-        private void ApplyLockoutColor()
+        private void RefreshSpellingText()
         {
-            if (remainingInputText != null)
+            if (spellingText == null || evaluator == null)
             {
-                remainingInputText.color = IsInputLocked ? lockedOutColor : remainingInputColor;
+                return;
             }
+
+            var acceptedHex = ColorUtility.ToHtmlStringRGBA(acceptedInputColor);
+            var remainingHex = ColorUtility.ToHtmlStringRGBA(IsInputLocked ? lockedOutColor : remainingInputColor);
+            spellingText.text = "<color=#" + acceptedHex + ">" + evaluator.AcceptedInput
+                + "</color><color=#" + remainingHex + ">" + evaluator.RemainingInput + "</color>";
         }
 
         protected override void OnDestroy()
@@ -238,27 +238,6 @@ namespace Overwork.MiniGames.Typing
             ProcessInput(input);
         }
 
-        /// <summary>「ローマ字」の行を整える。お題と同じ綴りになるときは行ごと隠す。</summary>
-        /// <remarks>
-        /// 英単語のお題では、打つ綴りがお題そのものになる。
-        /// 「お題: pull」の下に「ローマ字: pull」と並べても案内にならないため、そのときは出さない。
-        /// </remarks>
-        private void RefreshHint()
-        {
-            if (targetRomanizationText == null)
-            {
-                return;
-            }
-
-            var hint = evaluator.AcceptedInput + evaluator.RemainingInput;
-            var duplicated = string.Equals(hint, question.displayText.Trim(), StringComparison.OrdinalIgnoreCase);
-            targetRomanizationText.gameObject.SetActive(!duplicated);
-            if (!duplicated)
-            {
-                targetRomanizationText.text = string.Format(targetRomanizationFormat, hint);
-            }
-        }
-
         private void RefreshUi()
         {
             if (evaluator == null)
@@ -266,9 +245,14 @@ namespace Overwork.MiniGames.Typing
                 return;
             }
 
-            acceptedInputText.text = string.Format(acceptedInputFormat, evaluator.AcceptedInput);
-            remainingInputText.text = string.Format(remainingInputFormat, evaluator.RemainingInput);
-            ApplyLockoutColor();
+            if (readingText != null)
+            {
+                var reading = question == null ? string.Empty : question.reading?.Trim();
+                readingText.gameObject.SetActive(!string.IsNullOrEmpty(reading));
+                readingText.text = reading ?? string.Empty;
+            }
+
+            RefreshSpellingText();
 
             if (missText != null)
             {
