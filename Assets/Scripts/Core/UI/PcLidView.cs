@@ -60,6 +60,14 @@ public sealed class PcLidView : MonoBehaviour
              "0 にすると、いま映っている画面が一瞬で差し替わる。")]
     [Min(0f)] [SerializeField] private float coverSec = 0.15f;
 
+    [Tooltip("蓋を閉じるとき、画面を覆いきってからコマが動き出すまでの余韻（秒）。\n" +
+             "ここには元からシーン読み込みの停止（約 0.3 秒）が入っているため、\n" +
+             "体感の間は「その分＋ここの値」になる。")]
+    [Min(0f)] [SerializeField] private float closeHoldBeforeFramesSec = 0.35f;
+
+    [Tooltip("蓋を開けるときの同じ余韻。0 にすると従来どおり、覆いきってすぐ動き出す。")]
+    [Min(0f)] [SerializeField] private float openHoldBeforeFramesSec;
+
     [Tooltip("画面が光りきるまでの秒数。0 にすると光らない。")]
     [Min(0f)] [SerializeField] private float flashInSec = 0.12f;
 
@@ -101,16 +109,16 @@ public sealed class PcLidView : MonoBehaviour
     /// <returns>受け付けたら true。演出中にもう一度呼ばれた場合は false を返し、何もしない。</returns>
     public bool TryOpen(Action action)
     {
-        return TryRun(openFrames, true, action);
+        return TryRun(openFrames, true, openHoldBeforeFramesSec, action);
     }
 
     /// <summary>蓋を閉じてから <paramref name="action"/> を実行し、演出を引き上げる。</summary>
     public bool TryClose(Action action)
     {
-        return TryRun(closeFrames, false, action);
+        return TryRun(closeFrames, false, closeHoldBeforeFramesSec, action);
     }
 
-    private bool TryRun(Frame[] frames, bool flashAfterwards, Action action)
+    private bool TryRun(Frame[] frames, bool flashAfterwards, float holdSec, Action action)
     {
         if (action == null || canvasGroup == null || lidImage == null || running != null)
         {
@@ -123,7 +131,7 @@ public sealed class PcLidView : MonoBehaviour
             return false;
         }
 
-        running = StartCoroutine(Run(frames, flashAfterwards, action));
+        running = StartCoroutine(Run(frames, flashAfterwards, holdSec, action));
         return true;
     }
 
@@ -139,7 +147,7 @@ public sealed class PcLidView : MonoBehaviour
     /// 閉じるときは、シーン側の PC と閉じていく PC が重なって二重に見えていた。
     /// </para>
     /// </remarks>
-    private IEnumerator Run(Frame[] frames, bool flashAfterwards, Action action)
+    private IEnumerator Run(Frame[] frames, bool flashAfterwards, float holdSec, Action action)
     {
         // 覆う前に最初のコマを出す。いま映っている画面と同じ絵から始めるためである。
         var first = FirstSprite(frames);
@@ -163,6 +171,14 @@ public sealed class PcLidView : MonoBehaviour
         // 見送らずにコマを進めると、最初の数コマがその 1 回で消化されて飛ぶ。
         yield return null;
         yield return null;
+
+        // 覆いきった絵をひと呼吸見せてから動かす。
+        // 読み込みの停止フレームを見送ったあとに測るので、ここで指定した秒数がそのまま余韻になる。
+        // 読み込む前に置くと、実際の間が「指定値＋端末ごとに変わる読み込み時間」になってしまう。
+        if (holdSec > 0f)
+        {
+            yield return new WaitForSecondsRealtime(holdSec);
+        }
 
         foreach (var frame in frames)
         {

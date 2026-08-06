@@ -751,12 +751,14 @@ public sealed class MainGameController : MonoBehaviour
 
     private void CompletePlayerMiniGame(int taskId, bool success)
     {
-        if (!initialized || activePlayerTaskId != taskId)
+        // ending も見る。**ミニゲームは自前の Update で動いているため、
+        // 時間切れや HP0 でセッションが終わったあとも余韻のあいだ動き続ける。**
+        // ここを通すと、終了演出の最中に吹き出しが弾け、決着演出まで走ってしまう。
+        if (!initialized || ending || activePlayerTaskId != taskId)
         {
             return;
         }
 
-       
         taskManager.CompletePlayer(taskId, success);
     }
 
