@@ -30,6 +30,12 @@ public sealed class GameManager : MonoBehaviour
     [SerializeField] private MainGameController mainGameController;
     [SerializeField] private DeviceScreenController deviceScreenController;
 
+    [Header("【チュートリアル】")]
+    [Tooltip("チュートリアルとして開いたときだけ起こす一式（TutorialOverlay）。\n" +
+             "通常のプレイでは非アクティブのままにする。中の TutorialSequenceController も動かない。\n" +
+             "未設定でも通常プレイには影響しない（チュートリアルが動かないだけ）。")]
+    [SerializeField] private GameObject tutorialOverlay;
+
     [Header("【終了演出】")]
     [Tooltip("ゲームが終わってから画面を覆い始めるまでの余韻（秒）。\n" +
              "この間はゲーム画面が止まったまま残る。0 にすると終わった瞬間に蓋の演出へ入る。")]
@@ -86,6 +92,14 @@ public sealed class GameManager : MonoBehaviour
         mainGameController.PausedChanged += OnPausedChanged;
         mainGameController.SessionFinished += OnSessionFinished;
         miniGameHostView.Hide();
+
+        // チュートリアルの一式は、そのモードで開いたときだけ起こす。
+        // **すべての配線が終わってから起こすこと。** TutorialSequenceController.Start は
+        // mainGameController のイベントを購読し hudView を隠すため、初期化前に走らせない。
+        if (tutorialOverlay != null)
+        {
+            tutorialOverlay.SetActive(GameFlowController.EnsureInstance().IsTutorial);
+        }
     }
 
     /// <summary>ゲームを終えたら、PC 面へ戻してから結果画面へ移る。</summary>

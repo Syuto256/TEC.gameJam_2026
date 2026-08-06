@@ -22,13 +22,17 @@ public sealed class MainGameController : MonoBehaviour
     [SerializeField] private TaskBacklogView taskBacklogView;
 
     [Header("【タスク生成設定】")]
-    [Tooltip("通常の自動タスク生成（定期発生）を有効にするか。チュートリアル等では false にする")]
+    [Tooltip("通常の自動タスク生成（定期発生）を有効にするか。\n" +
+             "※チュートリアルのときはここではなく GameTuningSettings の【チュートリアルの設定】が使われる。")]
     [SerializeField] private bool enableAutoSpawn = true;
-    [Tooltip("タスク制限時間の上書き（秒）。0より大きい値を入れるとその秒数で固定される。チュートリアルで無制限にする場合は 9999 等を設定")]
+
+    [Tooltip("タスク制限時間の上書き（秒）。0 より大きい値を入れるとその秒数で固定される。\n" +
+             "※チュートリアルのときはここではなく GameTuningSettings の【チュートリアルの設定】が使われる。")]
     [SerializeField] private float overrideTaskLifetimeSec = 0f;
 
     [Header("【一斉飛来（ラッシュ）イベント設定】")]
-    [Tooltip("一斉飛来（ラッシュ）イベントを有効にするか")]
+    [Tooltip("一斉飛来（ラッシュ）イベントを有効にするか。\n" +
+             "※チュートリアルのときはここではなく GameTuningSettings の【チュートリアルの設定】が使われる。")]
     [SerializeField] private bool enableTaskRush = true;
 
     [Tooltip("ラッシュ発生の間隔（最小秒数）")]
@@ -64,6 +68,21 @@ public sealed class MainGameController : MonoBehaviour
     private bool initialized;
     private bool ending;
     private bool paused;
+
+    /// <summary>チュートリアルとして動いているか。<see cref="Initialize"/> で確定する。</summary>
+    /// <remarks>
+    /// **以前は <c>overrideTaskLifetimeSec &gt; 0f</c> をチュートリアル判定に流用していた。**
+    /// 制限時間の設定値が「今どのモードか」を兼ねていたため、片方だけ変えると
+    /// もう片方が黙って変わる状態になっていた。判定はこのフラグだけが持つ。
+    /// </remarks>
+    private bool isTutorial;
+
+    // Initialize で確定する実効値。チュートリアルなら GameTuningSettings.tutorial、
+    // そうでなければ上の [SerializeField]（＝ Scene の値）を採る。
+    private bool autoSpawnEnabled;
+    private bool taskRushEnabled;
+    private float taskLifetimeOverrideSec;
+    private float miniGameTimeLimitOverrideSec;
 
     public GameSession Session => session;
     public TaskManager TaskManager => taskManager;
@@ -170,11 +189,20 @@ public sealed class MainGameController : MonoBehaviour
 
         var flow = GameFlowController.EnsureInstance();
         difficultyProfile = tuningSettings.GetDifficultyProfile(flow.SelectedDifficulty);
+
+        // モードごとの実効値をここで一度だけ決める。以降はこの 4 つだけを見る。
+        isTutorial = flow.IsTutorial;
+        var tutorial = tuningSettings.tutorial;
+        autoSpawnEnabled = isTutorial ? tutorial.enableAutoSpawn : enableAutoSpawn;
+        taskRushEnabled = isTutorial ? tutorial.enableTaskRush : enableTaskRush;
+        taskLifetimeOverrideSec = isTutorial ? tutorial.taskLifetimeSec : overrideTaskLifetimeSec;
+        miniGameTimeLimitOverrideSec = isTutorial ? tutorial.miniGameTimeLimitSec : 0f;
+
         WarnIfSlotsAreFewerThanVisibleLimit();
         taskManager = new TaskManager(new TaskManagerSettings
         {
-            // ★修正: チュートリアル時（overrideTaskLifetimeSec > 0）は AI 成功率を 100% (1f) にして絶対成功させる
-            AiSuccessRate = overrideTaskLifetimeSec > 0f ? 1f : tuningSettings.ai.successRate,
+            // チュートリアルでは AI に任せた分を必ず成功させる（案内どおりに進ませるため）。
+            AiSuccessRate = isTutorial ? tutorial.aiSuccessRate : tuningSettings.ai.successRate,
             AiProcessDurationSec = tuningSettings.ai.processDurationSec,
             AiCooldownSec = tuningSettings.ai.cooldownSec,
             MaxVisibleTasksPerSurface = difficultyProfile.maxTasksPerSurface,
@@ -226,8 +254,8 @@ public sealed class MainGameController : MonoBehaviour
             return;
         }
 
-        // ★修正: enableAutoSpawn が true の時だけ自動生成のタイマーを進める
-        if (enableAutoSpawn)
+        // 自動生成が有効なときだけタイマーを進める（チュートリアルでは止まる）
+        if (autoSpawnEnabled)
         {
             spawnElapsedSec += deltaTime;
             var spawnInterval = difficultyProfile.GetSpawnInterval(taskManager.ElapsedSec);
@@ -238,8 +266,8 @@ public sealed class MainGameController : MonoBehaviour
             }
         }
 
-        // ★ 追加: ラッシュイベントの経過計測と発生判定
-        if (enableTaskRush)
+        // ラッシュイベントの経過計測と発生判定（チュートリアルでは起こさない）
+        if (taskRushEnabled)
         {
             rushElapsedSec += deltaTime;
             if (rushElapsedSec >= nextRushIntervalSec)
@@ -347,8 +375,10 @@ public sealed class MainGameController : MonoBehaviour
         // 失敗したときの出題し直しは TutorialSequenceController.OnTaskResolved が持っている。
         miniGame.OnCompleted += (success, reason) => CompletePlayerMiniGame(taskId, success);
 
-        // 時間は 9999 などの極端な数値ではなく 99 秒程度にして計算崩れを防ぐ
-        var timeLimit = overrideTaskLifetimeSec > 0f ? 99f : entry.GetTimeLimit(task.Level);
+        // 上書き値は 9999 などの極端な数値にしないこと（表示と計算が崩れる）。既定は 99 秒。
+        var timeLimit = miniGameTimeLimitOverrideSec > 0f
+            ? miniGameTimeLimitOverrideSec
+            : entry.GetTimeLimit(task.Level);
         miniGame.Initialize(task.Level, timeLimit);
         return true;
     }
@@ -400,7 +430,7 @@ public sealed class MainGameController : MonoBehaviour
             return;
         }
 
-        var lifetime = overrideTaskLifetimeSec > 0f ? overrideTaskLifetimeSec : difficultyProfile.taskLifetimeSec;
+        var lifetime = taskLifetimeOverrideSec > 0f ? taskLifetimeOverrideSec : difficultyProfile.taskLifetimeSec;
 
         // ★ 修正: 最後の引数を difficultyProfile... から lifetime に変更
         taskManager.CreateTask(kind, surface, level, lifetime);

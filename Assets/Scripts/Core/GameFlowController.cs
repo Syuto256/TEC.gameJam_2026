@@ -9,14 +9,20 @@ public sealed class GameFlowController : MonoBehaviour
     public const string GameSceneName = "Game";
     public const string ClearSceneName = "Clear";
     public const string GameOverSceneName = "GameOver";
-    
-    // ★追加: チュートリアルシーンの識別名（Build Settings のシーン名と一致させる）
-    public const string TutorialSceneName = "Tutorial";
 
     public static GameFlowController Instance { get; private set; }
 
     public GameDifficulty SelectedDifficulty { get; private set; } = GameDifficulty.Easy;
     public GameSessionResult LastSessionResult { get; private set; }
+
+    /// <summary>次に開く Game シーンをチュートリアルとして動かすか。</summary>
+    /// <remarks>
+    /// **チュートリアルは専用シーンではなく、Game シーンの 1 モードである。**
+    /// 以前は Tutorial シーンが Game シーンの複製として存在したが、複製した時点から
+    /// 追随されず古くなり続けたため廃止した（[チュートリアルの Game シーン統合] を参照）。
+    /// 挙動の差は <see cref="GameTuningSettings.tutorial"/> の 5 つの値だけが持つ。
+    /// </remarks>
+    public bool IsTutorial { get; private set; }
 
     public static GameFlowController EnsureInstance()
     {
@@ -66,6 +72,7 @@ public sealed class GameFlowController : MonoBehaviour
     {
         SelectedDifficulty = difficulty;
         LastSessionResult = null;
+        IsTutorial = false;
 
         var lid = PcLidView.EnsureInstance();
         if (lid != null && lid.TryPowerOn(() => SceneManager.LoadScene(GameSceneName)))
@@ -82,16 +89,35 @@ public sealed class GameFlowController : MonoBehaviour
         SelectDifficulty(difficulty);
     }
 
-    // ★追加: チュートリアル画面へ遷移する
+    /// <summary>Game シーンをチュートリアルとして開く。</summary>
+    /// <remarks>
+    /// **難易度は現在の選択をそのまま使う。** チュートリアルは難易度の 1 つではなく、
+    /// 選ばれた難易度の上で出題を止めて案内を出すモードである。
+    /// 遷移の演出は <see cref="SelectDifficulty"/> と同じものを使う。
+    /// </remarks>
     public void StartTutorial()
     {
         LastSessionResult = null;
-        Transition(TutorialSceneName);
+        IsTutorial = true;
+
+        var lid = PcLidView.EnsureInstance();
+        if (lid != null && lid.TryPowerOn(() => SceneManager.LoadScene(GameSceneName)))
+        {
+            return;
+        }
+
+        Transition(GameSceneName);
     }
 
+    /// <summary>結果画面からの再挑戦。</summary>
+    /// <remarks>
+    /// **チュートリアルから来た場合も本編で再開する。** 専用シーンだった頃と同じ挙動である
+    /// （当時も Retry の行き先は Game シーンだった）。
+    /// </remarks>
     public void Retry()
     {
         LastSessionResult = null;
+        IsTutorial = false;
         Transition(GameSceneName);
     }
 

@@ -20,13 +20,20 @@ public sealed class DifficultySelectManager : MonoBehaviour
     [Tooltip("表示する難易度とボタンの対応。並び順は Scene 側の配置で決める。")]
     [SerializeField] private Choice[] choices = Array.Empty<Choice>();
 
-    [Header("【チュートリアル確認ダイアログ】")]
-    [Tooltip("イージー・ノーマル選択時に表示する確認ダイアログ（Hierarchy 上の UIPanel をセット）")]
-    [SerializeField] private TutorialConfirmDialog confirmDialog;
+    [Header("【チュートリアル】")]
+    [Tooltip("チュートリアルを始めるボタン。難易度とは並列に扱わない補助導線。\n" +
+             "未設定でも他の難易度は選べる（チュートリアルへ入れなくなるだけ）。")]
+    [SerializeField] private Button tutorialButton;
 
     private void Start()
     {
         AppServices.Ensure();
+
+        if (tutorialButton != null)
+        {
+            tutorialButton.onClick.AddListener(SelectTutorial);
+        }
+
         if (choices == null || choices.Length == 0)
         {
             Debug.LogError("DifficultySelectManager (" + name + "): choices が空です。", this);
@@ -68,29 +75,20 @@ public sealed class DifficultySelectManager : MonoBehaviour
     private void Select(GameDifficulty difficulty)
     {
         AppServices.PlayConfirm();
-
-        // Easy または Normal、かつ設定で確認ONになっている場合
-        var isTargetDifficulty = (difficulty == GameDifficulty.Easy || difficulty == GameDifficulty.Normal);
-
-        if (isTargetDifficulty && GameSettings.ShowTutorialConfirm && confirmDialog != null)
-        {
-            // ダイアログを表示してワンクッション挟む
-            confirmDialog.Show(
-                onYes: () =>
-                {
-                    // 「はい」: チュートリアルへ
-                    GameFlowController.EnsureInstance().StartTutorial();
-                },
-                onNo: () =>
-                {
-                    // 「いいえ」: そのまま選択した難易度で本編開始
-                    GameFlowController.EnsureInstance().SelectDifficulty(difficulty);
-                }
-            );
-            return;
-        }
-
-        // 確認OFF、または Hard などの場合は即本編開始
         GameFlowController.EnsureInstance().SelectDifficulty(difficulty);
+    }
+
+    /// <summary>チュートリアルとして Game シーンを開く。</summary>
+    /// <remarks>
+    /// **難易度は現在の選択のままにする。** チュートリアルは難易度の 1 つではないため、
+    /// ここで難易度を選び直さない。以前は Easy / Normal を選んだときに確認ダイアログを出して
+    /// 分岐させていたが、遊ぶ前に問われても判断できないうえ、
+    /// 「チュートリアルを見たい」ときに難易度を選ばされる作りになっていたため、
+    /// 独立したボタンへ置き換えた。
+    /// </remarks>
+    private void SelectTutorial()
+    {
+        AppServices.PlayConfirm();
+        GameFlowController.EnsureInstance().StartTutorial();
     }
 }

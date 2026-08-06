@@ -11,9 +11,6 @@ public sealed class OptionPanelView : MonoBehaviour
     [Tooltip("SE 音量のスライダー")]
     [SerializeField] private Slider sfxSlider;
 
-    [Tooltip("チュートリアル確認表示の Toggle")]
-    [SerializeField] private Toggle showTutorialConfirmToggle;
-
     [Tooltip("オプションパネルを閉じるボタン")]
     [SerializeField] private Button closeButton;
 
@@ -33,11 +30,6 @@ public sealed class OptionPanelView : MonoBehaviour
             sfxSlider.onValueChanged.AddListener(HandleSfxChanged);
         }
 
-        if (showTutorialConfirmToggle != null)
-        {
-            showTutorialConfirmToggle.onValueChanged.AddListener(HandleTutorialConfirmChanged);
-        }
-
         if (closeButton != null)
         {
             closeButton.onClick.AddListener(Hide);
@@ -54,11 +46,6 @@ public sealed class OptionPanelView : MonoBehaviour
         if (sfxSlider != null)
         {
             sfxSlider.SetValueWithoutNotify(AudioManager.SfxVolume);
-        }
-
-        if (showTutorialConfirmToggle != null)
-        {
-            showTutorialConfirmToggle.SetIsOnWithoutNotify(GameSettings.ShowTutorialConfirm);
         }
     }
 
@@ -83,10 +70,5 @@ public sealed class OptionPanelView : MonoBehaviour
     {
         AudioManager.SfxVolume = value;
         AudioManager.PlaySfx(AudioCue.UiConfirm);
-    }
-
-    private static void HandleTutorialConfirmChanged(bool isOn)
-    {
-        GameSettings.ShowTutorialConfirm = isOn;
     }
 }

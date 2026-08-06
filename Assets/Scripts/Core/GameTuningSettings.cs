@@ -34,6 +34,36 @@ public class GameTuningSettings : ScriptableObject
              "行を足した直後は全項目が 0 になるため、必ず全部の値を入れること（0 のままの項目は上の値で補われる）。")]
     public List<DifficultyProfile> difficultyProfiles = new List<DifficultyProfile>();
 
+    [Header("【チュートリアルの設定】")]
+    [Tooltip("チュートリアルとして Game シーンを開いたときだけ使う値。\n" +
+             "チュートリアルは難易度の 1 つではないため、上の【難易度ごとの設定】には行を作らない。\n" +
+             "難易度そのものは選ばれたものをそのまま使い、ここの値だけを上書きする。")]
+    public TutorialSettings tutorial = new TutorialSettings();
+
+    /// <summary>チュートリアルとして走らせるときだけ効く上書き。</summary>
+    /// <remarks>
+    /// **本編との違いはここにある 5 つだけである。** 以前は Tutorial シーン側の
+    /// <c>MainGameController</c> に直接書かれており、シーンを複製しないと成立しなかった。
+    /// </remarks>
+    [Serializable]
+    public class TutorialSettings
+    {
+        [Tooltip("自動でタスクを出すか。チュートリアルは案内の順に出題するため false。")]
+        public bool enableAutoSpawn = false;
+
+        [Tooltip("一斉飛来（ラッシュ）を起こすか。チュートリアル中は起こさない。")]
+        public bool enableTaskRush = false;
+
+        [Tooltip("タスクの制限時間（秒）。案内を読む間に期限切れにならないよう長く取る。")]
+        [Min(0f)] public float taskLifetimeSec = 99f;
+
+        [Tooltip("ミニゲームの制限時間（秒）。同じ理由で長く取る。")]
+        [Min(0f)] public float miniGameTimeLimitSec = 99f;
+
+        [Tooltip("AI に任せたときの成功率。チュートリアルでは必ず成功させたいので 1（100%）。")]
+        [Range(0f, 1f)] public float aiSuccessRate = 1f;
+    }
+
     [Serializable]
     public class DamageSettings
     {
