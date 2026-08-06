@@ -70,6 +70,11 @@ public sealed class TutorialSequenceController : MonoBehaviour
     private bool previousOverrideSorting;
     private int previousSortingOrder;
     private bool previousRaycasterEnabled;
+
+    // ハイライトのために自分で足したか、元から付いていたか。
+    // 足したものは外し、元からあったものは値だけ戻す。
+    private bool addedCanvas;
+    private bool addedRaycaster;
     private Tween arrowTween;
 
     private void Start()
@@ -233,11 +238,17 @@ public sealed class TutorialSequenceController : MonoBehaviour
 
             case TutorialStep.PromptTabletSwitch:
                 ShowInstruction("『タブレット』を押してみましょう。", canClickAdvance: false);
-                if (tabletSwitchButton != null) HighlightObject(tabletSwitchButton.gameObject);
                 SetStep(TutorialStep.WaitTabletSwitch);
                 break;
 
-            case TutorialStep.WaitTabletSwitch: break;
+            // **ハイライトは「待つ側」のステップが持つこと。**
+            // 待たせる前のステップで HighlightObject を呼ぶと、直後の SetStep が
+            // 冒頭で ClearHighlight() を呼ぶため、作った矢印とマスクが同じフレームで消える。
+            // この画面は canClickAdvance: false（画面クリックで進めない）ので、
+            // 指し示すものが消えると進む手段が無くなり詰む。
+            case TutorialStep.WaitTabletSwitch:
+                if (tabletSwitchButton != null) HighlightObject(tabletSwitchButton.gameObject);
+                break;
 
             case TutorialStep.ExplainTabletWelcome: ShowInstruction("こんばんは。", canClickAdvance: true); break;
             case TutorialStep.ExplainAiOnTablet: ShowInstruction("こちらにも私はいるのでご安心を。", canClickAdvance: true); break;
@@ -452,13 +463,14 @@ public sealed class TutorialSequenceController : MonoBehaviour
                 return;
             }
 
-            // 自分で足した Canvas は、解除時に必ず無効へ戻す。
-            // 有効なまま残すと、対象の Graphic がルート Canvas の登録から外れたままになり、
-            // ルートの GraphicRaycaster に拾われなくなる（＝クリックできなくなる）。
+            // **自分で足したものは、解除時に外す。** 無効にして残すだけでは、
+            // 対象の Graphic の描画順が元に戻らないことがある（HP バーが赤いまま残る等）。
+            addedCanvas = true;
             previousCanvasEnabled = false;
         }
         else
         {
+            addedCanvas = false;
             previousCanvasEnabled = canvas.enabled;
         }
 
@@ -473,11 +485,13 @@ public sealed class TutorialSequenceController : MonoBehaviour
         if (raycaster == null)
         {
             raycaster = targetObj.AddComponent<GraphicRaycaster>();
-            // 自分で追加した分は、解除時に無効化してマスクのクリックを妨げないようにする。
+            // 自分で足した分は解除時に外す（Canvas と同じ理由）。
+            addedRaycaster = true;
             previousRaycasterEnabled = false;
         }
         else
         {
+            addedRaycaster = false;
             previousRaycasterEnabled = raycaster.enabled;
         }
 
@@ -510,26 +524,43 @@ public sealed class TutorialSequenceController : MonoBehaviour
 
         arrowTween?.Kill();
 
-        // Destroy は同フレーム内では反映されないため、破棄せず元の状態に戻すだけにする。
-        // （破棄すると、直後に同じ対象を再ハイライトした際に AddComponent が失敗する）
-        if (currentHighlightedObject != null)
+        // **対象が破棄されている場合も、ここまでは通す。**
+        // 以前は currentHighlightedObject の生存で全体を囲っていたため、
+        // 対象（タスク吹き出し等）が先に消えると後始末が丸ごと飛んでいた。
+        // Component 側の null 判定だけで足りる。
+
+        // GraphicRaycaster が先。Canvas を要求するため、逆順に外すと警告が出る。
+        if (currentHighlightRaycaster != null)
         {
-            if (currentHighlightCanvas != null)
+            if (addedRaycaster)
             {
-                currentHighlightCanvas.overrideSorting = previousOverrideSorting;
-                currentHighlightCanvas.sortingOrder = previousSortingOrder;
-
-                // 無効化することで Graphic の登録先がルート Canvas へ戻り、クリックが復活する。
-                // 破棄しないので、同一フレームで同じ対象を再ハイライトしても作り直しが起きない。
-                currentHighlightCanvas.enabled = previousCanvasEnabled;
+                // DestroyImmediate を使う。Destroy はフレーム終わりまで実体が残るため、
+                // 直後に同じ対象を再ハイライトすると AddComponent が null を返す
+                // （Canvas / GraphicRaycaster は DisallowMultipleComponent）。
+                DestroyImmediate(currentHighlightRaycaster);
             }
-
-            if (currentHighlightRaycaster != null)
+            else
             {
                 currentHighlightRaycaster.enabled = previousRaycasterEnabled;
             }
         }
 
+        if (currentHighlightCanvas != null)
+        {
+            if (addedCanvas)
+            {
+                DestroyImmediate(currentHighlightCanvas);
+            }
+            else
+            {
+                currentHighlightCanvas.overrideSorting = previousOverrideSorting;
+                currentHighlightCanvas.sortingOrder = previousSortingOrder;
+                currentHighlightCanvas.enabled = previousCanvasEnabled;
+            }
+        }
+
+        addedCanvas = false;
+        addedRaycaster = false;
         currentHighlightedObject = null;
         currentHighlightCanvas = null;
         currentHighlightRaycaster = null;

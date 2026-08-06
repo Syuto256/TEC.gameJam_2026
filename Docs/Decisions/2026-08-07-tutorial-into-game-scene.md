@@ -162,7 +162,7 @@ Prefab の中で完結する。
 | 4 | `Game.unity` に `TutorialOverlay` を 1 個置き、`IsTutorial` が false なら `SetActive(false)` | **済（2026-08-07）** |
 | 5 | 難易度選択にチュートリアルボタンを足す | **済（2026-08-07）** |
 | 6 | 削除（下表） | **済（2026-08-07）** |
-| 7 | 検証 | **未（実プレイが要る）** |
+| 7 | 検証 | **済（2026-08-07）。下記の不具合 2 件を発見・修正** |
 
 ### 6 で削除するもの
 
@@ -201,6 +201,69 @@ Prefab の中で完結する。
 - [ ] `tutorialProfile` の値が 0 でないこと（`maxHp` を特に確認）
 - [ ] EditMode テストが通ること（`unity command run_tests --mode EditMode`）
 - [ ] Console エラー 0 件
+
+## 検証で見つかった不具合 2 件（統合とは別の、元からあったもの）
+
+計測用の使い捨て MonoBehaviour を `TutorialOverlay` に貼り、ステップごとの状態を記録して 1 回通した。
+**チュートリアル本体には触れずに外から読むだけ**とした。
+
+### 7-1. タブレット切替で詰む
+
+`SetStep` は**冒頭で `ClearHighlight()` を呼ぶ**。そこへこの順序だった。
+
+```csharp
+case TutorialStep.PromptTabletSwitch:
+    ShowInstruction("『タブレット』を押してみましょう。", canClickAdvance: false);
+    HighlightObject(tabletSwitchButton.gameObject);   // ハイライトを作り
+    SetStep(TutorialStep.WaitTabletSwitch);           // 次の行で消していた
+```
+
+計測結果（修正前）:
+
+```
+step=WaitTabletSwitch | tabletTab=True/True/act=True | mask=False arrow=False
+```
+
+**タブが無効だったのではない。押せる状態のまま、指し示すものだけが消えていた。**
+`canClickAdvance: false` のため画面クリックでも進めず、進行手段が無くなっていた。
+
+**修正**: ハイライトを「待つ側」の `WaitTabletSwitch` の case へ移した。
+
+> **規則**: ハイライトは**待つステップが持つ**こと。待たせる前のステップで掛けると
+> 直後の `SetStep` に消される。
+
+### 7-2. HP バーが途中からずっと赤い
+
+`HighlightObject` は対象へ `Canvas`（`overrideSorting`, `sortingOrder = 100`）と
+`GraphicRaycaster` を足すが、`ClearHighlight` は**無効にするだけで外していなかった**。
+ステップ 12・13 の対象が `hpBarFill` そのもの（`HudView.HpBarObject`）であるため、
+居残った `Canvas` が赤バー（`hpBarDamageFill`）との前後を狂わせていた。
+
+塗り量は正常だった（計測で確認）。**描画順の問題である。**
+
+**修正**: 足したのか元からあったのかを `addedCanvas` / `addedRaycaster` で覚え、
+足したものは外す。`Destroy` ではなく `DestroyImmediate` を使う
+（`Destroy` はフレーム終わりまで実体が残り、同フレームの再ハイライトで
+`AddComponent` が null を返す。`Canvas` / `GraphicRaycaster` は `DisallowMultipleComponent`）。
+外す順は `GraphicRaycaster` が先（`Canvas` を要求するため）。
+
+修正後の計測:
+
+```
+ExplainDamage1   hpBar[ canvas=有効/ord=100/ovr=True ray=有 ]   ← ハイライト中
+ExplainGameOver  hpBar[ canvas=無                    ray=無 ]   ← 外れた
+```
+
+### 7-3. 併せて直したもの
+
+後始末が `if (currentHighlightedObject != null)` で丸ごと囲まれていた。
+**対象（タスク吹き出し等）が先に破棄されると後始末が全部飛ぶ。** Component 側の null 判定で足りる。
+
+### 残っている軽微なもの
+
+`HighlightObject` は対象に `RectTransform` が無いと矢印を消して `return` するが、
+**暗幕は出したまま抜ける**。進行は止まらないが「何も指していない暗幕」が出る。
+計測では `ExplainTimeUp` で `mask=True arrow=False` として観測された。
 
 ## 効果
 

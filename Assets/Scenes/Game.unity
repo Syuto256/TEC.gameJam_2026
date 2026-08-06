@@ -1983,6 +1983,14 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 1568949677292886931, guid: 522bb0478d262824a948619abfa0c758, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3680491744747796397, guid: 522bb0478d262824a948619abfa0c758, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 6980834475874178975, guid: 522bb0478d262824a948619abfa0c758, type: 3}
       propertyPath: m_Name
       value: TutorialOverlay
@@ -4143,7 +4151,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2726331405039818903, guid: 8e44b03bfcc3c8d41a22060ce592f4f9, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 687.0597
+      value: 757.1348
+      objectReference: {fileID: 0}
+    - target: {fileID: 2726331405039818903, guid: 8e44b03bfcc3c8d41a22060ce592f4f9, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -30.4457
       objectReference: {fileID: 0}
     - target: {fileID: 3572897625021432215, guid: 8e44b03bfcc3c8d41a22060ce592f4f9, type: 3}
       propertyPath: m_Sprite

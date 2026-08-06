@@ -742,6 +742,10 @@ PrefabInstance:
       propertyPath: m_TextStyleHashCode
       value: -1183493901
       objectReference: {fileID: 0}
+    - target: {fileID: 1568623108554266294, guid: f5d836e5edafdda47a8c42ee002c2017, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 156
+      objectReference: {fileID: 0}
     - target: {fileID: 1738256012442853458, guid: f5d836e5edafdda47a8c42ee002c2017, type: 3}
       propertyPath: m_Type
       value: 0
@@ -749,6 +753,10 @@ PrefabInstance:
     - target: {fileID: 1738256012442853458, guid: f5d836e5edafdda47a8c42ee002c2017, type: 3}
       propertyPath: m_Sprite
       value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 2699602757631507894, guid: f5d836e5edafdda47a8c42ee002c2017, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 260
       objectReference: {fileID: 0}
     - target: {fileID: 2937752458381542759, guid: f5d836e5edafdda47a8c42ee002c2017, type: 3}
       propertyPath: m_fontColor32.rgba
@@ -762,6 +770,10 @@ PrefabInstance:
       propertyPath: m_Sprite
       value: 
       objectReference: {fileID: 21300000, guid: 65b21df6fb8e25f428b1d6529c561207, type: 3}
+    - target: {fileID: 3859735996715162283, guid: f5d836e5edafdda47a8c42ee002c2017, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4583462241348555448, guid: f5d836e5edafdda47a8c42ee002c2017, type: 3}
       propertyPath: m_Name
       value: AppWindowFrame
