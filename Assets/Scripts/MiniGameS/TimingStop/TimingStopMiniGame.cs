@@ -163,10 +163,13 @@ namespace Overwork.MiniGames.TimingStop
             zoneCenter = center;
 
             var half = zoneWidth * 0.5f;
-            targetZone.anchorMin = new Vector2(zoneCenter - half, 0f);
-            targetZone.anchorMax = new Vector2(zoneCenter + half, 1f);
-            targetZone.offsetMin = Vector2.zero;
-            targetZone.offsetMax = Vector2.zero;
+
+            // 横だけコードが決め、縦は Prefab の指定をそのまま残す。
+            // 当たり判定は横位置の割合だけで見ているので、縦幅を変えても判定はずれない。
+            targetZone.anchorMin = new Vector2(zoneCenter - half, targetZone.anchorMin.y);
+            targetZone.anchorMax = new Vector2(zoneCenter + half, targetZone.anchorMax.y);
+            targetZone.offsetMin = new Vector2(0f, targetZone.offsetMin.y);
+            targetZone.offsetMax = new Vector2(0f, targetZone.offsetMax.y);
         }
 
         private void ApplyMarker()
