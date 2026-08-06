@@ -219,7 +219,7 @@ public GameObject TimeTextObject => timeText != null ? timeText.gameObject : nul
         if (snapshot.Score != lastScore)
         {
             lastScore = snapshot.Score;
-            scoreText.text = $"スコア: {snapshot.Score:N0}";
+            scoreText.text = snapshot.Score.ToString("N0");
         }
 
         var time = FormatTime(snapshot.RemainingTimeSec, snapshot.IsEndless);
@@ -262,7 +262,7 @@ public GameObject TimeTextObject => timeText != null ? timeText.gameObject : nul
                 if (snapshot.ComboCount > 0)
                 {
                     persistentComboText.gameObject.SetActive(true);
-                    persistentComboText.text = $"{snapshot.ComboCount} COMBO";
+                    persistentComboText.text = snapshot.ComboCount.ToString();
                     // コンボが増えた瞬間だけ拡大＆振動演出（DOPunchScale）
                     if (increased)
                     {
