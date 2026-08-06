@@ -2551,13 +2551,13 @@ RectTransform:
   - {fileID: 2042376540}
   - {fileID: 960471471}
   - {fileID: 1638882368}
+  - {fileID: 2073427699}
   - {fileID: 1351273354}
   - {fileID: 1334445742}
   - {fileID: 1939800939}
   - {fileID: 1433870330}
   - {fileID: 1223758115}
   - {fileID: 531529258}
-  - {fileID: 2073427699}
   m_Father: {fileID: 150308431}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.02, y: 0.88}
@@ -4121,7 +4121,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
@@ -5977,7 +5977,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:

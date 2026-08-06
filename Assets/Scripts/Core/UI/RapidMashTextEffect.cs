@@ -41,6 +41,23 @@ public sealed class RapidMashTextEffect : MonoBehaviour
         }
     }
 
+    /// <summary>揺らす対象を差し替える。Prefab の割り当てより後から呼んだものが優先される。</summary>
+    public void SetTarget(RectTransform target)
+    {
+        if (target == null || target == targetTransform) return;
+
+        // 差し替え前の対象を元の見た目に戻してから移る。
+        currentShakeTween?.Kill();
+        currentScaleTween?.Kill();
+        if (targetTransform != null)
+        {
+            targetTransform.localScale = initialScale;
+        }
+
+        targetTransform = target;
+        initialScale = target.localScale;
+    }
+
     /// <summary>連打ボタンが押された時に呼び出す</summary>
     public void OnMash()
     {

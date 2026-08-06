@@ -66,6 +66,7 @@ public sealed class TutorialSequenceController : MonoBehaviour
     private GameObject currentHighlightedObject;
     private Canvas currentHighlightCanvas;
     private GraphicRaycaster currentHighlightRaycaster;
+    private bool previousCanvasEnabled;
     private bool previousOverrideSorting;
     private int previousSortingOrder;
     private bool previousRaycasterEnabled;
@@ -442,16 +443,29 @@ public sealed class TutorialSequenceController : MonoBehaviour
         // 既に付いている場合 AddComponent は null を返す。必ず使い回すこと。
         // （同じ対象を連続ステップでハイライトするケースがあるため）
         var canvas = targetObj.GetComponent<Canvas>();
-        if (canvas == null) canvas = targetObj.AddComponent<Canvas>();
         if (canvas == null)
         {
-            Debug.LogWarning($"[Tutorial] {targetObj.name} に Canvas を用意できませんでした。ハイライトを中止します。");
-            return;
+            canvas = targetObj.AddComponent<Canvas>();
+            if (canvas == null)
+            {
+                Debug.LogWarning($"[Tutorial] {targetObj.name} に Canvas を用意できませんでした。ハイライトを中止します。");
+                return;
+            }
+
+            // 自分で足した Canvas は、解除時に必ず無効へ戻す。
+            // 有効なまま残すと、対象の Graphic がルート Canvas の登録から外れたままになり、
+            // ルートの GraphicRaycaster に拾われなくなる（＝クリックできなくなる）。
+            previousCanvasEnabled = false;
+        }
+        else
+        {
+            previousCanvasEnabled = canvas.enabled;
         }
 
         currentHighlightCanvas = canvas;
         previousOverrideSorting = canvas.overrideSorting;
         previousSortingOrder = canvas.sortingOrder;
+        canvas.enabled = true;
         canvas.overrideSorting = true;
         canvas.sortingOrder = 100;
 
@@ -504,6 +518,10 @@ public sealed class TutorialSequenceController : MonoBehaviour
             {
                 currentHighlightCanvas.overrideSorting = previousOverrideSorting;
                 currentHighlightCanvas.sortingOrder = previousSortingOrder;
+
+                // 無効化することで Graphic の登録先がルート Canvas へ戻り、クリックが復活する。
+                // 破棄しないので、同一フレームで同じ対象を再ハイライトしても作り直しが起きない。
+                currentHighlightCanvas.enabled = previousCanvasEnabled;
             }
 
             if (currentHighlightRaycaster != null)

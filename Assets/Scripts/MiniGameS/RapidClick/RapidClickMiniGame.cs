@@ -2,53 +2,26 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
-using UnityEngine.UI;
 
 namespace Overwork.MiniGames.RapidClick
 {
     public sealed class RapidClickMiniGame : MiniGameBase, IPointerClickHandler
     {
         [Header("【表示先】")]
-        [Tooltip("連打の進捗。")]
-        [SerializeField] private TMP_Text progressText;
-
-        // ★追加: 文字揺れエフェクトの参照
-        [Tooltip("連打時に文字を揺らすエフェクト（未設定でも動作に影響しない）")]
-        [SerializeField] private RapidMashTextEffect textEffect;
-
-        [Tooltip("進捗の書式。{0} が現在の回数、{1} が必要回数。")]
-        [SerializeField] private string progressFormat = "連打! {0} / {1}";
-
-        [Header("【プレビュー】")]
-        [Tooltip("押すたびに切り替える画像。仮素材を含め、同じ名前で本番素材へ差し替えられる。")]
-        [SerializeField] private Image previewImage;
-
-        [Tooltip("押すたびに切り替える画像の一覧。")]
-        [SerializeField] private Sprite[] previewSprites = new Sprite[0];
-
-        [Tooltip("プレビューのファイル名。画像の順番に対応させる。")]
-        [SerializeField] private string[] previewFileNames = new string[0];
-
-        [Tooltip("プレビューの解像度。画像の順番に対応させる。")]
-        [SerializeField] private string[] previewResolutions = new string[0];
-
-        [Tooltip("プレビューのファイル名の表示先。")]
-        [SerializeField] private TMP_Text fileNameText;
-
-        [Tooltip("プレビューの解像度の表示先。")]
-        [SerializeField] private TMP_Text resolutionText;
-
-        [Tooltip("プレビューの何枚目かの表示先。")]
+        [Tooltip("連打の進捗の表示先。押すたびに揺れる。")]
         [SerializeField] private TMP_Text indexText;
 
-        [Tooltip("残りクリック回数を大きく表示する先。")]
-        [SerializeField] private TMP_Text remainingText;
-
-        [Tooltip("プレビューの何枚目かの書式。{0} が番号、{1} が総数。")]
+        [Tooltip("連打の進捗の書式。{0} が現在の回数、{1} が必要回数。")]
         [SerializeField] private string indexFormat = "{0} / {1}";
 
-        [Tooltip("何回押すごとにプレビューを切り替えるか。1 なら毎回切り替える。")]
-        [Min(1)] [SerializeField] private int switchEveryNClicks = 1;
+        [Tooltip("残り時間の表示先。")]
+        [SerializeField] private TMP_Text remainingText;
+
+        [Tooltip("残り時間の書式。{0} に残り秒数が入る。")]
+        [SerializeField] private string remainingFormat = "残り{0}秒";
+
+        [Tooltip("連打時に文字を揺らすエフェクト（未設定でも動作に影響しない）")]
+        [SerializeField] private RapidMashTextEffect textEffect;
 
         [Header("【難度の調整】")]
         [Tooltip("レベル 1 での必要クリック数。")]
@@ -62,15 +35,12 @@ namespace Overwork.MiniGames.RapidClick
 
         private int requiredClicks;
         private int clicks;
+        private int shownRemainingSec = -1;
 
         public override void Initialize(int difficulty, float timeLimit)
         {
             base.Initialize(difficulty, timeLimit);
             if (!SceneUiValidation.Require(this,
-                    (nameof(progressText), progressText),
-                    (nameof(previewImage), previewImage),
-                    (nameof(fileNameText), fileNameText),
-                    (nameof(resolutionText), resolutionText),
                     (nameof(indexText), indexText),
                     (nameof(remainingText), remainingText)))
             {
@@ -78,16 +48,23 @@ namespace Overwork.MiniGames.RapidClick
                 return;
             }
 
-            if (previewSprites == null || previewSprites.Length == 0)
+            // 揺らす対象は必ず IndexText にする。
+            // Prefab 側の割り当てがどこを向いていても、ここで揃えておく。
+            if (textEffect == null)
             {
-                Debug.LogError(nameof(RapidClickMiniGame) + " (" + name + "): previewSprites が空です。", this);
-                FinishGame(false, "NO PREVIEW CONFIGURED");
-                return;
+                textEffect = indexText.GetComponent<RapidMashTextEffect>();
+            }
+
+            if (textEffect != null)
+            {
+                textEffect.SetTarget(indexText.rectTransform);
             }
 
             requiredClicks = baseClicks + (Mathf.Clamp(difficulty, 1, 4) - 1) * clicksPerLevel;
             clicks = 0;
+            shownRemainingSec = -1;
             Refresh();
+            RefreshRemaining();
         }
 
         public void OnPointerClick(PointerEventData eventData)
@@ -101,6 +78,8 @@ namespace Overwork.MiniGames.RapidClick
             {
                 RegisterInput();
             }
+
+            RefreshRemaining();
         }
 
         private void RegisterInput()
@@ -113,7 +92,6 @@ namespace Overwork.MiniGames.RapidClick
             clicks++;
             PlayInputFeedback(true);
 
-            // ★追加: 連打時にテキスト揺れ演出を実行
             if (textEffect != null)
             {
                 textEffect.OnMash();
@@ -131,49 +109,28 @@ namespace Overwork.MiniGames.RapidClick
 
         private void Refresh()
         {
-            if (progressText != null)
+            if (indexText != null)
             {
-                progressText.text = string.Format(progressFormat, clicks, requiredClicks);
+                indexText.text = string.Format(indexFormat, Mathf.Min(clicks, requiredClicks), requiredClicks);
             }
+        }
 
-            if (remainingText != null)
-            {
-                remainingText.text = Mathf.Max(0, requiredClicks - clicks).ToString();
-            }
-
-            if (previewSprites == null || previewSprites.Length == 0)
+        /// <summary>残り秒数を表示する。秒が変わった時だけ書き換える。</summary>
+        private void RefreshRemaining()
+        {
+            if (remainingText == null)
             {
                 return;
             }
 
-            var switchCount = Mathf.Max(1, switchEveryNClicks);
-            var previewIndex = Mathf.Clamp(clicks / switchCount, 0, int.MaxValue) % previewSprites.Length;
-            if (previewImage != null)
+            var seconds = Mathf.Max(0, Mathf.CeilToInt(TimeRemaining));
+            if (seconds == shownRemainingSec)
             {
-                previewImage.sprite = previewSprites[previewIndex];
+                return;
             }
 
-            if (fileNameText != null)
-            {
-                fileNameText.text = ValueAt(previewFileNames, previewIndex, "preview_" + (previewIndex + 1).ToString("00") + ".png");
-            }
-
-            if (resolutionText != null)
-            {
-                resolutionText.text = ValueAt(previewResolutions, previewIndex, "1024 × 1024");
-            }
-
-            if (indexText != null)
-            {
-                indexText.text = string.Format(indexFormat, previewIndex + 1, previewSprites.Length);
-            }
-        }
-
-        private static string ValueAt(string[] values, int index, string fallback)
-        {
-            return values != null && index >= 0 && index < values.Length && !string.IsNullOrEmpty(values[index])
-                ? values[index]
-                : fallback;
+            shownRemainingSec = seconds;
+            remainingText.text = string.Format(remainingFormat, seconds);
         }
     }
 }
