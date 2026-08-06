@@ -68,6 +68,15 @@ public sealed class PcLidView : MonoBehaviour
     [Tooltip("蓋を開けるときの同じ余韻。0 にすると従来どおり、覆いきってすぐ動き出す。")]
     [Min(0f)] [SerializeField] private float openHoldBeforeFramesSec;
 
+    [Tooltip("画面を覆いきってから、PC の画面が点くまでの間（秒）。TryPowerOn でだけ使う。")]
+    [Min(0f)] [SerializeField] private float powerOnHoldSec = 0.5f;
+
+    [Header("【画面の光り方】")]
+    [Tooltip("蓋を開けたあとに画面を光らせるか。\n" +
+             "難易度選択では画面を消したままにするため、既定は off。\n" +
+             "画面が点くのは、そこからゲームへ移るときの TryPowerOn である。")]
+    [SerializeField] private bool flashOnOpen;
+
     [Tooltip("画面が光りきるまでの秒数。0 にすると光らない。")]
     [Min(0f)] [SerializeField] private float flashInSec = 0.12f;
 
@@ -109,13 +118,33 @@ public sealed class PcLidView : MonoBehaviour
     /// <returns>受け付けたら true。演出中にもう一度呼ばれた場合は false を返し、何もしない。</returns>
     public bool TryOpen(Action action)
     {
-        return TryRun(openFrames, true, openHoldBeforeFramesSec, action);
+        return TryRun(openFrames, flashOnOpen, openHoldBeforeFramesSec, action);
     }
 
     /// <summary>蓋を閉じてから <paramref name="action"/> を実行し、演出を引き上げる。</summary>
     public bool TryClose(Action action)
     {
         return TryRun(closeFrames, false, closeHoldBeforeFramesSec, action);
+    }
+
+    /// <summary>蓋は動かさず、間を置いてから画面だけを点ける。難易度選択 → ゲームで使う。</summary>
+    /// <remarks>
+    /// **難易度選択では PC の画面を消したままにしている。** 起動して見せるのはここ 1 箇所だけであり、
+    /// 「暗い画面のまま少し待ってから点く」という間そのものが演出である。
+    /// <para>
+    /// コマ送りはしない。開き切った 1 枚を出したまま覆い、待ち、光らせる。
+    /// 蓋はすでに開いているため、動かすと二度目の開閉になってしまう。
+    /// </para>
+    /// </remarks>
+    public bool TryPowerOn(Action action)
+    {
+        var still = LastSprite(openFrames);
+        if (still == null)
+        {
+            return false;
+        }
+
+        return TryRun(new[] { new Frame { sprite = still, durationSec = 0f } }, true, powerOnHoldSec, action);
     }
 
     private bool TryRun(Frame[] frames, bool flashAfterwards, float holdSec, Action action)
@@ -219,6 +248,25 @@ public sealed class PcLidView : MonoBehaviour
             if (frame != null && frame.sprite != null)
             {
                 return frame.sprite;
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>並びの最後の絵。開けるコマの最後が「蓋が開き切った状態」である。</summary>
+    private static Sprite LastSprite(Frame[] frames)
+    {
+        if (frames == null)
+        {
+            return null;
+        }
+
+        for (var i = frames.Length - 1; i >= 0; i--)
+        {
+            if (frames[i] != null && frames[i].sprite != null)
+            {
+                return frames[i].sprite;
             }
         }
 
