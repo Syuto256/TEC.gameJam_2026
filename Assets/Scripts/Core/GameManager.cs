@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using UnityEngine;
 
 /// <summary>Game シーンの入口。View とゲーム進行コンポーネントを接続するだけを担当する。</summary>
@@ -28,6 +29,16 @@ public sealed class GameManager : MonoBehaviour
     [Header("【進行制御】")]
     [SerializeField] private MainGameController mainGameController;
     [SerializeField] private DeviceScreenController deviceScreenController;
+
+    [Header("【終了演出】")]
+    [Tooltip("ゲームが終わってから画面を覆い始めるまでの余韻（秒）。\n" +
+             "この間はゲーム画面が止まったまま残る。0 にすると終わった瞬間に蓋の演出へ入る。")]
+    [Min(0f)] [SerializeField] private float endHoldBeforeCoverSec = 0.6f;
+
+    // デバイス切替を止めたい理由。すべて RefreshDeviceSwitchEnabled で束ねて反映する。
+    private bool miniGameActive;
+    private bool paused;
+    private bool sessionFinished;
 
     private void Start()
     {
@@ -72,6 +83,7 @@ public sealed class GameManager : MonoBehaviour
         pauseMenuView.ResumeRequested += mainGameController.Resume;
         pauseMenuView.BackToDifficultyRequested += mainGameController.ReturnToDifficultySelect;
         mainGameController.PlayerMiniGameActiveChanged += OnPlayerMiniGameActiveChanged;
+        mainGameController.PausedChanged += OnPausedChanged;
         mainGameController.SessionFinished += OnSessionFinished;
         miniGameHostView.Hide();
     }
@@ -84,12 +96,35 @@ public sealed class GameManager : MonoBehaviour
     /// <para>
     /// 戻している最中にタブを押されると行き先が変わってしまうため、先に切替を止める。
     /// </para>
+    /// <para>
+    /// **PC 面へ戻し終えてから余韻を取る。** 戻す前に取ると、液タブを見たまま終わった場合に
+    /// 余韻の途中で画面が横に流れてしまう。後に置けば、どちらの面で終わっても
+    /// 必ず PC 面で静止した状態の余韻になる。
+    /// </para>
     /// </remarks>
     private void OnSessionFinished(GameSessionResult result)
     {
-        deviceScreenController.SetSwitchEnabled(false);
-        deviceScreenController.ReturnToPc(
-            () => GameFlowController.EnsureInstance().PresentResult(result));
+        sessionFinished = true;
+        RefreshDeviceSwitchEnabled();
+
+        // 戻すほうは force で通す。禁止のままだと、まさに戻したい場面で戻せない。
+        deviceScreenController.ReturnToPc(() => StartCoroutine(PresentAfterHold(result)));
+    }
+
+    /// <summary>終了の余韻を置いてから結果画面へ移る。</summary>
+    /// <remarks>
+    /// 待っているあいだ、<see cref="MainGameController"/> は <c>ending</c> のため進行を止めており、
+    /// タスクの生成も操作も通らない。画面は終わった瞬間の姿のまま残る。
+    /// </remarks>
+    private IEnumerator PresentAfterHold(GameSessionResult result)
+    {
+        // 実時間で測る。ポーズ経路と組み合わさっても長さが変わらないようにするためである。
+        if (endHoldBeforeCoverSec > 0f)
+        {
+            yield return new WaitForSecondsRealtime(endHoldBeforeCoverSec);
+        }
+
+        GameFlowController.EnsureInstance().PresentResult(result);
     }
 
     /// <summary>ミニゲーム中はデバイス切替を受け付けない。</summary>
@@ -108,12 +143,35 @@ public sealed class GameManager : MonoBehaviour
     /// </remarks>
     private void OnPlayerMiniGameActiveChanged(bool active)
     {
-        deviceScreenController.SetSwitchEnabled(!active);
+        miniGameActive = active;
+        RefreshDeviceSwitchEnabled();
 
         if (focusLightingView != null)
         {
             focusLightingView.SetFocused(active);
         }
+    }
+
+    /// <summary>一時停止中はデバイス切替を受け付けない。</summary>
+    /// <remarks>
+    /// タスクの吹き出しは <see cref="MainGameController"/> が自分で弾いている。
+    /// タブだけが素通りしていたため、同じ方式へ揃える。
+    /// </remarks>
+    private void OnPausedChanged(bool value)
+    {
+        paused = value;
+        RefreshDeviceSwitchEnabled();
+    }
+
+    /// <summary>デバイス切替を許すかどうかを、止めたい理由すべてから決め直す。</summary>
+    /// <remarks>
+    /// **理由ごとに <c>SetSwitchEnabled</c> を直接呼んではいけない。** あれは単なる代入で
+    /// 後から呼んだほうが勝つため、たとえばミニゲーム中にポーズして解除すると、
+    /// ミニゲームが開いたままなのに切替が復活してしまう。必ずここで束ねて反映する。
+    /// </remarks>
+    private void RefreshDeviceSwitchEnabled()
+    {
+        deviceScreenController.SetSwitchEnabled(!miniGameActive && !paused && !sessionFinished);
     }
 
     private bool HasValidWorkspaces()
@@ -151,6 +209,7 @@ public sealed class GameManager : MonoBehaviour
         if (mainGameController != null)
         {
             mainGameController.PlayerMiniGameActiveChanged -= OnPlayerMiniGameActiveChanged;
+            mainGameController.PausedChanged -= OnPausedChanged;
             mainGameController.SessionFinished -= OnSessionFinished;
         }
     }

@@ -57,10 +57,22 @@ public sealed class GameFlowController : MonoBehaviour
         Transition(DifficultySelectSceneName);
     }
 
+    /// <summary>難易度を決めてゲームへ。間を置いてから PC の画面が点く演出をはさむ。</summary>
+    /// <remarks>
+    /// **難易度選択では PC の画面を消したままにしている。** 蓋はもう開いているので動かさず、
+    /// 暗い画面のまま少し待ってから点ける。演出が用意できない場合は暗転に戻す。
+    /// </remarks>
     public void SelectDifficulty(GameDifficulty difficulty)
     {
         SelectedDifficulty = difficulty;
         LastSessionResult = null;
+
+        var lid = PcLidView.EnsureInstance();
+        if (lid != null && lid.TryPowerOn(() => SceneManager.LoadScene(GameSceneName)))
+        {
+            return;
+        }
+
         Transition(GameSceneName);
     }
 

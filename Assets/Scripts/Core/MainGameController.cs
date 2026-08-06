@@ -73,6 +73,13 @@ public sealed class MainGameController : MonoBehaviour
 
     /// <summary>自力ミニゲームの進行中・終了を通知する。デバイス切替の可否に使う。</summary>
     public event System.Action<bool> PlayerMiniGameActiveChanged;
+
+    /// <summary>一時停止の開始・解除を通知する。デバイス切替の可否に使う。</summary>
+    /// <remarks>
+    /// **タスクの吹き出しは自分で <c>paused</c> を見て弾いているが、タブは見ていなかった。**
+    /// この Controller はデバイス切替の実体を知らないため、判断は購読側（<c>GameManager</c>）に任せる。
+    /// </remarks>
+    public event System.Action<bool> PausedChanged;
     public event System.Action<TaskResolutionResult> TaskResolved;
 
     public void Initialize(
@@ -751,12 +758,14 @@ public sealed class MainGameController : MonoBehaviour
 
     private void CompletePlayerMiniGame(int taskId, bool success)
     {
-        if (!initialized || activePlayerTaskId != taskId)
+        // ending も見る。**ミニゲームは自前の Update で動いているため、
+        // 時間切れや HP0 でセッションが終わったあとも余韻のあいだ動き続ける。**
+        // ここを通すと、終了演出の最中に吹き出しが弾け、決着演出まで走ってしまう。
+        if (!initialized || ending || activePlayerTaskId != taskId)
         {
             return;
         }
 
-       
         taskManager.CompletePlayer(taskId, success);
     }
 
@@ -835,6 +844,7 @@ public sealed class MainGameController : MonoBehaviour
         Time.timeScale = paused ? 0f : 1f;
         pauseMenu.SetVisible(paused);
         AudioManager.PlaySfx(paused ? AudioCue.PauseOpen : AudioCue.PauseClose);
+        PausedChanged?.Invoke(paused);
     }
 
     private void OnDestroy()
