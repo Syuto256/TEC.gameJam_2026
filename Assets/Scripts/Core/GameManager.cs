@@ -35,6 +35,11 @@ public sealed class GameManager : MonoBehaviour
              "この間はゲーム画面が止まったまま残る。0 にすると終わった瞬間に蓋の演出へ入る。")]
     [Min(0f)] [SerializeField] private float endHoldBeforeCoverSec = 0.6f;
 
+    // デバイス切替を止めたい理由。すべて RefreshDeviceSwitchEnabled で束ねて反映する。
+    private bool miniGameActive;
+    private bool paused;
+    private bool sessionFinished;
+
     private void Start()
     {
         AppServices.Ensure();
@@ -78,6 +83,7 @@ public sealed class GameManager : MonoBehaviour
         pauseMenuView.ResumeRequested += mainGameController.Resume;
         pauseMenuView.BackToDifficultyRequested += mainGameController.ReturnToDifficultySelect;
         mainGameController.PlayerMiniGameActiveChanged += OnPlayerMiniGameActiveChanged;
+        mainGameController.PausedChanged += OnPausedChanged;
         mainGameController.SessionFinished += OnSessionFinished;
         miniGameHostView.Hide();
     }
@@ -98,7 +104,10 @@ public sealed class GameManager : MonoBehaviour
     /// </remarks>
     private void OnSessionFinished(GameSessionResult result)
     {
-        deviceScreenController.SetSwitchEnabled(false);
+        sessionFinished = true;
+        RefreshDeviceSwitchEnabled();
+
+        // 戻すほうは force で通す。禁止のままだと、まさに戻したい場面で戻せない。
         deviceScreenController.ReturnToPc(() => StartCoroutine(PresentAfterHold(result)));
     }
 
@@ -134,12 +143,35 @@ public sealed class GameManager : MonoBehaviour
     /// </remarks>
     private void OnPlayerMiniGameActiveChanged(bool active)
     {
-        deviceScreenController.SetSwitchEnabled(!active);
+        miniGameActive = active;
+        RefreshDeviceSwitchEnabled();
 
         if (focusLightingView != null)
         {
             focusLightingView.SetFocused(active);
         }
+    }
+
+    /// <summary>一時停止中はデバイス切替を受け付けない。</summary>
+    /// <remarks>
+    /// タスクの吹き出しは <see cref="MainGameController"/> が自分で弾いている。
+    /// タブだけが素通りしていたため、同じ方式へ揃える。
+    /// </remarks>
+    private void OnPausedChanged(bool value)
+    {
+        paused = value;
+        RefreshDeviceSwitchEnabled();
+    }
+
+    /// <summary>デバイス切替を許すかどうかを、止めたい理由すべてから決め直す。</summary>
+    /// <remarks>
+    /// **理由ごとに <c>SetSwitchEnabled</c> を直接呼んではいけない。** あれは単なる代入で
+    /// 後から呼んだほうが勝つため、たとえばミニゲーム中にポーズして解除すると、
+    /// ミニゲームが開いたままなのに切替が復活してしまう。必ずここで束ねて反映する。
+    /// </remarks>
+    private void RefreshDeviceSwitchEnabled()
+    {
+        deviceScreenController.SetSwitchEnabled(!miniGameActive && !paused && !sessionFinished);
     }
 
     private bool HasValidWorkspaces()
@@ -177,6 +209,7 @@ public sealed class GameManager : MonoBehaviour
         if (mainGameController != null)
         {
             mainGameController.PlayerMiniGameActiveChanged -= OnPlayerMiniGameActiveChanged;
+            mainGameController.PausedChanged -= OnPausedChanged;
             mainGameController.SessionFinished -= OnSessionFinished;
         }
     }
