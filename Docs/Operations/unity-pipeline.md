@@ -97,10 +97,37 @@ Prefab から作られたオブジェクトを変えた場合は、シーン側�
 `UnityEditor.PrefabUtility.ApplyPropertyOverride` で Prefab へ戻します。同じ Prefab を使う
 他のシーンに反映されないためです。
 
-再生中の挙動を測るときは、`UnityEditor.EditorApplication.update` に閉包を登録して
+再生中の挙動を**短く**測るときは、`UnityEditor.EditorApplication.update` に閉包を登録して
 `StringBuilder` へ書き溜め、目印を付けて `Debug.Log` し、`get_console_logs` で読み戻します。
 非アクティブなオブジェクトは `FindObjectsByType` の既定では拾えないため、
 `UnityEngine.FindObjectsInactive.Include` を指定します。
+
+## 人の操作が要る不具合を測る（使い捨ての計装）
+
+**症状が複数あるとき、1 つずつ直すより先に 1 回測るほうが安いことが多いです。**
+チュートリアルのように「人が最後まで操作しないと再現しない」ものは、
+`eval_file` では追えないため、**使い捨ての `MonoBehaviour` を貼って 1 回通します。**
+
+守ること:
+
+- **対象のコードには触らない。** 外から状態を読むだけにする。直す前に「今どうなっているか」を
+  確定させるのが目的であり、測るために対象を変えると何を測ったのか分からなくなる。
+- **置き場は `Assets/Scripts/_TempDebug/`。** 原因が確定したら**フォルダごと消す。**
+  Prefab には貼らず、**シーンのインスタンスに貼る**（外し忘れても本体に残らない）。
+- **詰みを迂回するキーを付ける**（例: F9 で次の段階へ強制送り）。
+  途中で詰まる不具合だと、その先が一度も動かせない。飛ばしてでも最後まで見る。
+- **値が変わったときだけ書く。比べる文字列に時刻を入れないこと。**
+  入れると毎フレーム書き出しになる（実例: 264 行で済むところが 12,133 行になった）。
+- **ログはファイルへも書く。** Console は流れて消える。
+  `Application.dataPath + "/../Logs/<名前>.log"` なら、CLI 側から直接読み戻せる。
+- **疑わしい値は全部並べて 1 行にする。** 「どれが犯人か」は事前に分からない。
+  ボタンなら `interactable` / `IsInteractable()` / `activeInHierarchy` を分けて出すと、
+  ボタン自体が無効なのか親が消えているのかを区別できる。
+- 対象の private フィールドはリフレクションで読む
+  （`BindingFlags.Instance | BindingFlags.NonPublic`）。
+
+**再生を挟んだ後は、シーンの `activeSelf` や Inspector の値が変わっていないか確かめます。**
+テスト中の状態がそのまま保存されていることがあります。
 
 ## よくある問題
 
