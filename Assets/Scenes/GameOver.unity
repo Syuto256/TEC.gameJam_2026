@@ -771,7 +771,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 45799c1f718759d42879e294d8f42372, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Overwork.Core::ButtonHoverScale
-  hoverScale: 1.5
+  hoverScale: 1.05
   duration: 0.1
 --- !u!1 &1241708063
 GameObject:
@@ -1181,7 +1181,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 45799c1f718759d42879e294d8f42372, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Overwork.Core::ButtonHoverScale
-  hoverScale: 1.5
+  hoverScale: 1.05
   duration: 0.1
 --- !u!1 &1756867770
 GameObject:

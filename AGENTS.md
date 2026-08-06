@@ -6,6 +6,29 @@
 - Unity 操作は **Unity CLI の `unity command` を経由し、導入済みの Unity PipelinePackage (`com.unity.pipeline`) に接続して行います**。Unity YAML ファイルを直接書き換えてシーンやアセットを操作してはいけません。
 - 企画書・仕様書は未整備です。仕様を推測して恒久的なゲーム挙動を実装せず、必要な判断は `Docs/GameDesign/` または `Docs/Specifications/` に TODO として残します。
 
+## 先に読むこと: 過去に手戻りが起きた箇所
+
+**いずれもコードを読んだだけでは気づけません。** 該当する作業に入る前に確認してください。
+
+### 見た目・配置
+
+- **大きさを合わせるのに `localScale` を使わない。** 当たり判定も一緒に伸びます。`RectTransform` の `sizeDelta` で合わせます。
+- **`Assets/Sprites/` のデザイン画像は 1920×1080 のレイヤー書き出しです。** 切り出した素材ではないため、画像の寸法そのものに意味はありません。絵の位置は画像の中で既に決まっています。
+- **触る前に Prefab か Scene インスタンスかを確かめる。** `Assets/Prefabs/UI/` の Prefab は複数のシーンから使われています。シーン側だけ直すと他のシーンに反映されず、後から Prefab へ移し替える作業が発生します。
+- 座標・大きさ・色は Scene / Prefab が持ちます。コードが持つのは進行だけです。
+- `[Header]` `[Tooltip]` は日本語で書きます。
+
+### Unity 操作
+
+- **`eval_file` に渡す C# はメソッドの本体です。** `using` も `class` も書けません。型は `UnityEditor.SerializedObject` のように完全修飾で書き、`string` を `return` します。
+- **値を変えたら `SerializedObject` → `ApplyModifiedPropertiesWithoutUndo()` → `EditorUtility.SetDirty()` → `SaveScene()` まで行います。** どれか欠けると保存されず、保存されなかったこと自体にも気づけません。変更後はシーンを開き直して読み直し、値が入っているか確かめます。
+- **テストは `unity test` ではなく `unity command run_tests --mode EditMode` を使います。** `ProjectSettings/ProjectVersion.txt` は `6000.4.4f1` ですが、実際に開いている Editor は `6000.3.21f1` です。`unity test` は前者をインストール済み Editor から探すため、この環境では起動を拒否します。
+- 手順とコマンド例は [Unity CLI / Pipeline 運用](Docs/Operations/unity-pipeline.md) を参照します。
+
+### Git
+
+- **`core.autocrlf=true` で、シーンとアセットは CRLF で保存されています。** スクリプトから書き換えると LF になり、中身が同じでもファイル全体が差分になります。Unity YAML は手で書き換えず、Pipeline 経由で操作します。
+
 ## 作業を始める前の確認（毎回必須）
 
 1. `git status --short` で他メンバーの未コミット変更を確認する。関係のない変更は触らない。

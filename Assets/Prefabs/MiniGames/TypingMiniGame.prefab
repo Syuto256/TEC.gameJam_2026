@@ -671,6 +671,10 @@ PrefabInstance:
       propertyPath: m_text
       value: "\uFF0D  \u8CC7\u6599_\u4FEE\u6B63\u7248_\u6700\u7D42.doc"
       objectReference: {fileID: 0}
+    - target: {fileID: 6075103050384386282, guid: f5d836e5edafdda47a8c42ee002c2017, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 6612768772547812060, guid: f5d836e5edafdda47a8c42ee002c2017, type: 3}
       propertyPath: m_text
       value: "\u6587\u66F8\u4F5C\u6210"

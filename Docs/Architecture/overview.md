@@ -1,6 +1,6 @@
 # アーキテクチャ概要
 
-最終確認: 2026-08-04  
+最終確認: 2026-08-06  
 対象: 現在 `Assets/Scripts/` にある実装
 
 はじめて読む場合は [シーン構造](scene-structure.md) から読んでください。このページは層の分かれ方と依存の向きを扱います。
@@ -99,7 +99,7 @@ flowchart LR
 ## 拡張時の指針
 
 1. ミニゲームを追加する場合は [ミニゲームの追加・改造手順](mini-game-catalog.md) に従う。Prefab とカタログ 1 行だけで完結し、`Game.unity` は触らない。
-2. UI 要素を追加する場合は Scene / Prefab に実体を置き、対応する View の `[SerializeField]` に足す。コードで `new GameObject` しない。
+2. UI 要素を追加する場合は Scene / Prefab に実体を置き、対応する View の `[SerializeField]` に足す。コードで `new GameObject` しない。Title / Game / Tutorial の共通設定 UI は `OptionPanel.prefab` と `OptionPanelView` に集約する。
 3. 共有の調整値は `GameTuningSettings` へ追加する前に、全ミニゲームで共有する値か個別データかを判断する。個別の値は自分の Prefab か個別 ScriptableObject に置く。
 4. `MainGameController` にタスク種別やデバイス面ごとの分岐を増やさない。種別ごとの差は `MiniGameCatalog` の行、出現場所の差は `TaskSpawnTable` の行として表す。
 5. 新しい責務または依存を足したら、この図とカタログ、必要に応じて詳細ページを更新する。

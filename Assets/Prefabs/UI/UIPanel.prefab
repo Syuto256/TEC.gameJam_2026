@@ -105,6 +105,7 @@ GameObject:
   - component: {fileID: 7244816104553961357}
   - component: {fileID: 9201529122859400332}
   - component: {fileID: 8377981458697386757}
+  - component: {fileID: 1059129585123801116}
   m_Layer: 0
   m_Name: Button
   m_TagString: Untagged
@@ -214,6 +215,20 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &1059129585123801116
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3583019965280943509}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 45799c1f718759d42879e294d8f42372, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Overwork.Core::ButtonHoverScale
+  hoverScale: 1.05
+  duration: 0.1
 --- !u!1 &3885921101584761008
 GameObject:
   m_ObjectHideFlags: 0
@@ -363,6 +378,7 @@ GameObject:
   - component: {fileID: 8337671147356909344}
   - component: {fileID: 7356948536463809194}
   - component: {fileID: 5472071228505823227}
+  - component: {fileID: 2292374455748345605}
   m_Layer: 0
   m_Name: Button (1)
   m_TagString: Untagged
@@ -472,6 +488,20 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &2292374455748345605
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6557042920226477930}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 45799c1f718759d42879e294d8f42372, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Overwork.Core::ButtonHoverScale
+  hoverScale: 1.05
+  duration: 0.1
 --- !u!1 &6955373059163792434
 GameObject:
   m_ObjectHideFlags: 0

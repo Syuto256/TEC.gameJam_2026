@@ -268,15 +268,31 @@ public sealed class MainGameController : MonoBehaviour
         }
     }
 
+    /// <summary>タスクを自分で片付ける。ミニゲームの窓を開く。</summary>
+    /// <remarks>
+    /// **すでに 1 つ抱えているあいだは受け付けない。**
+    /// <see cref="MiniGameHostView.Spawn"/> は窓の中身を捨てて入れ替えるため、
+    /// 2 つ目を開くと 1 つ目が黙って消える。決着の購読だけが残り、
+    /// 消えたはずのミニゲームがタスクを片付けてしまう。
+    /// <para>
+    /// 決着を見せているあいだも <c>activePlayerTaskId</c> は落ちない
+    /// （<see cref="CloseMiniGame"/> を参照）。そのため結果表示の途中で
+    /// 次のミニゲームが始まることもない。
+    /// </para>
+    /// </remarks>
     public bool TryAssignPlayer(int taskId)
     {
-        // ★追加: AI右クリック誘導中（ForceAiOnlyMode == true）は左クリックでのミニゲーム開始を禁止する
+        // AI へ右クリックで誘導している最中は、左クリックで始めさせない。
         if (ForceAiOnlyMode)
         {
             return false;
         }
 
-        
+        if (activePlayerTaskId >= 0)
+        {
+            return false;
+        }
+
         if (!initialized || ending || paused || !taskManager.TryGetTask(taskId, out var task) || task.State != TaskState.Available)
         {
             return false;
@@ -316,18 +332,13 @@ public sealed class MainGameController : MonoBehaviour
         // 決着表示の秒数をそこで読むため、実体を控えておく。
         activeMiniGame = miniGame;
 
-        // ★ 修正: チュートリアル中（overrideTaskLifetimeSec > 0）は「成功」のみ受け付ける
-        miniGame.OnCompleted += (success, reason) =>
-        {
-            // チュートリアル中で失敗通知が来た場合は無視してゲームを継続させる
-            if (overrideTaskLifetimeSec > 0f && !success)
-            {
-                Debug.Log("[Tutorial] 失敗判定を無視し、クリアまで継続します。");
-                return;
-            }
-
-            CompletePlayerMiniGame(taskId, success);
-        };
+        // **成功も失敗もそのまま通す。チュートリアルでも例外を作らない。**
+        // 以前はチュートリアル中の失敗をここで捨てていたが、
+        // <see cref="MiniGameBase.FinishGame"/> は通知より先に IsPlaying を false にするため、
+        // 捨てた時点でミニゲームは既に終わっている。決着が誰にも届かず、窓が閉じないまま
+        // 操作も止まったままになり、そこから進めなくなっていた。
+        // 失敗したときの出題し直しは TutorialSequenceController.OnTaskResolved が持っている。
+        miniGame.OnCompleted += (success, reason) => CompletePlayerMiniGame(taskId, success);
 
         // 時間は 9999 などの極端な数値ではなく 99 秒程度にして計算崩れを防ぐ
         var timeLimit = overrideTaskLifetimeSec > 0f ? 99f : entry.GetTimeLimit(task.Level);
@@ -672,9 +683,9 @@ public sealed class MainGameController : MonoBehaviour
     /// <summary>ミニゲームの窓を閉じる。決着表示があるときはその秒数だけ待つ。</summary>
     /// <remarks>
     /// **担当中の印を落とすのも一緒に遅らせる。** 先に落とすと、結果を出している最中に
-    /// 集中演出の暗幕が戻り、タスク吹き出しもクリックできるようになってしまう
-    /// （<see cref="GameManager"/> が <see cref="PlayerMiniGameActiveChanged"/> で
-    /// 面の操作可否を切り替えているため）。待っているあいだ次のミニゲームは始められない。
+    /// 次のミニゲームを始められてしまい、まだ読んでいない結果ごと窓が差し替わる
+    /// （<see cref="TryAssignPlayer"/> はこの印を見て弾いている）。
+    /// デバイス切替が戻るのも同じ理由で、決着を見せ終わってからにする。
     /// </remarks>
     private void CloseMiniGame(float delaySec)
     {

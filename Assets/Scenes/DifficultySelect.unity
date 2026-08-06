@@ -131,6 +131,7 @@ GameObject:
   - component: {fileID: 90696634}
   - component: {fileID: 90696633}
   - component: {fileID: 90696632}
+  - component: {fileID: 90696635}
   m_Layer: 0
   m_Name: Button
   m_TagString: Untagged
@@ -252,6 +253,20 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 90696630}
   m_CullTransparentMesh: 1
+--- !u!114 &90696635
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 90696630}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 45799c1f718759d42879e294d8f42372, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Overwork.Core::ButtonHoverScale
+  hoverScale: 1.05
+  duration: 0.1
 --- !u!1 &112203332
 GameObject:
   m_ObjectHideFlags: 0
@@ -526,25 +541,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 112711116}
   m_CullTransparentMesh: 1
---- !u!1 &219676898 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 3583019965280943509, guid: 2539257157758354694b998b2090a2d8, type: 3}
-  m_PrefabInstance: {fileID: 599338794}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &219676903
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 219676898}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 45799c1f718759d42879e294d8f42372, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Overwork.Core::ButtonHoverScale
-  hoverScale: 1.5
-  duration: 0.1
 --- !u!1 &244520543
 GameObject:
   m_ObjectHideFlags: 0
@@ -558,6 +554,7 @@ GameObject:
   - component: {fileID: 244520545}
   - component: {fileID: 244520547}
   - component: {fileID: 244520548}
+  - component: {fileID: 244520549}
   m_Layer: 0
   m_Name: NormalButton
   m_TagString: Untagged
@@ -681,6 +678,20 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Overwork.Core::SelectionCornerHighlight
   focusFrame: {fileID: 850748225}
+--- !u!114 &244520549
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 244520543}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 45799c1f718759d42879e294d8f42372, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Overwork.Core::ButtonHoverScale
+  hoverScale: 1.05
+  duration: 0.1
 --- !u!1 &257767692
 GameObject:
   m_ObjectHideFlags: 0
@@ -694,6 +705,7 @@ GameObject:
   - component: {fileID: 257767694}
   - component: {fileID: 257767696}
   - component: {fileID: 257767697}
+  - component: {fileID: 257767698}
   m_Layer: 0
   m_Name: EndlessButton
   m_TagString: Untagged
@@ -817,6 +829,20 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Overwork.Core::SelectionCornerHighlight
   focusFrame: {fileID: 2106640746}
+--- !u!114 &257767698
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 257767692}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 45799c1f718759d42879e294d8f42372, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Overwork.Core::ButtonHoverScale
+  hoverScale: 1.05
+  duration: 0.1
 --- !u!1 &384517398
 GameObject:
   m_ObjectHideFlags: 0
@@ -1530,13 +1556,7 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 3583019965280943509, guid: 2539257157758354694b998b2090a2d8, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 219676903}
-    - targetCorrespondingSourceObject: {fileID: 6557042920226477930, guid: 2539257157758354694b998b2090a2d8, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1657269940}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 2539257157758354694b998b2090a2d8, type: 3}
 --- !u!1 &696534987
 GameObject:
@@ -1551,6 +1571,7 @@ GameObject:
   - component: {fileID: 696534989}
   - component: {fileID: 696534991}
   - component: {fileID: 696534992}
+  - component: {fileID: 696534993}
   m_Layer: 0
   m_Name: HardButton
   m_TagString: Untagged
@@ -1674,6 +1695,20 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Overwork.Core::SelectionCornerHighlight
   focusFrame: {fileID: 460131433}
+--- !u!114 &696534993
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 696534987}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 45799c1f718759d42879e294d8f42372, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Overwork.Core::ButtonHoverScale
+  hoverScale: 1.05
+  duration: 0.1
 --- !u!1 &716176477
 GameObject:
   m_ObjectHideFlags: 0
@@ -1687,6 +1722,7 @@ GameObject:
   - component: {fileID: 716176479}
   - component: {fileID: 716176481}
   - component: {fileID: 716176482}
+  - component: {fileID: 716176483}
   m_Layer: 0
   m_Name: EasyButton
   m_TagString: Untagged
@@ -1810,6 +1846,20 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Overwork.Core::SelectionCornerHighlight
   focusFrame: {fileID: 1176052575}
+--- !u!114 &716176483
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 716176477}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 45799c1f718759d42879e294d8f42372, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Overwork.Core::ButtonHoverScale
+  hoverScale: 1.05
+  duration: 0.1
 --- !u!1 &850748225
 GameObject:
   m_ObjectHideFlags: 0
@@ -2577,25 +2627,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1970487349}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1657269935 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 6557042920226477930, guid: 2539257157758354694b998b2090a2d8, type: 3}
-  m_PrefabInstance: {fileID: 599338794}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &1657269940
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1657269935}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 45799c1f718759d42879e294d8f42372, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Overwork.Core::ButtonHoverScale
-  hoverScale: 1.5
-  duration: 0.1
 --- !u!1 &1700613117
 GameObject:
   m_ObjectHideFlags: 0

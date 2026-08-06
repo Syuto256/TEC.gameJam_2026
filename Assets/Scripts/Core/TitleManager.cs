@@ -22,12 +22,6 @@ public sealed class TitleManager : MonoBehaviour
     [SerializeField] private Button optionBackdropButton;
     [SerializeField] private Button closeOptionButton;
 
-    [Tooltip("BGM の音量。0 で無音、1 で最大。値は AudioManager が PlayerPrefs に保存する。")]
-    [SerializeField] private Slider bgmSlider;
-
-    [Tooltip("効果音の音量。0 で無音、1 で最大。")]
-    [SerializeField] private Slider sfxSlider;
-
     private void Start()
     {
         AppServices.Ensure();
@@ -45,9 +39,7 @@ public sealed class TitleManager : MonoBehaviour
                 (nameof(optionButton), optionButton),
                 (nameof(optionModal), optionModal),
                 (nameof(optionBackdropButton), optionBackdropButton),
-                (nameof(closeOptionButton), closeOptionButton),
-                (nameof(bgmSlider), bgmSlider),
-                (nameof(sfxSlider), sfxSlider)))
+                (nameof(closeOptionButton), closeOptionButton)))
         {
             return;
         }
@@ -63,13 +55,6 @@ public sealed class TitleManager : MonoBehaviour
         optionButton.onClick.AddListener(ShowOption);
         optionBackdropButton.onClick.AddListener(HideOption);
         closeOptionButton.onClick.AddListener(HideOption);
-
-        // 保存されている音量をつまみに反映してから、動かしたときの処理をつなぐ。
-        // 逆にすると、反映した時点で決定音が鳴り、保存済みの値を書き戻すことになる。
-        bgmSlider.SetValueWithoutNotify(AudioManager.BgmVolume);
-        sfxSlider.SetValueWithoutNotify(AudioManager.SfxVolume);
-        bgmSlider.onValueChanged.AddListener(value => AudioManager.BgmVolume = value);
-        sfxSlider.onValueChanged.AddListener(HandleSfxChanged);
 
         SetCreditsVisible(false);
         SetOflLicenseVisible(false);
@@ -91,16 +76,18 @@ public sealed class TitleManager : MonoBehaviour
     private void SetOptionVisible(bool visible)
     {
         SetModalVisible(optionModal, visible);
-    }
-
-    /// <summary>効果音の音量を変えたら、その音量で 1 度鳴らして聞かせる。</summary>
-    /// <remarks>
-    /// **鳴らさないと、動かしても何が変わったのか分からない。** BGM は鳴り続けているため要らない。
-    /// </remarks>
-    private void HandleSfxChanged(float value)
-    {
-        AudioManager.SfxVolume = value;
-        AudioManager.PlaySfx(AudioCue.UiConfirm);
+        var optionPanelView = optionModal.GetComponentInChildren<OptionPanelView>(true);
+        if (optionPanelView != null)
+        {
+            if (visible)
+            {
+                optionPanelView.Show();
+            }
+            else
+            {
+                optionPanelView.Hide();
+            }
+        }
     }
 
     private void HandleStart()
